@@ -1,4 +1,10 @@
 import { parseYMD, toYMD, addDays, dayOfWeek, isoWeek, rangeDays, diffDays } from "../src/lib/date.js";
+import { appPeriod, timezone, week12, semesterMarkers, calendarNotes } from "../src/data/semester.js";
+import { holidays } from "../src/data/holidays.js";
+import { courses } from "../src/data/courses.js";
+import { psyDates, agtechDates, rteDates, rteActionItems, chineseLessons, chineseExamSlots } from "../src/data/coursedates.js";
+import { trips } from "../src/data/trips.js";
+import { chinaVisaFreeDeadline, flexWeekAnnouncementDeadline, academicDeadlines } from "../src/data/deadlines.js";
 
 let failures = 0;
 let passed = 0;
@@ -77,6 +83,138 @@ check('isoWeek("2026-12-31")', isoWeek("2026-12-31"), { isoYear: 2026, week: 53 
 // is dus 2026-12-31 (dezelfde week als hierboven) -> isoYear blijft 2026,
 // week blijft 53, ook al is de kalenderdatum al 2027.
 check('isoWeek("2027-01-01") — jaargrens', isoWeek("2027-01-01"), { isoYear: 2026, week: 53 });
+
+// =====================================================================
+// Fase 1 — datalaag uit DATA.md
+// =====================================================================
+
+const ZEKERHEID_WAARDEN = ["ZEKER", "TE VERIFIËREN", "ONBEKEND"];
+
+/**
+ * Valideert dat een item een geldige bron + zekerheid heeft.
+ * @param {string} label
+ * @param {{bron?: string, zekerheid?: string}} item
+ */
+function checkBronZekerheid(label, item) {
+  if (!item.bron) {
+    failures++;
+    console.error(`FAIL  ${label}: geen bron`);
+  } else {
+    passed++;
+  }
+  if (!ZEKERHEID_WAARDEN.includes(item.zekerheid)) {
+    failures++;
+    console.error(`FAIL  ${label}: ongeldige zekerheid "${item.zekerheid}"`);
+  } else {
+    passed++;
+  }
+}
+
+const YMD_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Valideert een item met een kalenderdatum: date, of start+end als bereik,
+ * binnen de app-periode — plus bron + zekerheid.
+ * @param {string} label
+ * @param {{date?: string|null, start?: string, end?: string, bron?: string, zekerheid?: string}} item
+ */
+function checkItem(label, item) {
+  if (item.date !== undefined && item.date !== null) {
+    checkDateInAppPeriod(`${label}: date`, item.date);
+  }
+  if (item.start !== undefined && YMD_PATTERN.test(item.start)) {
+    checkDateInAppPeriod(`${label}: start`, item.start);
+    checkDateInAppPeriod(`${label}: end`, item.end);
+    if (diffDays(item.start, item.end) < 0) {
+      failures++;
+      console.error(`FAIL  ${label}: start (${item.start}) ligt na end (${item.end})`);
+    } else {
+      passed++;
+    }
+  }
+  checkBronZekerheid(label, item);
+}
+
+/**
+ * @param {string} label
+ * @param {string} ymd
+ */
+function checkDateInAppPeriod(label, ymd) {
+  try {
+    parseYMD(ymd);
+  } catch (err) {
+    failures++;
+    console.error(`FAIL  ${label}: ${err.message}`);
+    return;
+  }
+  const binnenPeriode = diffDays(appPeriod.start, ymd) >= 0 && diffDays(ymd, appPeriod.end) >= 0;
+  if (binnenPeriode) {
+    passed++;
+  } else {
+    failures++;
+    console.error(`FAIL  ${label}: ${ymd} valt buiten de app-periode ${appPeriod.start} → ${appPeriod.end}`);
+  }
+}
+
+check("appPeriod.days", appPeriod.days, 181);
+check("timezone.user", timezone.user, "Asia/Taipei");
+check("calendarNotes bevat opmerking 1 en 2", calendarNotes.length, 2);
+for (const note of calendarNotes) checkItem("calendarNotes item", note);
+
+for (const m of semesterMarkers) checkItem(`semesterMarkers: ${m.label}`, m);
+checkItem("week12", week12);
+
+for (const h of holidays) checkItem(`holidays: ${h.label}`, h);
+
+for (const c of courses) {
+  checkBronZekerheid(`courses: ${c.id}`, c);
+  checkBronZekerheid(`courses: ${c.id}.beoordeling`, c.beoordeling);
+  check(`courses: ${c.id}.start is HH:MM`, /^\d{2}:\d{2}$/.test(c.start), true);
+  check(`courses: ${c.id}.end is HH:MM`, /^\d{2}:\d{2}$/.test(c.end), true);
+}
+
+for (const d of psyDates) checkItem(`psyDates: ${d.date}`, d);
+for (const d of agtechDates) checkItem(`agtechDates: ${d.date}`, d);
+for (const d of rteDates) checkItem(`rteDates: ${d.date}`, d);
+for (const d of rteActionItems) checkItem(`rteActionItems: ${d.date} ${d.label}`, d);
+for (const d of chineseLessons) checkItem(`chineseLessons: ${d.date}`, d);
+for (const d of chineseExamSlots) checkItem(`chineseExamSlots: ${d.label}`, d);
+
+for (const t of trips) checkItem(`trips: ${t.label}`, t);
+
+checkItem("chinaVisaFreeDeadline", chinaVisaFreeDeadline);
+checkItem("flexWeekAnnouncementDeadline", flexWeekAnnouncementDeadline);
+for (const a of academicDeadlines) checkItem(`academicDeadlines: ${a.label}`, a);
+check("flexWeekAnnouncementDeadline valt op einde week12", flexWeekAnnouncementDeadline.date, week12.end);
+
+// --- lesdag-tellingen (belangrijkste typefoutcheck in de datalaag) ---
+check("psyDates.length === 16", psyDates.length, 16);
+check("agtechDates.length === 16", agtechDates.length, 16);
+check("rteDates.length === 16", rteDates.length, 16);
+
+for (const d of psyDates) check(`${d.date} is woensdag (PSY)`, dayOfWeek(d.date), DAG.wo);
+for (const d of agtechDates) check(`${d.date} is donderdag (AgTech)`, dayOfWeek(d.date), DAG.do);
+for (const d of rteDates) check(`${d.date} is donderdag (RTE)`, dayOfWeek(d.date), DAG.do);
+
+// --- General Chinese generator vs. controlelijst DATA.md §3.4 ---
+const chiMondays = chineseLessons.filter((l) => dayOfWeek(l.date) === DAG.ma);
+const chiWednesdays = chineseLessons.filter((l) => dayOfWeek(l.date) === DAG.wo);
+check("General Chinese: aantal maandagen", chiMondays.length, 13);
+check("General Chinese: aantal woensdagen", chiWednesdays.length, 15);
+check("General Chinese: totaal aantal lessen", chineseLessons.length, 28);
+check("General Chinese: 2026-09-28 (feestdag) niet in de lijst", chineseLessons.some((l) => l.date === "2026-09-28"), false);
+check("General Chinese: 2026-10-26 (feestdag) niet in de lijst", chineseLessons.some((l) => l.date === "2026-10-26"), false);
+
+// --- geen dubbele datum binnen hetzelfde vak ---
+function checkNoDuplicateDates(label, items) {
+  const dates = items.map((i) => i.date);
+  const unique = new Set(dates);
+  check(`${label}: geen dubbele datum`, dates.length, unique.size);
+}
+checkNoDuplicateDates("psyDates", psyDates);
+checkNoDuplicateDates("agtechDates", agtechDates);
+checkNoDuplicateDates("rteDates", rteDates);
+checkNoDuplicateDates("chineseLessons", chineseLessons);
 
 console.log(`\n${passed} geslaagd, ${failures} mislukt.`);
 if (failures > 0) process.exit(1);
