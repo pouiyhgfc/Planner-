@@ -1,0 +1,107 @@
+:root {
+  --kleur-bg: #ffffff;
+  --kleur-tekst: #111111;
+  --kleur-rand: #cccccc;
+  --kleur-rand-week: #888888;
+  --kleur-kop-bg: #111111;
+  --kleur-kop-tekst: #ffffff;
+  --kleur-maandkop-bg: #eeeeee;
+
+  --kleur-les: #ffffff;
+  --kleur-vrij: #ffffff;
+  --kleur-vakantie: #f2f2f2;
+  --kleur-feestdag: #fde9d9;
+  --kleur-geen-les: #fde9d9;
+  --kleur-tentamen: #fddede;
+  --kleur-vaste-boeking: #dde8fa;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Courier New", ui-monospace, monospace;
+  font-size: 13px;
+  color: var(--kleur-tekst);
+  background: var(--kleur-bg);
+}
+
+.app-kop {
+  padding: 8px 12px;
+  background: var(--kleur-kop-bg);
+  color: var(--kleur-kop-tekst);
+  font-weight: bold;
+  position: sticky;
+  top: 0;
+}
+
+.maandkop {
+  margin: 0;
+  padding: 4px 12px;
+  background: var(--kleur-maandkop-bg);
+  border-top: 2px solid var(--kleur-rand-week);
+  border-bottom: 1px solid var(--kleur-rand);
+  font-size: 13px;
+  font-weight: bold;
+  position: sticky;
+  top: 29px;
+}
+
+.dagenlijst {
+  display: flex;
+  flex-direction: column;
+}
+
+.dag-rij {
+  display: flex;
+  gap: 10px;
+  padding: 2px 12px;
+  border-bottom: 1px solid var(--kleur-rand);
+  align-items: baseline;
+  background: var(--kleur-vrij);
+}
+
+.dag-rij.weekgrens {
+  border-top: 1px solid var(--kleur-rand-week);
+}
+
+.dag-rij.status-les { background: var(--kleur-les); }
+.dag-rij.status-vrij { background: var(--kleur-vrij); }
+.dag-rij.status-vakantie { background: var(--kleur-vakantie); }
+.dag-rij.status-feestdag { background: var(--kleur-feestdag); }
+.dag-rij.status-geen-les { background: var(--kleur-geen-les); }
+.dag-rij.status-tentamen { background: var(--kleur-tentamen); }
+.dag-rij.status-vaste-boeking { background: var(--kleur-vaste-boeking); }
+
+.col-datum {
+  flex: 0 0 190px;
+}
+
+.col-status {
+  flex: 0 0 90px;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+.col-dagdelen {
+  flex: 0 0 90px;
+  letter-spacing: 2px;
+  white-space: nowrap;
+}
+
+.col-details {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .col-datum { flex-basis: 140px; }
+  .col-status { flex-basis: 60px; }
+  .col-dagdelen { flex-basis: 50px; }
+  .dag-rij { flex-wrap: wrap; }
+  .col-details { flex-basis: 100%; white-space: normal; }
+}

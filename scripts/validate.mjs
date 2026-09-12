@@ -5,6 +5,7 @@ import { courses } from "../src/data/courses.js";
 import { psyDates, agtechDates, rteDates, rteActionItems, chineseLessons, chineseExamSlots } from "../src/data/coursedates.js";
 import { trips } from "../src/data/trips.js";
 import { chinaVisaFreeDeadline, flexWeekAnnouncementDeadline, academicDeadlines } from "../src/data/deadlines.js";
+import { dayStatus, genereerKalenderDagen } from "../src/lib/dayStatus.js";
 
 let failures = 0;
 let passed = 0;
@@ -215,6 +216,60 @@ checkNoDuplicateDates("psyDates", psyDates);
 checkNoDuplicateDates("agtechDates", agtechDates);
 checkNoDuplicateDates("rteDates", rteDates);
 checkNoDuplicateDates("chineseLessons", chineseLessons);
+
+// =====================================================================
+// Fase 2 — dagen genereren en statisch tonen
+// =====================================================================
+
+check("genereerKalenderDagen(): precies 181 dagen", genereerKalenderDagen().length, 181);
+
+// 2026-10-28: PSY-midterm 's ochtends, status tentamen, Chinees 's avonds
+{
+  const dag = dayStatus("2026-10-28");
+  check("2026-10-28 status === tentamen", dag.status, "tentamen");
+  check("2026-10-28 bevat PSY-midterm", dag.vakken.some((v) => v.course === "PSY" && v.type === "tentamen"), true);
+  check("2026-10-28 ochtend bezet (PSY-midterm)", dag.dagdelen.ochtend.bezet, true);
+  check("2026-10-28 avond bezet (Chinees)", dag.dagdelen.avond.bezet, true);
+}
+
+// 2026-10-29: AgTech + RTE, valt in de midterm-periode
+{
+  const dag = dayStatus("2026-10-29");
+  check("2026-10-29 heeft AgTech", dag.vakken.some((v) => v.course === "AGTECH"), true);
+  check("2026-10-29 heeft RTE", dag.vakken.some((v) => v.course === "RTE"), true);
+  check("2026-10-29 valt in tentamenperiode", dag.tentamenperiode, true);
+}
+
+// 2026-10-30 t/m 2026-11-09: vaste boeking
+for (const ymd of rangeDays("2026-10-30", "2026-11-09")) {
+  check(`${ymd} status === vaste-boeking`, dayStatus(ymd).status, "vaste-boeking");
+}
+
+// 2026-09-25: feestdag, geen les
+{
+  const dag = dayStatus("2026-09-25");
+  check("2026-09-25 status === feestdag", dag.status, "feestdag");
+  check("2026-09-25 geen vakken", dag.vakken.length, 0);
+}
+
+// 2026-09-28: feestdag, normaal een Chinees-maandag, maar geen les
+{
+  const dag = dayStatus("2026-09-28");
+  check("2026-09-28 status === feestdag", dag.status, "feestdag");
+  check("2026-09-28 geen Chinese les", dag.vakken.some((v) => v.course === "CHI"), false);
+}
+
+// 2026-11-16 (maandag): ochtend/middag vrij, avond bezet (Chinees)
+{
+  const dag = dayStatus("2026-11-16");
+  check("2026-11-16 is maandag", dag.weekday, DAG.ma);
+  check("2026-11-16 ochtend vrij", dag.dagdelen.ochtend.bezet, false);
+  check("2026-11-16 middag vrij", dag.dagdelen.middag.bezet, false);
+  check("2026-11-16 avond bezet", dag.dagdelen.avond.bezet, true);
+}
+
+// 2027-01-15: vakantie
+check("2027-01-15 status === vakantie", dayStatus("2027-01-15").status, "vakantie");
 
 console.log(`\n${passed} geslaagd, ${failures} mislukt.`);
 if (failures > 0) process.exit(1);
