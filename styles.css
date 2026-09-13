@@ -14,6 +14,11 @@
   --kleur-geen-les: #fde9d9;
   --kleur-tentamen: #fddede;
   --kleur-vaste-boeking: #dde8fa;
+
+  --kleur-item-idee: #eeeeee;
+  --kleur-item-vast: #111111;
+  --kleur-waarschuwing-bg: #fff3cd;
+  --kleur-waarschuwing-rand: #cc9900;
 }
 
 * {
@@ -96,6 +101,83 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.col-eigen-items {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 6px;
+}
+
+.item-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  border: 1px solid var(--kleur-tekst);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.item-chip.item-status-idee {
+  background: var(--kleur-item-idee);
+  border-style: dashed;
+}
+
+.item-chip.item-status-vast {
+  background: var(--kleur-item-vast);
+  color: #ffffff;
+}
+
+.item-verwijder {
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  padding: 0;
+}
+
+.persist-regel {
+  padding: 4px 12px;
+  font-size: 11px;
+  background: var(--kleur-maandkop-bg);
+  border-bottom: 1px solid var(--kleur-rand);
+}
+
+.planner-form form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--kleur-rand-week);
+}
+
+.planner-form input,
+.planner-form select,
+.planner-form button {
+  font-family: inherit;
+  font-size: 12px;
+  padding: 3px 6px;
+  border: 1px solid var(--kleur-rand-week);
+  background: var(--kleur-bg);
+  color: var(--kleur-tekst);
+}
+
+.planner-form button {
+  cursor: pointer;
+  background: var(--kleur-tekst);
+  color: #ffffff;
+}
+
+.kosten-waarschuwing {
+  flex-basis: 100%;
+  padding: 4px 6px;
+  background: var(--kleur-waarschuwing-bg);
+  border: 1px solid var(--kleur-waarschuwing-rand);
+  font-size: 12px;
 }
 
 @media (max-width: 480px) {

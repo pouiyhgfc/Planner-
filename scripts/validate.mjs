@@ -7,6 +7,8 @@ import { trips } from "../src/data/trips.js";
 import { chinaVisaFreeDeadline, flexWeekAnnouncementDeadline, academicDeadlines } from "../src/data/deadlines.js";
 import { dayStatus, genereerKalenderDagen } from "../src/lib/dayStatus.js";
 import { isFree, freeBlocks, blocksWithCost, costOfRange } from "../src/lib/blocks.js";
+import { leegState, migrate, valideerItem, CURRENT_SCHEMA_VERSION } from "../src/state/schema.js";
+import { voegItemToe, verwijderItem } from "../src/state/store.js";
 
 let failures = 0;
 let passed = 0;
@@ -345,6 +347,76 @@ check("blocksWithCost(0): nergens een gemist lesmoment", blocksWithCost(0).every
   check("Japan: 1x AgTech", kosten.AGTECH, 1);
   check("Japan: 1x RTE", kosten.RTE, 1);
   check("Japan: 1x PSY", kosten.PSY, 1);
+}
+
+// =====================================================================
+// Fase 4 — plannen en opslaan
+// =====================================================================
+
+// leegState()
+check("leegState() heeft de actuele schemaVersion", leegState().schemaVersion, CURRENT_SCHEMA_VERSION);
+check("leegState() heeft geen items", leegState().items.length, 0);
+
+// migrate(): schemaVersion 0 -> 1 mag niets weggooien
+{
+  const v0 = {
+    schemaVersion: 0,
+    items: [
+      { id: "a1", naam: "Bezoek familie", datum: "2026-10-05", notitie: "treinreis" },
+      { id: "a2", naam: "Weekendje weg", datum: "2026-11-14" },
+    ],
+  };
+  const gemigreerd = migrate(v0);
+  check("migrate: schemaVersion wordt 1", gemigreerd.schemaVersion, 1);
+  check("migrate: aantal items blijft gelijk", gemigreerd.items.length, 2);
+  check("migrate: naam blijft behouden", gemigreerd.items[0].naam, "Bezoek familie");
+  check("migrate: datum wordt start én end", gemigreerd.items[0].start === "2026-10-05" && gemigreerd.items[0].end === "2026-10-05", true);
+  check("migrate: notitie blijft behouden", gemigreerd.items[0].notitie, "treinreis");
+  check("migrate: ontbrekende notitie wordt lege string, niet weggelaten", gemigreerd.items[1].notitie, "");
+  check("migrate: ontbrekende status krijgt default idee", gemigreerd.items[1].status, "idee");
+  check("migrate op actuele versie is een no-op", migrate(leegState()).schemaVersion, CURRENT_SCHEMA_VERSION);
+}
+
+// valideerItem(): geldig item is oké, ongeldig item gooit een fout
+{
+  const geldig = { id: "x", naam: "Test", start: "2026-10-01", end: "2026-10-02", status: "idee", notitie: "" };
+  let wierpGeenFout = true;
+  try {
+    valideerItem(geldig);
+  } catch {
+    wierpGeenFout = false;
+  }
+  check("valideerItem: geldig item werpt geen fout", wierpGeenFout, true);
+
+  const ongeldigeStatus = { ...geldig, status: "vast-en-zeker" };
+  let wierpFout = false;
+  try {
+    valideerItem(ongeldigeStatus);
+  } catch {
+    wierpFout = true;
+  }
+  check("valideerItem: ongeldige status werpt een fout", wierpFout, true);
+
+  const omgekeerdBereik = { ...geldig, start: "2026-10-05", end: "2026-10-01" };
+  let wierpFout2 = false;
+  try {
+    valideerItem(omgekeerdBereik);
+  } catch {
+    wierpFout2 = true;
+  }
+  check("valideerItem: start na end werpt een fout", wierpFout2, true);
+}
+
+// voegItemToe / verwijderItem: pure state-transformaties
+{
+  let state = leegState();
+  state = voegItemToe(state, { naam: "Strand", start: "2026-10-10", end: "2026-10-12", status: "idee", notitie: "" });
+  check("voegItemToe: item toegevoegd", state.items.length, 1);
+  check("voegItemToe: item heeft een id", typeof state.items[0].id === "string" && state.items[0].id.length > 0, true);
+
+  const id = state.items[0].id;
+  state = verwijderItem(state, id);
+  check("verwijderItem: item weer weg", state.items.length, 0);
 }
 
 console.log(`\n${passed} geslaagd, ${failures} mislukt.`);

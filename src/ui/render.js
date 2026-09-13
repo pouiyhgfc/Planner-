@@ -24,8 +24,10 @@ const DAGDEEL_NAMEN = ["ochtend", "middag", "avond"];
 
 /**
  * @param {HTMLElement} root
+ * @param {object[]} items eigen geplande items (schema.js-vorm)
+ * @param {(id: string) => void} onVerwijderItem
  */
-export function renderCalendar(root) {
+export function renderCalendar(root, items, onVerwijderItem) {
   const dagen = genereerKalenderDagen();
   root.textContent = "";
   root.appendChild(renderKop(dagen.length));
@@ -40,7 +42,8 @@ export function renderCalendar(root) {
       lijst.appendChild(renderMaandkop(y, m));
       vorigeMaand = m;
     }
-    lijst.appendChild(renderDagRij(dag));
+    const itemsOpDag = items.filter((item) => dag.date >= item.start && dag.date <= item.end);
+    lijst.appendChild(renderDagRij(dag, itemsOpDag, onVerwijderItem));
   }
 
   root.appendChild(lijst);
@@ -69,8 +72,10 @@ function renderMaandkop(y, m) {
 
 /**
  * @param {ReturnType<typeof import("../lib/dayStatus.js").dayStatus>} dag
+ * @param {object[]} itemsOpDag
+ * @param {(id: string) => void} onVerwijderItem
  */
-function renderDagRij(dag) {
+function renderDagRij(dag, itemsOpDag, onVerwijderItem) {
   const rij = document.createElement("div");
   rij.className = `dag-rij status-${dag.status}`;
   rij.dataset.date = dag.date;
@@ -101,6 +106,28 @@ function renderDagRij(dag) {
   for (const f of dag.feestdagen) stukken.push(f.label);
   details.textContent = stukken.join(" · ");
   rij.appendChild(details);
+
+  if (itemsOpDag.length > 0) {
+    const eigenItems = document.createElement("span");
+    eigenItems.className = "col-eigen-items";
+    for (const item of itemsOpDag) {
+      const chip = document.createElement("span");
+      chip.className = `item-chip item-status-${item.status}`;
+      chip.textContent = `${item.naam} (${item.status})`;
+      if (item.notitie) chip.title = item.notitie;
+
+      const verwijder = document.createElement("button");
+      verwijder.type = "button";
+      verwijder.className = "item-verwijder";
+      verwijder.textContent = "×";
+      verwijder.setAttribute("aria-label", `Verwijder "${item.naam}"`);
+      verwijder.addEventListener("click", () => onVerwijderItem(item.id));
+      chip.appendChild(verwijder);
+
+      eigenItems.appendChild(chip);
+    }
+    rij.appendChild(eigenItems);
+  }
 
   return rij;
 }
