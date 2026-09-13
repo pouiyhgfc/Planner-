@@ -400,7 +400,7 @@ op te bouwen.
 | ISO-weeknummer | Het klassieke `Date`-object is hiervoor onbetrouwbaar | Eigen `isoWeek()` implementeren + testen |
 | Vercel statisch | `index.html` in de root zonder build-stap werkt; `vercel.json` alleen nodig voor rewrites/headers | Geen `vercel.json` tenzij nodig |
 | Vercel Hobby-limieten | 100 GB data transfer; max 100 deploys per dag; 50 custom domains per project | Geen beperking voor dit project |
-| Manifest-velden en iconformaten Android | **niet gevonden** | ONBEKEND — fase 7 begint met dit opzoeken |
+| Manifest-velden en iconformaten Android | Gevonden in fase 7 (web.dev/learn/pwa/web-app-manifest, developer.chrome.com/docs/lighthouse/pwa/installable-manifest): verplicht `name`, `short_name`, `start_url`, `display` (standalone/fullscreen/minimal-ui), `background_color`, `theme_color`, iconen 192×192 en 512×512 PNG; maskable icoon (`purpose: "any maskable"`) heeft de hoofdinhoud binnen een cirkel met straal 40% van de iconbreedte, gecentreerd | ZEKER, met bron — verwerkt in `manifest.json` |
 | Offline zonder service worker | Werkt niet offline zonder SW; installeerbaarheid vereist technisch niet altijd een SW | Fase 7: minimale SW |
 
 ---

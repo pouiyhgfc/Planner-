@@ -11,6 +11,11 @@ import { leegState, migrate, valideerItem, CURRENT_SCHEMA_VERSION } from "../src
 import { voegItemToe, verwijderItem, huidigeYMD, bereidExportVoor, bereidSamenvoegingVoor, pasConflictKeuzesToe } from "../src/state/store.js";
 import { chinaAftelling, flexWeekStatus, cnyDrukte, resterendeBlokken, absentieTotaal } from "../src/lib/overzicht.js";
 import { seizoensdataLabel } from "../src/data/season.js";
+import { readFileSync, existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+
+const PROJECT_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 let failures = 0;
 let passed = 0;
@@ -605,6 +610,56 @@ const GESIMULEERD_VANDAAG = "2026-11-01";
 // Seizoensdata: elke maand zonder data toont de vaste tekst, nooit een schatting
 for (const m of [9, 10, 11, 12, 1, 2]) {
   check(`seizoensdataLabel(${m}) === "seizoensdata ontbreekt"`, seizoensdataLabel(m), "seizoensdata ontbreekt");
+}
+
+// =====================================================================
+// Fase 7 — PWA en deploy
+// =====================================================================
+
+// manifest.json: verplichte velden voor installeerbaarheid op Chrome Android
+// (bron: zie CLAUDE-sessie fase 7-rapport — web.dev/learn/pwa/web-app-manifest,
+// developer.chrome.com/docs/lighthouse/pwa/installable-manifest)
+{
+  const manifest = JSON.parse(readFileSync(join(PROJECT_ROOT, "manifest.json"), "utf8"));
+  check("manifest: name aanwezig", typeof manifest.name === "string" && manifest.name.length > 0, true);
+  check("manifest: short_name aanwezig", typeof manifest.short_name === "string" && manifest.short_name.length > 0, true);
+  check("manifest: start_url aanwezig", typeof manifest.start_url === "string" && manifest.start_url.length > 0, true);
+  check("manifest: display is standalone/fullscreen/minimal-ui", ["standalone", "fullscreen", "minimal-ui"].includes(manifest.display), true);
+  check("manifest: background_color aanwezig", typeof manifest.background_color === "string", true);
+  check("manifest: theme_color aanwezig", typeof manifest.theme_color === "string", true);
+
+  const heeft192 = manifest.icons.some((i) => i.sizes === "192x192");
+  const heeft512Any = manifest.icons.some((i) => i.sizes === "512x512" && (i.purpose ?? "any") === "any");
+  const heeft512Maskable = manifest.icons.some((i) => i.sizes === "512x512" && i.purpose === "maskable");
+  check("manifest: icoon 192x192 aanwezig", heeft192, true);
+  check("manifest: icoon 512x512 (any) aanwezig", heeft512Any, true);
+  check("manifest: icoon 512x512 (maskable) aanwezig", heeft512Maskable, true);
+
+  for (const icon of manifest.icons) {
+    check(`manifest: icoonbestand bestaat op schijf (${icon.src})`, existsSync(join(PROJECT_ROOT, icon.src)), true);
+  }
+}
+
+// index.html verwijst naar het manifest en de service worker registreert zich
+{
+  const html = readFileSync(join(PROJECT_ROOT, "index.html"), "utf8");
+  check('index.html linkt manifest.json', html.includes('rel="manifest" href="manifest.json"'), true);
+  const mainJs = readFileSync(join(PROJECT_ROOT, "src/ui/main.js"), "utf8");
+  check("main.js registreert de service worker", mainJs.includes("serviceWorker.register"), true);
+}
+
+// sw.js: elk bestand in de app-shell-lijst moet echt bestaan (voorkomt een
+// cache.addAll() die faalt op een ontbrekend bestand, wat installatie breekt)
+{
+  const swBron = readFileSync(join(PROJECT_ROOT, "sw.js"), "utf8");
+  const match = swBron.match(/const APP_SHELL = \[([\s\S]*?)\];/);
+  check("sw.js: APP_SHELL-lijst gevonden", Boolean(match), true);
+  const bestanden = [...match[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+  check("sw.js: APP_SHELL is niet leeg", bestanden.length > 0, true);
+  for (const pad of bestanden) {
+    if (pad === "./") continue; // navigatie-alias voor index.html, geen los bestand
+    check(`sw.js: app-shell-bestand bestaat (${pad})`, existsSync(join(PROJECT_ROOT, pad.replace(/^\.\//, ""))), true);
+  }
 }
 
 console.log(`\n${passed} geslaagd, ${failures} mislukt.`);

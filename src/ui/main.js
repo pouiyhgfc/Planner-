@@ -81,3 +81,7 @@ async function pasConflictenToe(keuzes) {
 
 vraagPersistentOpslagAan().then((toegekend) => renderPersistRegel(persistEl, toegekend));
 opnieuwRenderen();
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./sw.js");
+}
