@@ -146,6 +146,45 @@ body {
   border-bottom: 1px solid var(--kleur-rand);
 }
 
+.export-regel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 12px;
+  font-size: 11px;
+  border-bottom: 1px solid var(--kleur-rand-week);
+}
+
+.export-regel .export-waarschuwing {
+  color: #a33;
+  font-weight: bold;
+}
+
+.export-regel button,
+.export-regel input[type="file"] {
+  font-family: inherit;
+  font-size: 11px;
+}
+
+.conflicten-paneel {
+  padding: 8px 12px;
+  background: var(--kleur-waarschuwing-bg);
+  border-bottom: 2px solid var(--kleur-waarschuwing-rand);
+  font-size: 12px;
+}
+
+.conflict-rij {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 2px 0;
+}
+
+.conflict-rij select {
+  font-family: inherit;
+  font-size: 11px;
+}
+
 .planner-form form {
   display: flex;
   flex-wrap: wrap;

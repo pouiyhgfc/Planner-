@@ -4,6 +4,10 @@
  */
 
 import { costOfRange } from "../lib/blocks.js";
+import { diffDays } from "../lib/date.js";
+import { huidigeYMD } from "../state/store.js";
+
+const EXPORT_WAARSCHUWING_DAGEN = 14;
 
 /**
  * @param {HTMLElement} root
@@ -94,6 +98,97 @@ export function renderPersistRegel(root, toegekend) {
   } else if (toegekend) {
     root.textContent = "Opslag: persistente opslag toegekend.";
   } else {
-    root.textContent = "Opslag: persistente opslag geweigerd door de browser — export je data regelmatig (fase 5).";
+    root.textContent = "Opslag: persistente opslag geweigerd door de browser — exporteer regelmatig.";
   }
+}
+
+/**
+ * @param {HTMLElement} root
+ * @param {string|null} laatsteExport
+ * @param {() => void} onExporteren
+ */
+export function renderExportRegel(root, laatsteExport, onExporteren) {
+  root.className = "export-regel";
+  root.textContent = "";
+
+  const tekst = document.createElement("span");
+  if (!laatsteExport) {
+    tekst.textContent = "Nog nooit geëxporteerd — dit is de enige echte back-up.";
+    tekst.classList.add("export-waarschuwing");
+  } else {
+    const dagenGeleden = diffDays(laatsteExport, huidigeYMD());
+    tekst.textContent = `Laatste export: ${laatsteExport} (${dagenGeleden} dagen geleden)`;
+    if (dagenGeleden > EXPORT_WAARSCHUWING_DAGEN) tekst.classList.add("export-waarschuwing");
+  }
+  root.appendChild(tekst);
+
+  const knop = document.createElement("button");
+  knop.type = "button";
+  knop.textContent = "Exporteer";
+  knop.addEventListener("click", onExporteren);
+  root.appendChild(knop);
+
+  const importInput = document.createElement("input");
+  importInput.type = "file";
+  importInput.accept = "application/json";
+  importInput.addEventListener("change", () => {
+    if (importInput.files.length > 0) root.dispatchEvent(new CustomEvent("import-bestand", { detail: importInput.files[0] }));
+    importInput.value = "";
+  });
+  root.appendChild(importInput);
+}
+
+/**
+ * @param {HTMLElement} root
+ * @param {{huidig: object, geimporteerd: object}[]} conflicten
+ * @param {(keuzes: Record<string, "huidig"|"geimporteerd">) => void} onOplossen
+ */
+export function renderConflictenPaneel(root, conflicten, onOplossen) {
+  root.className = "conflicten-paneel";
+  root.textContent = "";
+
+  if (conflicten.length === 0) {
+    root.hidden = true;
+    return;
+  }
+  root.hidden = false;
+
+  const kop = document.createElement("div");
+  kop.textContent = `${conflicten.length} conflict(en) bij import — kies per item welke versie moet blijven:`;
+  root.appendChild(kop);
+
+  const keuzes = {};
+  for (const conflict of conflicten) {
+    keuzes[conflict.huidig.id] = (conflict.huidig.bijgewerkt ?? "") >= (conflict.geimporteerd.bijgewerkt ?? "") ? "huidig" : "geimporteerd";
+
+    const rij = document.createElement("div");
+    rij.className = "conflict-rij";
+
+    const naam = document.createElement("span");
+    naam.textContent = conflict.huidig.naam;
+    rij.appendChild(naam);
+
+    const select = document.createElement("select");
+    const optieHuidig = document.createElement("option");
+    optieHuidig.value = "huidig";
+    optieHuidig.textContent = `huidig (${conflict.huidig.bijgewerkt ?? "onbekend"}, ${conflict.huidig.start}→${conflict.huidig.end}, ${conflict.huidig.status})`;
+    const optieNieuw = document.createElement("option");
+    optieNieuw.value = "geimporteerd";
+    optieNieuw.textContent = `geïmporteerd (${conflict.geimporteerd.bijgewerkt ?? "onbekend"}, ${conflict.geimporteerd.start}→${conflict.geimporteerd.end}, ${conflict.geimporteerd.status})`;
+    select.appendChild(optieHuidig);
+    select.appendChild(optieNieuw);
+    select.value = keuzes[conflict.huidig.id];
+    select.addEventListener("change", () => {
+      keuzes[conflict.huidig.id] = select.value;
+    });
+    rij.appendChild(select);
+
+    root.appendChild(rij);
+  }
+
+  const knop = document.createElement("button");
+  knop.type = "button";
+  knop.textContent = "Conflicten toepassen";
+  knop.addEventListener("click", () => onOplossen(keuzes));
+  root.appendChild(knop);
 }

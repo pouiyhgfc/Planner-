@@ -8,7 +8,7 @@ import { chinaVisaFreeDeadline, flexWeekAnnouncementDeadline, academicDeadlines 
 import { dayStatus, genereerKalenderDagen } from "../src/lib/dayStatus.js";
 import { isFree, freeBlocks, blocksWithCost, costOfRange } from "../src/lib/blocks.js";
 import { leegState, migrate, valideerItem, CURRENT_SCHEMA_VERSION } from "../src/state/schema.js";
-import { voegItemToe, verwijderItem } from "../src/state/store.js";
+import { voegItemToe, verwijderItem, huidigeYMD, bereidExportVoor, bereidSamenvoegingVoor, pasConflictKeuzesToe } from "../src/state/store.js";
 
 let failures = 0;
 let passed = 0;
@@ -367,7 +367,7 @@ check("leegState() heeft geen items", leegState().items.length, 0);
     ],
   };
   const gemigreerd = migrate(v0);
-  check("migrate: schemaVersion wordt 1", gemigreerd.schemaVersion, 1);
+  check("migrate: schemaVersion wordt de actuele versie", gemigreerd.schemaVersion, CURRENT_SCHEMA_VERSION);
   check("migrate: aantal items blijft gelijk", gemigreerd.items.length, 2);
   check("migrate: naam blijft behouden", gemigreerd.items[0].naam, "Bezoek familie");
   check("migrate: datum wordt start én end", gemigreerd.items[0].start === "2026-10-05" && gemigreerd.items[0].end === "2026-10-05", true);
@@ -417,6 +417,92 @@ check("leegState() heeft geen items", leegState().items.length, 0);
   const id = state.items[0].id;
   state = verwijderItem(state, id);
   check("verwijderItem: item weer weg", state.items.length, 0);
+}
+
+// =====================================================================
+// Fase 5 — export en import
+// =====================================================================
+
+// huidigeYMD(): geldig YYYY-MM-DD formaat
+{
+  const vandaag = huidigeYMD();
+  check("huidigeYMD() heeft geldig formaat", /^\d{4}-\d{2}-\d{2}$/.test(vandaag), true);
+  let parseerdeZonderFout = true;
+  try {
+    parseYMD(vandaag);
+  } catch {
+    parseerdeZonderFout = false;
+  }
+  check("huidigeYMD() is een geldige datum", parseerdeZonderFout, true);
+}
+
+// migrate(): schemaVersion 1 -> 2 mag niets weggooien
+{
+  const v1 = {
+    schemaVersion: 1,
+    items: [{ id: "b1", naam: "Oud item", start: "2026-10-05", end: "2026-10-06", status: "vast", notitie: "" }],
+  };
+  const gemigreerd = migrate(v1);
+  check("migrate v1->v2: schemaVersion wordt 2", gemigreerd.schemaVersion, 2);
+  check("migrate v1->v2: laatsteExport default null", gemigreerd.laatsteExport, null);
+  check("migrate v1->v2: item blijft behouden", gemigreerd.items.length, 1);
+  check("migrate v1->v2: bijgewerkt default null", gemigreerd.items[0].bijgewerkt, null);
+  check("migrate v1->v2: naam blijft behouden", gemigreerd.items[0].naam, "Oud item");
+
+  // volledige keten v0 -> v2
+  const v0 = { schemaVersion: 0, items: [{ id: "c1", naam: "Zeer oud item", datum: "2026-11-01" }] };
+  const vanV0 = migrate(v0);
+  check("migrate v0->v2: schemaVersion wordt 2", vanV0.schemaVersion, 2);
+  check("migrate v0->v2: start/end afgeleid van datum", vanV0.items[0].start === "2026-11-01" && vanV0.items[0].end === "2026-11-01", true);
+}
+
+// bereidExportVoor(): bestandsnaam met datum, geldige JSON-inhoud
+{
+  const state = voegItemToe(leegState(), { naam: "Strand", start: "2026-10-10", end: "2026-10-12", status: "idee", notitie: "" });
+  const { state: nieuweState, bestandsnaam, inhoud } = bereidExportVoor(state);
+  check("export: bestandsnaam bevat vandaag", bestandsnaam, `planner-export-${huidigeYMD()}.json`);
+  check("export: state krijgt laatsteExport", nieuweState.laatsteExport, huidigeYMD());
+  check("export: inhoud is geldige JSON met dezelfde items", JSON.parse(inhoud).items.length, 1);
+}
+
+// Klaar-criterium fase 5: export -> state wissen -> import geeft exact de oude state terug
+{
+  const origineel = voegItemToe(leegState(), { naam: "Strand", start: "2026-10-10", end: "2026-10-12", status: "idee", notitie: "" });
+  const { inhoud } = bereidExportVoor(origineel);
+  const geimporteerd = JSON.parse(inhoud);
+
+  const gewisteState = leegState(); // "state wissen"
+  const { items, conflicten } = bereidSamenvoegingVoor(gewisteState, geimporteerd);
+  check("import in gewiste state: geen conflicten", conflicten.length, 0);
+  check("import in gewiste state: exact hetzelfde item terug", JSON.stringify(items), JSON.stringify(origineel.items));
+}
+
+// Samenvoegen: onbekend id wordt toegevoegd, identiek item genegeerd, afwijkend item -> conflict
+{
+  let huidig = leegState();
+  huidig = voegItemToe(huidig, { naam: "Blijft", start: "2026-10-01", end: "2026-10-01", status: "idee", notitie: "" });
+  huidig = voegItemToe(huidig, { naam: "Botst", start: "2026-10-05", end: "2026-10-05", status: "idee", notitie: "" });
+  const botsendId = huidig.items[1].id;
+
+  const geimporteerd = {
+    schemaVersion: 2,
+    laatsteExport: "2026-10-02",
+    items: [
+      { id: "nieuw-1", naam: "Nieuw uit import", start: "2026-10-08", end: "2026-10-08", status: "idee", notitie: "", bijgewerkt: "2026-10-02" },
+      { ...huidig.items[0] }, // identiek -> geen conflict, geen dubbele
+      { id: botsendId, naam: "Botst (gewijzigd)", start: "2026-10-05", end: "2026-10-06", status: "vast", notitie: "", bijgewerkt: "2026-10-03" },
+    ],
+  };
+
+  const { items, conflicten } = bereidSamenvoegingVoor(huidig, geimporteerd);
+  check("samenvoegen: nieuw item toegevoegd", items.some((i) => i.id === "nieuw-1"), true);
+  check("samenvoegen: identiek item niet verdubbeld", items.filter((i) => i.id === huidig.items[0].id).length, 1);
+  check("samenvoegen: afwijkend item levert precies 1 conflict op", conflicten.length, 1);
+  check("samenvoegen: totaal blijft correct (geen items verloren)", items.length, 3);
+
+  const opgelost = pasConflictKeuzesToe(items, conflicten, { [botsendId]: "geimporteerd" });
+  const gekozenItem = opgelost.find((i) => i.id === botsendId);
+  check("conflict opgelost met 'geimporteerd': naam bijgewerkt", gekozenItem.naam, "Botst (gewijzigd)");
 }
 
 console.log(`\n${passed} geslaagd, ${failures} mislukt.`);

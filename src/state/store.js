@@ -3,7 +3,7 @@
  * localStorage — zie CLAUDE.md §4.
  */
 
-import { leegState, migrate, valideerItem } from "./schema.js";
+import { leegState, migrate, valideerItem, CURRENT_SCHEMA_VERSION } from "./schema.js";
 
 const DB_NAAM = "planner";
 const DB_VERSIE = 1;
@@ -55,12 +55,23 @@ export async function bewaarState(state) {
 }
 
 /**
+ * Huidige datum als "YYYY-MM-DD" in de tijdzone van de gebruiker
+ * (Asia/Taipei, zie DATA.md §0). Enige plek in de app die de systeemklok
+ * leest — het resultaat gaat direct door lib/date.js voor alle verdere
+ * berekeningen, nooit terug via het Date-object.
+ * @returns {string}
+ */
+export function huidigeYMD() {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Taipei" }).format(new Date());
+}
+
+/**
  * @param {{schemaVersion: number, items: object[]}} state
  * @param {{naam: string, start: string, end: string, status: string, notitie: string}} veld
  * @returns {{schemaVersion: number, items: object[]}}
  */
 export function voegItemToe(state, veld) {
-  const item = { id: crypto.randomUUID(), ...veld };
+  const item = { id: crypto.randomUUID(), bijgewerkt: huidigeYMD(), ...veld };
   valideerItem(item);
   return { ...state, items: [...state.items, item] };
 }
@@ -87,4 +98,65 @@ export async function vraagPersistentOpslagAan() {
   const toegekend = await navigator.storage.persist();
   console.log(`navigator.storage.persist() → ${toegekend}`);
   return toegekend;
+}
+
+/**
+ * @param {{schemaVersion: number, items: object[]}} state
+ * @returns {{state: {schemaVersion: number, items: object[], laatsteExport: string}, bestandsnaam: string, inhoud: string}}
+ */
+export function bereidExportVoor(state) {
+  const datum = huidigeYMD();
+  const nieuweState = { ...state, laatsteExport: datum };
+  return {
+    state: nieuweState,
+    bestandsnaam: `planner-export-${datum}.json`,
+    inhoud: JSON.stringify(nieuweState, null, 2),
+  };
+}
+
+/**
+ * Voegt een geïmporteerde state samen met de huidige — overschrijft nooit
+ * blind. Items met een onbekend id worden toegevoegd; identieke items
+ * worden genegeerd; verschillende items met hetzelfde id komen als
+ * conflict terug voor een keuze door de gebruiker.
+ * @param {{schemaVersion: number, items: object[]}} huidig
+ * @param {object} geimporteerdRuw
+ * @returns {{items: object[], conflicten: {huidig: object, geimporteerd: object}[]}}
+ */
+export function bereidSamenvoegingVoor(huidig, geimporteerdRuw) {
+  if (geimporteerdRuw.schemaVersion === undefined) throw new Error("geïmporteerd bestand mist schemaVersion");
+  const geimporteerd = migrate(geimporteerdRuw);
+
+  const huidigeById = new Map(huidig.items.map((item) => [item.id, item]));
+  const items = [...huidig.items];
+  const conflicten = [];
+
+  for (const item of geimporteerd.items) {
+    valideerItem(item);
+    const bestaand = huidigeById.get(item.id);
+    if (!bestaand) {
+      items.push(item);
+    } else if (JSON.stringify(bestaand) !== JSON.stringify(item)) {
+      conflicten.push({ huidig: bestaand, geimporteerd: item });
+    }
+  }
+
+  return { items, conflicten };
+}
+
+/**
+ * Past de keuzes uit een conflictenlijst toe op de samengevoegde items.
+ * @param {object[]} items
+ * @param {{huidig: object, geimporteerd: object}[]} conflicten
+ * @param {Record<string, "huidig"|"geimporteerd">} keuzes sleutel = conflict-item id
+ * @returns {object[]}
+ */
+export function pasConflictKeuzesToe(items, conflicten, keuzes) {
+  let resultaat = [...items];
+  for (const conflict of conflicten) {
+    const keuze = keuzes[conflict.huidig.id] ?? "huidig";
+    const gekozen = keuze === "geimporteerd" ? conflict.geimporteerd : conflict.huidig;
+    resultaat = resultaat.map((item) => (item.id === gekozen.id ? gekozen : item));
+  }
+  return resultaat;
 }

@@ -1,35 +1,39 @@
 /**
  * State-vorm en migratie. Eén state-object, één schemaVersion, een
  * migratiefunctie die nooit stilzwijgend data weggooit.
+ *
+ * v0: items met een los veld "datum" (geen bereik), geen status.
+ * v1: items met start/end-bereik, status, notitie (fase 4).
+ * v2: state kreeg laatsteExport; items kregen bijgewerkt (interne metadata,
+ *     geen invoerveld) voor de merge-conflictresolutie in fase 5.
  */
 
 import { parseYMD } from "../lib/date.js";
 
-export const CURRENT_SCHEMA_VERSION = 1;
+export const CURRENT_SCHEMA_VERSION = 2;
 
 const STATUS_WAARDEN = ["idee", "vast"];
 
 /**
- * @returns {{schemaVersion: number, items: object[]}}
+ * @returns {{schemaVersion: number, items: object[], laatsteExport: string|null}}
  */
 export function leegState() {
-  return { schemaVersion: CURRENT_SCHEMA_VERSION, items: [] };
+  return { schemaVersion: CURRENT_SCHEMA_VERSION, items: [], laatsteExport: null };
 }
 
 /**
  * Migreert een opgeslagen state naar CURRENT_SCHEMA_VERSION. Gooit nooit
  * stilzwijgend velden weg — onbekende schemaVersion is een harde fout.
- * @param {{schemaVersion: number, items: object[]}} state
- * @returns {{schemaVersion: number, items: object[]}}
+ * @param {{schemaVersion: number}} state
+ * @returns {{schemaVersion: number, items: object[], laatsteExport: string|null}}
  */
 export function migrate(state) {
-  if (state.schemaVersion === CURRENT_SCHEMA_VERSION) return state;
+  let s = state;
 
-  if (state.schemaVersion === 0) {
-    // v0 kende alleen een los veld "datum" (geen bereik) en geen status.
-    return {
+  if (s.schemaVersion === 0) {
+    s = {
       schemaVersion: 1,
-      items: (state.items ?? []).map((item) => ({
+      items: (s.items ?? []).map((item) => ({
         id: item.id,
         naam: item.naam,
         start: item.datum,
@@ -40,6 +44,15 @@ export function migrate(state) {
     };
   }
 
+  if (s.schemaVersion === 1) {
+    s = {
+      schemaVersion: 2,
+      laatsteExport: s.laatsteExport ?? null,
+      items: (s.items ?? []).map((item) => ({ ...item, bijgewerkt: item.bijgewerkt ?? null })),
+    };
+  }
+
+  if (s.schemaVersion === CURRENT_SCHEMA_VERSION) return s;
   throw new Error(`onbekende schemaVersion: ${state.schemaVersion}`);
 }
 
