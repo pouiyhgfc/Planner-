@@ -15,10 +15,10 @@
 import { rangeDays, diffDays } from "./date.js";
 import { appPeriod, semesterMarkers } from "../data/semester.js";
 import { courses } from "../data/courses.js";
-import { psyDates, agtechDates, rteDates, chineseLessons, rteActionItems } from "../data/coursedates.js";
+import { psyDates, agtechDates, rteDates, pythonDates, chineseLessons, rteActionItems } from "../data/coursedates.js";
 import { trips } from "../data/trips.js";
 
-const alleLesItems = [...psyDates, ...agtechDates, ...rteDates, ...chineseLessons];
+const alleLesItems = [...psyDates, ...agtechDates, ...rteDates, ...pythonDates, ...chineseLessons];
 const AVOND_BEGIN = "18:25";
 
 function courseVoor(id) {

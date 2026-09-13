@@ -7,11 +7,11 @@ import { rangeDays, dayOfWeek, isoWeek } from "./date.js";
 import { appPeriod, semesterMarkers } from "../data/semester.js";
 import { holidays } from "../data/holidays.js";
 import { courses } from "../data/courses.js";
-import { psyDates, agtechDates, rteDates, chineseLessons, chineseMogelijkeTentamens, rteActionItems } from "../data/coursedates.js";
+import { psyDates, agtechDates, rteDates, pythonDates, chineseLessons, chineseMogelijkeTentamens, rteActionItems } from "../data/coursedates.js";
 import { trips } from "../data/trips.js";
 import { chinaVisaFreeDeadline, flexWeekAnnouncementDeadline, academicDeadlines } from "../data/deadlines.js";
 
-const alleVakItems = [...psyDates, ...agtechDates, ...rteDates, ...chineseLessons];
+const alleVakItems = [...psyDates, ...agtechDates, ...rteDates, ...pythonDates, ...chineseLessons];
 const alleDeadlineItems = [...rteActionItems, ...academicDeadlines, chinaVisaFreeDeadline, flexWeekAnnouncementDeadline];
 
 const DAGDEEL_NAMEN = ["ochtend", "middag", "avond"];

@@ -25,13 +25,14 @@ export const courses = [
   },
   {
     id: "AGTECH",
-    code: "946 U0060 (ser. 52089)",
+    code: null,
     name: "Global AgTech Foresight",
     weekdays: [3], // donderdag
     start: "09:10",
     end: "12:10",
     room: null,
-    onbekendeVelden: ["room"],
+    onbekendeVelden: ["code", "room"],
+    opmerking: "De eerder aangenomen code 946 U0060 (ser. 52089) bleek bij Computer Programming in Python te horen, niet bij AgTech — FASE-8-1.md 0B, correctie 1. AgTech's eigen code is ONBEKEND.",
     bron: "presentatie 20260910-_Global_AgTech_Foresight.pdf",
     zekerheid: "ZEKER",
     beoordeling: {
@@ -92,6 +93,44 @@ export const courses = [
         bron: "Course Description-blok PTCSL7908 (zelfde blok dat eerder de onjuiste dag/zaal noemde)",
         zekerheid: "TE VERIFIËREN",
       },
+    },
+  },
+  {
+    id: "PY",
+    code: "Data5006, curriculum identity 946EU0060, klas 03, ser. 52089",
+    name: "Computer Programming in Python",
+    weekdays: [2], // woensdag
+    start: "13:20",
+    end: "16:20",
+    room: null,
+    docent: "LIN, TSE-YU",
+    onbekendeVelden: ["room"],
+    inschrijving: "onbevestigd",
+    opmerking: "Inschrijving liep via een Google Form, deadline 2026-09-13 09:13 (Taipei) inmiddels verstreken; permissienummers worden verloot, uitkomst onbekend. Telt desondanks wel mee in de bezetting van woensdagmiddag totdat de status wijzigt (DATA.md §3.5). 3 studiepunten, half jaar, max. 80 studenten.",
+    bron: "NTU-cursuspagina (FASE-8-1.md 0B, correctie 2)",
+    zekerheid: "ZEKER",
+    beoordeling: {
+      tekst: "Aanwezigheid 10%, opdrachten 65% (ca. 10-12 stuks, programmeeropdrachten en online quizzes), groepsproject 25%.",
+      bron: "NTU-cursuspagina",
+      zekerheid: "ZEKER",
+    },
+    absentieregels: {
+      tekst: "Minstens drie presentiecontroles, mogelijk meer dan één per week. Verlof uitsluitend vóór de les aanvragen via MyNTU; achteraf niet geaccepteerd. Bewijsstukken vereist behalve bij mentale gezondheid en menstruatieverlof. Weken 12 t/m 16 gelden als tentamenperiode; dan alleen bepaalde verlofsoorten. Geen losse tentamendatum, weken 14-16 zijn projectpresentaties.",
+      bron: "NTU-cursuspagina",
+      zekerheid: "ZEKER",
+    },
+    groepsproject: {
+      tekst: "Verplicht in groepsverband, individueel werk niet geaccepteerd. Geen groep binnen de termijn vormen betekent een F voor het hele vak. Groepsgrootte en vormingstermijn worden in de les aangekondigd.",
+      groepsgrootte: null,
+      vormingstermijn: null,
+      onbekendeVelden: ["groepsgrootte", "vormingstermijn"],
+      bron: "NTU-cursuspagina",
+      zekerheid: "ZEKER",
+    },
+    cursusrestrictieOpenPunt: {
+      tekst: "Voor bachelorstudenten met een hoofd-, tweede of bijvak in een afdeling die programmeervakken aanbiedt geldt een strengere cijfergrens (syllabus-voorbeeld: 95+ i.p.v. 90+ voor een A+). Of dit op civiele techniek van toepassing is, is niet vastgesteld.",
+      bron: "NTU-cursuspagina",
+      zekerheid: "TE VERIFIËREN",
     },
   },
 ];

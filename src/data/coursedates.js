@@ -1,8 +1,8 @@
 /**
- * Losse datums en deadlines per vak, uit DATA.md §3.1, §3.2, §3.3, §3.4.
- * psyDates / agtechDates / rteDates bevatten precies de lesdagen (incl.
- * tentamens) van dat vak — dit zijn de tellingen die validate.mjs
- * controleert (16 elk).
+ * Losse datums en deadlines per vak, uit DATA.md §3.1, §3.2, §3.3, §3.4, §3.5.
+ * psyDates / agtechDates / rteDates / pythonDates bevatten precies de
+ * lesdagen (incl. tentamens) van dat vak — dit zijn de tellingen die
+ * validate.mjs controleert (16 elk).
  */
 
 import { rangeDays, dayOfWeek } from "../lib/date.js";
@@ -11,6 +11,7 @@ import { holidayDates } from "./holidays.js";
 const BRON_PSY = "syllabus PSY1007-09";
 const BRON_AGTECH = "presentatie 20260910-_Global_AgTech_Foresight.pdf";
 const BRON_RTE = "2026-NTU_RTE_Syllabus_ver_1.docx";
+const BRON_PY = "NTU-cursuspagina (FASE-8-1.md 0B, correctie 2)";
 
 export const psyDates = [
   { date: "2026-09-09", week: 1, type: "les", course: "PSY", label: "Introductie / syllabus", bron: BRON_PSY, zekerheid: "ZEKER" },
@@ -67,6 +68,31 @@ export const rteDates = [
   { date: "2026-12-10", week: 14, type: "les", course: "RTE", label: "Term Project Presentations", bron: BRON_RTE, zekerheid: "ZEKER" },
   { date: "2026-12-17", week: 15, type: "les", course: "RTE", label: "Term Project Presentations", bron: BRON_RTE, zekerheid: "ZEKER" },
   { date: "2026-12-24", week: 16, type: "tentamen", course: "RTE", label: "Comprehensive Exam (25%)", bron: BRON_RTE, zekerheid: "ZEKER" },
+];
+
+/**
+ * Elke woensdag 2026-09-09 t/m 2026-12-23. Datums zijn generatie-consistent
+ * (validate.mjs vergelijkt ze met weekdag + semestergrenzen, zonder
+ * feestdag-uitzonderingen — geen enkele feestdag valt op een woensdag), maar
+ * de onderwerpen zijn letterlijke syllabusdata en dus getypt, niet afgeleid.
+ */
+export const pythonDates = [
+  { date: "2026-09-09", week: 1, type: "les", course: "PY", label: "Course Introduction and Google Colab", bron: BRON_PY, zekerheid: "ZEKER" },
+  { date: "2026-09-16", week: 2, type: "les", course: "PY", label: "Your First Python Program", bron: BRON_PY, zekerheid: "ZEKER" },
+  { date: "2026-09-23", week: 3, type: "les", course: "PY", label: "Basic Types in Python", bron: BRON_PY, zekerheid: "ZEKER" },
+  { date: "2026-09-30", week: 4, type: "les", course: "PY", label: "More Python Types", bron: BRON_PY, zekerheid: "ZEKER" },
+  { date: "2026-10-07", week: 5, type: "les", course: "PY", label: "More Python Types", bron: BRON_PY, zekerheid: "ZEKER" },
+  { date: "2026-10-14", week: 6, type: "les", course: "PY", label: "Self-defined Functions", bron: BRON_PY, zekerheid: "ZEKER" },
+  { date: "2026-10-21", week: 7, type: "les", course: "PY", label: "Control Flow", bron: BRON_PY, zekerheid: "ZEKER" },
+  { date: "2026-10-28", week: 8, type: "les", course: "PY", label: "Text Processing", bron: BRON_PY, zekerheid: "ZEKER" },
+  { date: "2026-11-04", week: 9, type: "les", course: "PY", label: "Nested Structure", bron: BRON_PY, zekerheid: "ZEKER" },
+  { date: "2026-11-11", week: 10, type: "les", course: "PY", label: "NumPy", bron: BRON_PY, zekerheid: "ZEKER" },
+  { date: "2026-11-18", week: 11, type: "les", course: "PY", label: "Pandas", bron: BRON_PY, zekerheid: "ZEKER" },
+  { date: "2026-11-25", week: 12, type: "les", course: "PY", label: "Invited Speaker (TBD)", bron: BRON_PY, zekerheid: "ZEKER" },
+  { date: "2026-12-02", week: 13, type: "les", course: "PY", label: "Invited Speaker (TBD)", bron: BRON_PY, zekerheid: "ZEKER" },
+  { date: "2026-12-09", week: 14, type: "les", course: "PY", label: "Project Presentation", bron: BRON_PY, zekerheid: "ZEKER" },
+  { date: "2026-12-16", week: 15, type: "les", course: "PY", label: "Project Presentation", bron: BRON_PY, zekerheid: "ZEKER" },
+  { date: "2026-12-23", week: 16, type: "les", course: "PY", label: "Project Presentation", bron: BRON_PY, zekerheid: "ZEKER" },
 ];
 
 /**

@@ -25,45 +25,59 @@ Zekerheidsniveaus:
 
 ## 1. Vaste weekstructuur (lesrooster 115-1)
 
-Bron: de drie syllabi (gecontroleerd) + voor General Chinese de NTU
-Course-pagina en syllabus PTCSL7908-23 (zie CORRECTIE-CHINEES.md).
-Zekerheid: **ZEKER**, behalve waar vermeld.
+Bron: de vier syllabi/cursuspagina's (gecontroleerd). Zekerheid: **ZEKER**,
+behalve waar vermeld. Vijf vakken sinds FASE-8-1.md 0B (Computer Programming
+in Python erbij).
 
 | Vak | Code | Dag | Tijd | Zaal |
 |---|---|---|---|---|
+| General Chinese (國際生華語(一)) | PTCSL7908, klas 23, course identifier 146 U9080, ser. 34044 | maandag | 18:25–21:05 | 普502 (Pu 502) |
 | General Psychology (普通心理學) | PSY1007-09 | woensdag | 09:10–12:10 | 博雅 101 |
-| Global AgTech Foresight | 946 U0060 (ser. 52089) | donderdag | 09:10–12:10 | ONBEKEND |
+| **Computer Programming in Python** | **Data5006, curriculum identity 946EU0060, klas 03, ser. 52089** | **woensdag** | **13:20–16:20** | ONBEKEND |
+| General Chinese (國際生華語(一)) | PTCSL7908, klas 23, course identifier 146 U9080, ser. 34044 | woensdag | 18:25–21:05 | 普502 (Pu 502) |
+| Global AgTech Foresight | **ONBEKEND** (zie correctie hieronder) | donderdag | 09:10–12:10 | ONBEKEND |
 | Railroad Transportation Engineering | 521 EU8770 | donderdag | 14:20–17:20 | 新 103 |
-| General Chinese (國際生華語(一)) | PTCSL7908, klas 23, course identifier 146 U9080, ser. 34044 | maandag **en** woensdag | **18:25–21:05** | 普502 (Pu 502) |
 
 General Chinese: docent 何宣瑩 (HE, SYUAN-YING), 3 studiepunten, keuzevak,
 voertaal Chinees met Engels als hulptaal, lesmateriaal *Practical
 Audio-Visual Chinese 1* (les 1 t/m 6), alleen voor internationale studenten.
+Zie §3.5 voor de volledige gegevens van Python.
+
+**Correctie op de vakcode van AgTech (FASE-8-1.md 0B, correctie 1):** de code
+`946 U0060 (ser. 52089)` stond eerder foutief bij Global AgTech Foresight.
+Die code hoort bij Computer Programming in Python (curriculum identity
+946EU0060). AgTech's eigen vakcode is **ONBEKEND** — niet ingevuld met een
+gok. Zaalnummer AgTech: de NOL-link
+(`nol.ntu.edu.tw/.../print_table.php?course_id=946%20U0060&ser_no=52089`)
+gaf sowieso een serverfout bij ophalen, dus bleef al ONBEKEND.
 
 **De eindtijd van General Chinese was eerder fout in dit bestand** (er stond
 18:00–21:00). Overal waar dit tijdstip in berekeningen wordt gebruikt, is de
-grens nu **18:25**.
+grens **18:25**.
 
 **Afgeleid (laat de app dit berekenen, niet invoeren):**
 - Bezetting per weekdag:
   - maandag: avond 18:25–21:05 (Chinees)
   - dinsdag: vrij
-  - woensdag: 09:10–12:10 (PSY) + 18:25–21:05 (Chinees)
+  - **woensdag: 09:10–12:10 (PSY) + 13:20–16:20 (Python) + 18:25–21:05
+    (Chinees) — alle drie de dagdelen bezet, was ochtend + avond**
   - donderdag: 09:10–12:10 (AgTech) + 14:20–17:20 (RTE)
   - vrijdag, zaterdag, zondag: vrij
 - **Enige blok zonder enige absentie: vrijdag 00:00 → maandag 18:25.**
   Dat is 3,5 kalenderdag, en met heen- en terugreis in de praktijk ± 2,5
-  bruikbare dag. Dit is het standaardvenster.
+  bruikbare dag. Dit is het standaardvenster. **Dit blok verandert niet** door
+  de komst van Python.
 - **Eén gemiste Chinees-les op maandagavond verlengt dat naar vrijdag → dinsdag
   23:59 = 5 dagen** (terug vóór woensdagochtend PSY). Dit is de goedkoopste
   ruil in het hele rooster en moet de app expliciet als aparte optie tonen.
-- Terug tot woensdag 18:25 kost daarnaast de PSY-ochtend (1 les), maar nog
-  niet de Chinese les van die woensdagavond. Pas terug ná 18:25 (t/m 23:59)
-  kost ook die tweede Chinese les.
-- Woensdagmiddag (12:10–18:25) is vrij maar te kort om mee te tellen.
-
-**Zaalnummer AgTech:** de NOL-link (`nol.ntu.edu.tw/.../print_table.php?course_id=946%20U0060&ser_no=52089`)
-gaf een serverfout bij ophalen. Veld blijft ONBEKEND tot Idries het aanlevert.
+  **Dit blok verandert ook niet.**
+- **Wat wél verandert: de prijs van een woensdag.** Terug tot woensdag 16:20
+  kost nog altijd maar 1 Chinees-les (maandag), maar nu ook zowel de
+  PSY-ochtend als de Python-middag (2 lesmomenten i.p.v. 1). Pas terug ná
+  18:25 (t/m 23:59) kost daarnaast ook de Chinese les van woensdagavond
+  (2 Chinees + 2 overige). Een woensdag kost dus drie lesmomenten in plaats
+  van twee.
+- Woensdagavond na 21:05 is vrij maar te kort om mee te tellen.
 
 ---
 
@@ -291,17 +305,83 @@ final 25%.
 - Gedragsregels: vanaf de 4e waarschuwing −1 punt per overtreding (valt
   onder het aanwezigheidscijfer).
 
-### 3.5 Afgeleide lesbelasting — controlewaarden
+### 3.5 Computer Programming in Python (woensdag 13:20–16:20)
+Bron: NTU-cursuspagina (FASE-8-1.md 0B, correctie 2, aangeleverd door Idries).
+Zekerheid **ZEKER** voor de cursusgegevens, **TE VERIFIËREN** voor de
+inschrijving (zie hieronder).
 
-**Correctie:** de eindtijd van Chinees is 18:25, niet 18:00 (zie §1) — dit
-schuift de trip-vensters hieronder op. Deze tabel vervangt de vorige versie.
+Curriculum Number Data5006, Curriculum Identity Number 946EU0060, klas 03,
+serienummer 52089. Docent LIN, TSE-YU. Zaal ONBEKEND. 3 studiepunten, half
+jaar, maximum 80 studenten.
 
-| Trip-venster | Chinees | Overige lessen |
+**Weekindeling** (data gegenereerd uit weekdag + semestergrenzen — elke
+woensdag van 2026-09-09 t/m 2026-12-23, geen enkele valt op een feestdag —
+de onderwerpen zijn letterlijk overgenomen, niet af te leiden):
+
+| Week | Datum | Onderwerp |
+|---|---|---|
+| 1 | 2026-09-09 | Course Introduction and Google Colab |
+| 2 | 2026-09-16 | Your First Python Program |
+| 3 | 2026-09-23 | Basic Types in Python |
+| 4 | 2026-09-30 | More Python Types |
+| 5 | 2026-10-07 | More Python Types |
+| 6 | 2026-10-14 | Self-defined Functions |
+| 7 | 2026-10-21 | Control Flow |
+| 8 | 2026-10-28 | Text Processing |
+| 9 | 2026-11-04 | Nested Structure |
+| 10 | 2026-11-11 | NumPy |
+| 11 | 2026-11-18 | Pandas |
+| 12 | 2026-11-25 | Invited Speaker (TBD) |
+| 13 | 2026-12-02 | Invited Speaker (TBD) |
+| 14 | 2026-12-09 | Project Presentation |
+| 15 | 2026-12-16 | Project Presentation |
+| 16 | 2026-12-23 | Project Presentation |
+
+→ **Controlewaarde: 16 woensdagen, geen enkele op een feestdag.**
+
+**Beoordeling:** aanwezigheid 10%, opdrachten 65% (ca. 10–12 stuks,
+programmeeropdrachten en online quizzes), groepsproject 25%.
+
+**Aanwezigheidsregels:** minstens drie presentiecontroles, mogelijk meer dan
+één per week. Verlof uitsluitend **vóór** de les aanvragen via MyNTU;
+achteraf wordt niet geaccepteerd. Bewijsstukken vereist bij alle
+verlofcategorieën behalve mentale gezondheid en menstruatieverlof. **Weken
+12 t/m 16 gelden als tentamenperiode**; in die periode worden alleen bepaalde
+verlofsoorten geaccepteerd. Geen losse tentamendatum — weken 14–16 zijn
+projectpresentaties.
+
+**Groepsproject:** verplicht in groepsverband, individueel werk wordt niet
+geaccepteerd. Geen groep vormen binnen de termijn betekent een **F voor het
+hele vak**. Groepsgrootte en vormingstermijn worden in de les aangekondigd en
+zijn nu **ONBEKEND** — leeg veld met invoermogelijkheid in de app, geen
+termijn verzinnen. Presentaties: weken 14, 15, 16 (2026-12-09, 12-16, 12-23).
+
+**Cursusrestrictie (open punt):** voor bachelorstudenten met een hoofd-,
+tweede of bijvak in een afdeling die programmeervakken aanbiedt geldt een
+strengere cijfergrens (syllabus-voorbeeld: 95+ i.p.v. 90+ voor een A+). Of
+dit op civiele techniek van toepassing is, is niet vastgesteld (zie §9).
+
+**Inschrijving onbevestigd:** de inschrijving liep via een Google Form met
+deadline **2026-09-13 09:13 (Taipei)**, waarna beperkte permissienummers
+worden verloot. Die deadline is verstreken; onbekend of Idries een plek
+heeft. Veld `inschrijving: "onbevestigd"` in het datamodel. Zolang dat zo
+staat: de app toont het vak met een zichtbare markering, de motor rekent het
+vak **wel** mee in de bezetting van woensdagmiddag (dus in alle
+blokberekeningen), en het vakkenscherm krijgt later (fase 8F) een knop om de
+status op bevestigd/afgewezen te zetten.
+
+### 3.6 Afgeleide lesbelasting — controlewaarden
+
+**Correctie:** de eindtijd van Chinees is 18:25, niet 18:00 (zie §1), en
+Python voegt twee lesmomenten toe aan woensdag (zie §1). Deze tabel vervangt
+de vorige versie.
+
+| Trip-venster | Chinees | Overige lesmomenten |
 |---|---|---|
 | vrijdag 00:00 → maandag 18:25 | 0 | 0 |
 | vrijdag → dinsdag 23:59 | 1 (maandag) | 0 |
-| vrijdag → woensdag 18:25 | 1 (maandag) | 1 (PSY-ochtend) |
-| vrijdag → woensdag 23:59 | 2 (ma + wo) | 1 (PSY-ochtend) |
+| vrijdag → woensdag 16:20 | 1 (maandag) | 2 (PSY + Python) |
+| vrijdag → woensdag 23:59 | 2 (ma + wo) | 2 (PSY + Python) |
 
 **De harde controlewaarde — Japan, 2026-10-30 → 11-09:**
 - Chinees: 3 sessies (11-02, 11-04, 11-09) = **9 uur absentie**, waarvan 6 uur
@@ -309,10 +389,16 @@ schuift de trip-vensters hieronder op. Deze tabel vervangt de vorige versie.
   −1,5 punt** op het aanwezigheidscijfer.
 - **11-02 en 11-04 zijn week 9 = de midterm-week (20% van het eindcijfer)** —
   zie de "in overleg met docent"-status in §3.4.
-- Overige lessen: AgTech 11-05, RTE 11-05, PSY 11-04 (3 lesmomenten).
+- **Python: 1 sessie (11-04, week 9, Nested Structure).**
+- Overige lessen: PSY 11-04 · AgTech 11-05 · RTE 11-05.
 
 De Japan-regel is de belangrijkste controlewaarde in de hele app: komt er iets
 anders dan 3 Chinees-sessies / 9 uur uit, dan zit er een fout in de motor.
+
+**Blijft staan (bevestigd door Idries, FASE-8-1.md's correctie 5 noemde per
+abuis weer 2x — genegeerd):** AgTech en RTE op 2026-10-29 (donderdag vóór de
+boekingsstart) tellen niet mee — Idries gaat die donderdag gewoon naar
+college. Elk telt dus 1x (alleen 11-05).
 
 **Eerdere correctie (bevestigd door Idries, blijft staan):** AgTech en RTE op
 2026-10-29 (donderdag vóór de boekingsstart) tellen niet mee — Idries gaat die
@@ -409,13 +495,19 @@ op te bouwen.
 
 De app maakt hiervoor lege, gemarkeerde velden — géén aannames.
 
-1. Zaalnummer Global AgTech Foresight.
+1. Vakcode én zaalnummer Global AgTech Foresight (de eerder aangenomen code
+   bleek bij Python te horen — zie §1-correctie).
 1b. General Chinese: exacte tentamendatum binnen week 9 (11-02 of 11-04) en
     binnen week 16 (12-21 of 12-23). Ook: uitkomst van het gesprek met docent
     何宣瑩 (HE, SYUAN-YING) over de afwezigheid tijdens week 9 door de
     Japan-boeking, en of een herkansing zonder medische verklaring mogelijk is.
     (Vakcode, docent, zaal, startdatum en absentiebeleid zijn nu ZEKER — zie
     §1 en §3.4.)
+1c. Computer Programming in Python: zaalnummer; uitkomst van de
+    inschrijvingsloting (Google Form, deadline verstreken 2026-09-13 09:13);
+    groepsgrootte en vormingstermijn van het groepsproject; of de strengere
+    cijfergrens voor programmeer-gerelateerde opleidingen op civiele techniek
+    van toepassing is (zie §3.5).
 2. Of de docenten inhaallessen plannen in de flexibele week 2026-12-28 → 12-31.
    Aankondiging uiterlijk 2026-11-28 volgens de kalender.
 3. Datum en duur van de afstudeeropdracht in Nederland (februari 2027) — bepaalt

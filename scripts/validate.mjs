@@ -2,7 +2,7 @@ import { parseYMD, toYMD, addDays, dayOfWeek, isoWeek, rangeDays, diffDays } fro
 import { appPeriod, timezone, week12, semesterMarkers, calendarNotes } from "../src/data/semester.js";
 import { holidays } from "../src/data/holidays.js";
 import { courses } from "../src/data/courses.js";
-import { psyDates, agtechDates, rteDates, rteActionItems, chineseLessons, chineseMogelijkeTentamens } from "../src/data/coursedates.js";
+import { psyDates, agtechDates, rteDates, pythonDates, rteActionItems, chineseLessons, chineseMogelijkeTentamens } from "../src/data/coursedates.js";
 import { trips } from "../src/data/trips.js";
 import { chinaVisaFreeDeadline, flexWeekAnnouncementDeadline, academicDeadlines } from "../src/data/deadlines.js";
 import { dayStatus, genereerKalenderDagen } from "../src/lib/dayStatus.js";
@@ -183,9 +183,16 @@ for (const c of courses) {
   check(`courses: ${c.id}.start is HH:MM`, /^\d{2}:\d{2}$/.test(c.start), true);
   check(`courses: ${c.id}.end is HH:MM`, /^\d{2}:\d{2}$/.test(c.end), true);
   if (c.absentieregels) {
-    checkBronZekerheid(`courses: ${c.id}.absentieregels.puntenaftrek`, c.absentieregels.puntenaftrek);
-    checkBronZekerheid(`courses: ${c.id}.absentieregels.faaldrempel`, c.absentieregels.faaldrempel);
+    if (c.absentieregels.bron) {
+      checkBronZekerheid(`courses: ${c.id}.absentieregels`, c.absentieregels);
+    } else {
+      for (const [naam, regel] of Object.entries(c.absentieregels)) {
+        checkBronZekerheid(`courses: ${c.id}.absentieregels.${naam}`, regel);
+      }
+    }
   }
+  if (c.groepsproject) checkBronZekerheid(`courses: ${c.id}.groepsproject`, c.groepsproject);
+  if (c.cursusrestrictieOpenPunt) checkBronZekerheid(`courses: ${c.id}.cursusrestrictieOpenPunt`, c.cursusrestrictieOpenPunt);
 }
 
 // General Chinese tijd is gecorrigeerd naar 18:25-21:05 (CORRECTIE-CHINEES.md)
@@ -198,9 +205,27 @@ for (const c of courses) {
   check("CHI: faaldrempel === 1/3 van de sessies", chi.absentieregels.faaldrempel.drempelFractieSessies, 1 / 3);
 }
 
+// FASE-8-1.md 0B: AgTech-vakcode gecorrigeerd naar ONBEKEND, Python nieuw vak
+{
+  const agtech = courses.find((c) => c.id === "AGTECH");
+  check("AGTECH: code is null (was foutief 946 U0060)", agtech.code, null);
+  check("AGTECH: onbekendeVelden bevat code en room", [...agtech.onbekendeVelden].sort().join(","), "code,room");
+
+  const py = courses.find((c) => c.id === "PY");
+  check("PY: vak bestaat", Boolean(py), true);
+  check("PY: weekdays === [woensdag]", py.weekdays.join(","), "2");
+  check("PY: start === 13:20", py.start, "13:20");
+  check("PY: end === 16:20", py.end, "16:20");
+  check("PY: inschrijving === onbevestigd", py.inschrijving, "onbevestigd");
+  check("PY: room ONBEKEND", py.room, null);
+  check("PY: groepsgrootte ONBEKEND", py.groepsproject.groepsgrootte, null);
+  check("PY: vormingstermijn ONBEKEND (niet verzonnen)", py.groepsproject.vormingstermijn, null);
+}
+
 for (const d of psyDates) checkItem(`psyDates: ${d.date}`, d);
 for (const d of agtechDates) checkItem(`agtechDates: ${d.date}`, d);
 for (const d of rteDates) checkItem(`rteDates: ${d.date}`, d);
+for (const d of pythonDates) checkItem(`pythonDates: ${d.date}`, d);
 for (const d of rteActionItems) checkItem(`rteActionItems: ${d.date} ${d.label}`, d);
 for (const d of chineseLessons) checkItem(`chineseLessons: ${d.date}`, d);
 for (const d of chineseMogelijkeTentamens) checkItem(`chineseMogelijkeTentamens: ${d.date}`, d);
@@ -216,10 +241,23 @@ check("flexWeekAnnouncementDeadline valt op einde week12", flexWeekAnnouncementD
 check("psyDates.length === 16", psyDates.length, 16);
 check("agtechDates.length === 16", agtechDates.length, 16);
 check("rteDates.length === 16", rteDates.length, 16);
+check("pythonDates.length === 16", pythonDates.length, 16);
 
 for (const d of psyDates) check(`${d.date} is woensdag (PSY)`, dayOfWeek(d.date), DAG.wo);
 for (const d of agtechDates) check(`${d.date} is donderdag (AgTech)`, dayOfWeek(d.date), DAG.do);
 for (const d of rteDates) check(`${d.date} is donderdag (RTE)`, dayOfWeek(d.date), DAG.do);
+for (const d of pythonDates) check(`${d.date} is woensdag (Python)`, dayOfWeek(d.date), DAG.wo);
+
+// Python-weekindeling is generatie-consistent: elke woensdag 09-09 t/m 12-23,
+// geen enkele feestdag valt op een woensdag (FASE-8-1.md 0B, correctie 2)
+{
+  const gegenereerd = rangeDays("2026-09-09", "2026-12-23").filter((d) => dayOfWeek(d) === DAG.wo);
+  check(
+    "pythonDates: datums zijn gelijk aan elke woensdag 09-09 t/m 12-23",
+    pythonDates.map((d) => d.date).join(","),
+    gegenereerd.join(",")
+  );
+}
 
 // --- General Chinese generator vs. controlelijst DATA.md §3.4 (CORRECTIE-CHINEES.md) ---
 const chiMondays = chineseLessons.filter((l) => dayOfWeek(l.date) === DAG.ma);
@@ -263,6 +301,7 @@ function checkNoDuplicateDates(label, items) {
 checkNoDuplicateDates("psyDates", psyDates);
 checkNoDuplicateDates("agtechDates", agtechDates);
 checkNoDuplicateDates("rteDates", rteDates);
+checkNoDuplicateDates("pythonDates", pythonDates);
 checkNoDuplicateDates("chineseLessons", chineseLessons);
 
 // =====================================================================
@@ -278,6 +317,16 @@ check("genereerKalenderDagen(): precies 181 dagen", genereerKalenderDagen().leng
   check("2026-10-28 bevat PSY-midterm", dag.vakken.some((v) => v.course === "PSY" && v.type === "tentamen"), true);
   check("2026-10-28 ochtend bezet (PSY-midterm)", dag.dagdelen.ochtend.bezet, true);
   check("2026-10-28 avond bezet (Chinees)", dag.dagdelen.avond.bezet, true);
+}
+
+// FASE-8-1.md 0B "klaar als": een gewone woensdag heeft nu alle drie de
+// dagdelen bezet (PSY ochtend, Python middag, Chinees avond) — was ochtend+avond
+{
+  const dag = dayStatus("2026-11-18"); // gewone lesweek-woensdag, geen tentamen
+  check("2026-11-18 ochtend bezet (PSY)", dag.dagdelen.ochtend.bezet, true);
+  check("2026-11-18 middag bezet (Python)", dag.dagdelen.middag.bezet, true);
+  check("2026-11-18 avond bezet (Chinees)", dag.dagdelen.avond.bezet, true);
+  check("2026-11-18 bevat Python-onderwerp Pandas", dag.vakken.some((v) => v.course === "PY" && v.label === "Pandas"), true);
 }
 
 // 2026-10-29: AgTech + RTE, valt in de midterm-periode
@@ -363,14 +412,17 @@ check('isFree("2026-11-14") === true (zaterdag)', isFree("2026-11-14"), true);
 
 // Bij twee absenties: loopt door tot en met woensdag, kosten 2x Chinees + 1x PSY
 // (bevestigd door Idries: kosten leidend boven de eindtijd-frasering in DATA.md)
+// + 1x Python sinds FASE-8-1.md 0B (woensdagmiddag is nu ook bezet)
 {
   const week = blocksWithCost(2).find((b) => b.start === "2026-11-13");
   check("N=2: eindigt op woensdag 2026-11-18", week.end, "2026-11-18");
   check("N=2: lengte === 6 dagen", week.length, 6);
   const chinees = week.gemisteLessen.filter((l) => l.course === "CHI").length;
   const psy = week.gemisteLessen.filter((l) => l.course === "PSY").length;
+  const py = week.gemisteLessen.filter((l) => l.course === "PY").length;
   check("N=2: 2x Chinees gemist", chinees, 2);
   check("N=2: 1x PSY gemist", psy, 1);
+  check("N=2: 1x Python gemist", py, 1);
 }
 
 // blocksWithCost(0) bevat nooit een lesmoment, ook geen maandag-/woensdagavond
@@ -384,14 +436,17 @@ check("blocksWithCost(0): nergens een gemist lesmoment", blocksWithCost(0).every
   check("langste blok: bevat de flexibele week als risico", langste.bevatRisicoperiode, true);
 }
 
-// Japan-controlewaarde (DATA.md §3.5, CORRECTIE-CHINEES.md): 3 Chinees-
+// Japan-controlewaarde (DATA.md §3.6, FASE-8-1.md 0B correctie 5): 3 Chinees-
 // sessies / 9 uur is de belangrijkste controlewaarde in de hele app.
+// AgTech/RTE blijven 1x elk (10-29 telt niet mee — bevestigd door Idries,
+// FASE-8-1.md noemde per abuis weer 2x, genegeerd na navraag).
 {
   const kosten = costOfRange("2026-10-30", "2026-11-09").perVak;
   check("Japan: 3x Chinees (belangrijkste controlewaarde)", kosten.CHI, 3);
   check("Japan: 1x AgTech", kosten.AGTECH, 1);
   check("Japan: 1x RTE", kosten.RTE, 1);
   check("Japan: 1x PSY", kosten.PSY, 1);
+  check("Japan: 1x Python (11-04, week 9)", kosten.PY, 1);
 
   const chi = courses.find((c) => c.id === "CHI");
   const chiUren = kosten.CHI * chi.absentieregels.puntenaftrek.uurPerSessie;
