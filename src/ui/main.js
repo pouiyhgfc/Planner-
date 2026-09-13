@@ -14,7 +14,8 @@ import {
 import { absentieTotaal } from "../lib/overzicht.js";
 import { initNavigatie, renderTopbar } from "./nav.js";
 import { initMaandScherm } from "./schermMaand.js";
-import { renderWekenScherm, renderOverzichtScherm, renderVakkenScherm } from "./schermen.js";
+import { initWekenScherm } from "./schermWeken.js";
+import { renderOverzichtScherm, renderVakkenScherm } from "./schermen.js";
 import {
   renderThemaRegel,
   renderPersistRegel,
@@ -100,12 +101,28 @@ function maandWeergeven() {
   maandScherm.render({ vandaag: huidigeYMD(), items: state.items, afgevinkteDeadlines: state.afgevinkteDeadlines });
 }
 
+function wekenWeergeven() {
+  wekenScherm.render({ weekWeergave: state.weekWeergave, vandaag: huidigeYMD() });
+}
+
+async function wijzigWeekWeergave(nieuweWeekWeergave) {
+  state = { ...state, weekWeergave: nieuweWeekWeergave };
+  await bewaarState(state);
+  wekenWeergeven();
+}
+
+function openWeekInMaand(ymd) {
+  navigatie.naarScherm("maand");
+  maandScherm.openDag(ymd);
+}
+
 async function voegItemEnHerteken(veld) {
   state = voegItemToe(state, veld);
   await bewaarState(state);
   instellingenWeergeven();
   topbarWeergeven();
   maandWeergeven();
+  wekenWeergeven();
 }
 
 async function verwijderItemEnHerteken(id) {
@@ -114,6 +131,7 @@ async function verwijderItemEnHerteken(id) {
   instellingenWeergeven();
   topbarWeergeven();
   maandWeergeven();
+  wekenWeergeven();
 }
 
 async function zetDeadlineEnHerteken(sleutel, afgevinkt) {
@@ -150,6 +168,7 @@ async function importeerBestand(bestand) {
   instellingenWeergeven();
   topbarWeergeven();
   maandWeergeven();
+  wekenWeergeven();
 }
 exportEl.addEventListener("import-bestand", (e) => importeerBestand(e.detail));
 
@@ -160,6 +179,7 @@ async function pasConflictenToe(keuzes) {
   instellingenWeergeven();
   topbarWeergeven();
   maandWeergeven();
+  wekenWeergeven();
 }
 
 pasThemaToe(state.ui.thema);
@@ -180,13 +200,19 @@ const maandScherm = initMaandScherm(schermEls.maand, {
   onDeadlineToggle: zetDeadlineEnHerteken,
 });
 
-renderWekenScherm(schermEls.weken);
+const wekenScherm = initWekenScherm(schermEls.weken, {
+  onWeekWeergaveWijzigen: wijzigWeekWeergave,
+  onOpenWeek: openWeekInMaand,
+  onItemToevoegen: voegItemEnHerteken,
+});
+
 renderOverzichtScherm(schermEls.overzicht);
 renderVakkenScherm(schermEls.vakken);
 
 topbarWeergeven();
 instellingenWeergeven();
 maandWeergeven();
+wekenWeergeven();
 
 vraagPersistentOpslagAan().then((toegekend) => {
   persistToegekend = toegekend;

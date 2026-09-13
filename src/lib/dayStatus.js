@@ -14,7 +14,7 @@ import { chinaVisaFreeDeadline, flexWeekAnnouncementDeadline, academicDeadlines 
 const alleVakItems = [...psyDates, ...agtechDates, ...rteDates, ...pythonDates, ...chineseLessons];
 const alleDeadlineItems = [...rteActionItems, ...academicDeadlines, chinaVisaFreeDeadline, flexWeekAnnouncementDeadline];
 
-const DAGDEEL_NAMEN = ["ochtend", "middag", "avond"];
+export const DAGDEEL_NAMEN = ["ochtend", "middag", "avond"];
 const OCHTEND_EINDE = "12:10";
 const MIDDAG_EINDE = "18:25";
 
@@ -33,7 +33,7 @@ function valtOpDatum(ymd, item) {
  * @param {string} hhmm
  * @returns {"ochtend"|"middag"|"avond"}
  */
-function dagdeelVoorTijd(hhmm) {
+export function dagdeelVoorTijd(hhmm) {
   if (hhmm < OCHTEND_EINDE) return "ochtend";
   if (hhmm < MIDDAG_EINDE) return "middag";
   return "avond";

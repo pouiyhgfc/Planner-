@@ -12,15 +12,19 @@
  * v4: state kreeg afgevinkteDeadlines (fase 8C, dagblad): welke deadlines
  *     zijn afgevinkt, per sleutel "date-of-start::label" — deadlines zelf
  *     hebben geen eigen id in src/data/deadlines.js of coursedates.js.
+ * v5: state kreeg weekWeergave (fase 8D, scherm "Weken"): de gekozen
+ *     periodelengte en het huidige vensterbegin (een maandag), zodat de
+ *     periodekeuze bewaard blijft — zie FASE-8.md 8D.
  */
 
 import { parseYMD } from "../lib/date.js";
 
-export const CURRENT_SCHEMA_VERSION = 4;
+export const CURRENT_SCHEMA_VERSION = 5;
 
 const STATUS_WAARDEN = ["idee", "vast"];
 export const SCHERMEN = ["maand", "weken", "overzicht", "vakken"];
 const THEMA_WAARDEN = ["systeem", "licht", "donker"];
+export const PERIODES = ["1w", "2w", "4w", "1m", "3m", "alle", "eigen"];
 
 /**
  * @returns {{activeScreen: string, scrollPositions: Record<string, number>, thema: string}}
@@ -34,7 +38,14 @@ function legeUiState() {
 }
 
 /**
- * @returns {{schemaVersion: number, items: object[], laatsteExport: string|null, ui: object, afgevinkteDeadlines: string[]}}
+ * @returns {{periode: string, startWeek: string|null, eigenStart: string|null, eigenEind: string|null}}
+ */
+function legeWeekWeergave() {
+  return { periode: "1w", startWeek: null, eigenStart: null, eigenEind: null };
+}
+
+/**
+ * @returns {{schemaVersion: number, items: object[], laatsteExport: string|null, ui: object, afgevinkteDeadlines: string[], weekWeergave: object}}
  */
 export function leegState() {
   return {
@@ -43,6 +54,7 @@ export function leegState() {
     laatsteExport: null,
     ui: legeUiState(),
     afgevinkteDeadlines: [],
+    weekWeergave: legeWeekWeergave(),
   };
 }
 
@@ -96,10 +108,41 @@ export function migrate(state) {
     };
   }
 
+  if (s.schemaVersion === 4) {
+    s = {
+      schemaVersion: 5,
+      laatsteExport: s.laatsteExport ?? null,
+      items: s.items ?? [],
+      ui: geldigeUiState(s.ui),
+      afgevinkteDeadlines: s.afgevinkteDeadlines ?? [],
+      weekWeergave: geldigeWeekWeergave(s.weekWeergave),
+    };
+  }
+
   if (s.schemaVersion === CURRENT_SCHEMA_VERSION) {
-    return { ...s, ui: geldigeUiState(s.ui), afgevinkteDeadlines: s.afgevinkteDeadlines ?? [] };
+    return {
+      ...s,
+      ui: geldigeUiState(s.ui),
+      afgevinkteDeadlines: s.afgevinkteDeadlines ?? [],
+      weekWeergave: geldigeWeekWeergave(s.weekWeergave),
+    };
   }
   throw new Error(`onbekende schemaVersion: ${state.schemaVersion}`);
+}
+
+/**
+ * @param {object|undefined} weekWeergave
+ * @returns {{periode: string, startWeek: string|null, eigenStart: string|null, eigenEind: string|null}}
+ */
+function geldigeWeekWeergave(weekWeergave) {
+  const leeg = legeWeekWeergave();
+  if (!weekWeergave) return leeg;
+  return {
+    periode: PERIODES.includes(weekWeergave.periode) ? weekWeergave.periode : leeg.periode,
+    startWeek: weekWeergave.startWeek ?? leeg.startWeek,
+    eigenStart: weekWeergave.eigenStart ?? leeg.eigenStart,
+    eigenEind: weekWeergave.eigenEind ?? leeg.eigenEind,
+  };
 }
 
 /**

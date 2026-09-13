@@ -1,7 +1,7 @@
 /**
- * Schermlichamen van de resterende hoofdtabs. Maand heeft sinds fase 8C
- * zijn eigen module (schermMaand.js); Weken, Overzicht en Vakken volgen in
- * 8D/8E/8F en tonen tot die tijd eerlijk welke fase ze vult, geen nepdata.
+ * Schermlichamen van de resterende hoofdtabs. Maand (8C) en Weken (8D)
+ * hebben inmiddels hun eigen module; Overzicht en Vakken volgen in 8E/8F
+ * en tonen tot die tijd eerlijk welke fase ze vult, geen nepdata.
  */
 
 function schermLichaam(titel, toelichting) {
@@ -15,12 +15,6 @@ function schermLichaam(titel, toelichting) {
   frag.appendChild(kop);
   frag.appendChild(sub);
   return frag;
-}
-
-/** @param {HTMLElement} root */
-export function renderWekenScherm(root) {
-  root.textContent = "";
-  root.appendChild(schermLichaam("Weken", "Weekstrips met periodekiezer volgen in fase 8D."));
 }
 
 /** @param {HTMLElement} root */

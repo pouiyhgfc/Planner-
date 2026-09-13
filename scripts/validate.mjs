@@ -7,13 +7,14 @@ import { trips } from "../src/data/trips.js";
 import { chinaVisaFreeDeadline, flexWeekAnnouncementDeadline, academicDeadlines } from "../src/data/deadlines.js";
 import { dayStatus, genereerKalenderDagen } from "../src/lib/dayStatus.js";
 import { isFree, freeBlocks, blocksWithCost, costOfRange } from "../src/lib/blocks.js";
-import { leegState, migrate, valideerItem, CURRENT_SCHEMA_VERSION, SCHERMEN } from "../src/state/schema.js";
+import { leegState, migrate, valideerItem, CURRENT_SCHEMA_VERSION, SCHERMEN, PERIODES } from "../src/state/schema.js";
 import { voegItemToe, verwijderItem, zetDeadlineAfgevinkt, huidigeYMD, bereidExportVoor, bereidSamenvoegingVoor, pasConflictKeuzesToe } from "../src/state/store.js";
 import { chinaAftelling, flexWeekStatus, cnyDrukte, resterendeBlokken, absentieTotaal } from "../src/lib/overzicht.js";
 import { seizoensdataLabel } from "../src/data/season.js";
 import { kortDatum, collegeWeek } from "../src/ui/datumlabels.js";
 import { maandWeken, isStipMoment } from "../src/ui/maandGrid.js";
 import { deadlineSleutel } from "../src/ui/dagblad.js";
+import { maandagVan, weekAantal, weekStarts, verschuifVenster, dagdelenMetKleur } from "../src/ui/wekenGrid.js";
 import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -927,6 +928,81 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
 // Geen title-attributen in de fase 8C-bestanden
 {
   for (const bestand of ["src/ui/maandGrid.js", "src/ui/dagblad.js", "src/ui/schermMaand.js"]) {
+    const bron = readFileSync(join(PROJECT_ROOT, bestand), "utf8");
+    check(`${bestand}: geen title-attributen`, /\.title\s*=|setAttribute\(\s*["']title["']/.test(bron), false);
+  }
+}
+
+// =====================================================================
+// Fase 8D — scherm "Weken"
+// =====================================================================
+
+// migrate(): schemaVersion 4 -> 5 voegt weekWeergave toe zonder iets weg te gooien
+{
+  const v4 = { ...leegState(), schemaVersion: 4 };
+  delete v4.weekWeergave;
+  const gemigreerd = migrate(v4);
+  check("migrate v4->v5: schemaVersion wordt de actuele versie", gemigreerd.schemaVersion, CURRENT_SCHEMA_VERSION);
+  check("migrate v4->v5: weekWeergave.periode default 1w", gemigreerd.weekWeergave.periode, "1w");
+  check("migrate v4->v5: weekWeergave.startWeek default null", gemigreerd.weekWeergave.startWeek, null);
+
+  const metOnbekendePeriode = { ...leegState(), weekWeergave: { periode: "onbekend", startWeek: "2026-10-05" } };
+  const genormaliseerd = migrate(metOnbekendePeriode);
+  check("migrate: onbekende periode valt terug op default", genormaliseerd.weekWeergave.periode, "1w");
+  check("migrate: bestaande startWeek blijft staan", genormaliseerd.weekWeergave.startWeek, "2026-10-05");
+}
+
+// maandagVan(): altijd een maandag, ook als ymd zelf al maandag is
+{
+  check("maandagVan: woensdag terug naar maandag", maandagVan("2026-11-04"), "2026-11-02");
+  check("maandagVan: maandag blijft gelijk", maandagVan("2026-11-02"), "2026-11-02");
+  check("maandagVan: zondag terug naar maandag", maandagVan("2026-11-08"), "2026-11-02");
+}
+
+// weekAantal() / weekStarts(): elke periodekeuze levert het juiste aantal weken
+{
+  check("weekAantal: 1w", weekAantal("1w", null, null), 1);
+  check("weekAantal: 2w", weekAantal("2w", null, null), 2);
+  check("weekAantal: 4w", weekAantal("4w", null, null), 4);
+  check("weekAantal: 1m", weekAantal("1m", null, null), 5);
+  check("weekAantal: 3m", weekAantal("3m", null, null), 13);
+  check("weekAantal: eigen (2 weken bereik)", weekAantal("eigen", "2026-09-07", "2026-09-20"), 2);
+  check("weekAantal: eigen zonder geldig bereik valt terug op 1", weekAantal("eigen", null, null), 1);
+
+  for (const periode of PERIODES.filter((p) => p !== "eigen")) {
+    const starts = weekStarts("2026-10-05", periode, null, null);
+    check(`weekStarts(${periode}): aantal weken klopt met weekAantal`, starts.length, weekAantal(periode, null, null));
+    check(`weekStarts(${periode}): elke start is een maandag`, starts.every((s) => dayOfWeek(s) === 0), true);
+  }
+}
+
+// verschuifVenster(): schuift correct over de jaargrens 2026 -> 2027
+{
+  const overJaargrens = verschuifVenster("2026-12-21", "2w", null, null, 1);
+  check("verschuifVenster: 2 weken vooruit vanaf 21 dec 2026", overJaargrens, "2027-01-04");
+  check("verschuifVenster: 1 week terug", verschuifVenster("2027-01-04", "1w", null, null, -1), "2026-12-28");
+}
+
+// dagdelenMetKleur(): woensdag 4 nov 2026 heeft alle drie de dagdelen bezet
+// (PSY ochtend, Python middag, Chinees avond) — het "Klaar als"-voorbeeld uit 8D.
+{
+  const dagdelen = dagdelenMetKleur(dayStatus("2026-11-04"));
+  check("dagdelenMetKleur: ochtend bezet (PSY)", dagdelen.ochtend?.kleurVar, "--vak-psy-text");
+  check("dagdelenMetKleur: middag bezet (Python)", dagdelen.middag?.kleurVar, "--vak-py-text");
+  check("dagdelenMetKleur: avond bezet (Chinees)", dagdelen.avond?.kleurVar, "--vak-chi-text");
+}
+
+// sw.js: de fase 8D-bestanden zitten in de app-shell
+{
+  const swBron = readFileSync(join(PROJECT_ROOT, "sw.js"), "utf8");
+  for (const bestand of ["schermWeken.js", "wekenGrid.js"]) {
+    check(`sw.js: APP_SHELL bevat ui/${bestand}`, swBron.includes(`ui/${bestand}`), true);
+  }
+}
+
+// Geen title-attributen in de fase 8D-bestanden
+{
+  for (const bestand of ["src/ui/wekenGrid.js", "src/ui/schermWeken.js"]) {
     const bron = readFileSync(join(PROJECT_ROOT, bestand), "utf8");
     check(`${bestand}: geen title-attributen`, /\.title\s*=|setAttribute\(\s*["']title["']/.test(bron), false);
   }

@@ -559,3 +559,120 @@ select {
   border-top: var(--border-width) solid var(--border);
   padding-top: 12px;
 }
+
+/* fase 8D — scherm "Weken" */
+
+.periodekiezer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.periode-knop {
+  font-size: var(--fs-min);
+  padding: 6px 10px;
+}
+.periode-knop[aria-current="true"] {
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+  color: var(--accent-text);
+}
+
+.eigen-periode-velden {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 6px;
+}
+.eigen-periode-fout {
+  color: var(--danger-text);
+  font-size: var(--fs-min);
+  margin: 0;
+  width: 100%;
+}
+
+.weken-navigatie {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.weken-invoeg:not(:empty) {
+  margin-bottom: 12px;
+}
+
+.weekkaart {
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.weekkaart-kop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 8px;
+  margin-bottom: 8px;
+}
+.weekkaart-titelblok {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+.weekkaart-titel {
+  display: block;
+  font-family: var(--ff-head);
+  font-size: 15px;
+}
+.weekkaart-collegeweek {
+  display: block;
+  color: var(--text-muted);
+  font-size: var(--fs-min);
+}
+.weekkaart-badge {
+  flex-shrink: 0;
+  background: var(--purple-bg);
+  color: var(--purple-text);
+  border-radius: var(--radius-control);
+  padding: 4px 8px;
+  font-size: var(--fs-min);
+}
+
+.weekkaart-grid {
+  display: grid;
+  grid-template-columns: 16px repeat(7, 1fr);
+  gap: 2px;
+  align-items: center;
+}
+.weekkaart-dagkop {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--fs-min);
+}
+.weekkaart-dagdeelkop {
+  color: var(--text-muted);
+  font-size: var(--fs-min);
+  text-transform: uppercase;
+}
+.weekkaart-cel {
+  height: 14px;
+  border-radius: 3px;
+  background: var(--border-soft);
+}
+
+.weekkaart-uitzonderingen {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  font-size: var(--fs-min);
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.weekkaart-knoppen {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}

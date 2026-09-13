@@ -85,5 +85,18 @@ export function initMaandScherm(root, callbacks) {
     tekenen();
   }
 
-  return { render };
+  /**
+   * Springt naar de maand van ymd en opent meteen het dagblad van die dag —
+   * gebruikt door "Open week" op het scherm Weken (fase 8D).
+   * @param {string} ymd
+   */
+  function openDag(ymd) {
+    const { y, m } = parseYMD(ymd);
+    jaar = y;
+    maand = m;
+    geselecteerd = ymd;
+    tekenen();
+  }
+
+  return { render, openDag };
 }
