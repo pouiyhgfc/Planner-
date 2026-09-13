@@ -86,6 +86,17 @@ export function verwijderItem(state, id) {
 }
 
 /**
+ * @param {{afgevinkteDeadlines: string[]}} state
+ * @param {string} sleutel
+ * @param {boolean} afgevinkt
+ * @returns {{afgevinkteDeadlines: string[]}}
+ */
+export function zetDeadlineAfgevinkt(state, sleutel, afgevinkt) {
+  const zonder = state.afgevinkteDeadlines.filter((s) => s !== sleutel);
+  return { ...state, afgevinkteDeadlines: afgevinkt ? [...zonder, sleutel] : zonder };
+}
+
+/**
  * Vraagt persistente opslag aan. Logt de uitkomst; de app werkt ongeacht
  * het antwoord (CLAUDE.md §4/§8).
  * @returns {Promise<boolean|null>} null als de API niet bestaat

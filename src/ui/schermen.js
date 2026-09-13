@@ -1,8 +1,7 @@
 /**
- * Schermlichamen van de vier hoofdtabs. Fase 8B levert alleen de
- * navigatieschil; de echte inhoud komt in 8C (Maand), 8D (Weken),
- * 8E (Overzicht) en 8F (Vakken). Tot die tijd toont elk scherm eerlijk
- * welke fase het vult, geen nepdata.
+ * Schermlichamen van de resterende hoofdtabs. Maand heeft sinds fase 8C
+ * zijn eigen module (schermMaand.js); Weken, Overzicht en Vakken volgen in
+ * 8D/8E/8F en tonen tot die tijd eerlijk welke fase ze vult, geen nepdata.
  */
 
 function schermLichaam(titel, toelichting) {
@@ -16,12 +15,6 @@ function schermLichaam(titel, toelichting) {
   frag.appendChild(kop);
   frag.appendChild(sub);
   return frag;
-}
-
-/** @param {HTMLElement} root */
-export function renderMaandScherm(root) {
-  root.textContent = "";
-  root.appendChild(schermLichaam("Maand", "Maandkalender met dagblad volgt in fase 8C."));
 }
 
 /** @param {HTMLElement} root */

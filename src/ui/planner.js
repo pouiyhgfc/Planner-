@@ -13,14 +13,17 @@ const EXPORT_WAARSCHUWING_DAGEN = 14;
 /**
  * @param {HTMLElement} root
  * @param {(veld: {naam: string, start: string, end: string, status: string, notitie: string}) => void} onToevoegen
+ * @param {{start?: string, end?: string}} [voorinvulling] datumbereik dat al is ingevuld (bijv. vanuit het dagblad)
  */
-export function renderPlannerForm(root, onToevoegen) {
+export function renderPlannerForm(root, onToevoegen, voorinvulling) {
   root.textContent = "";
   root.className = "planner-form";
 
   const naam = veldInput("text", "Naam");
   const start = veldInput("date", "Van");
   const eind = veldInput("date", "Tot");
+  if (voorinvulling?.start) start.value = voorinvulling.start;
+  if (voorinvulling?.end) eind.value = voorinvulling.end;
   const status = document.createElement("select");
   for (const waarde of ["idee", "vast"]) {
     const optie = document.createElement("option");

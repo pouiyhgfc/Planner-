@@ -8,10 +8,12 @@ import { chinaVisaFreeDeadline, flexWeekAnnouncementDeadline, academicDeadlines 
 import { dayStatus, genereerKalenderDagen } from "../src/lib/dayStatus.js";
 import { isFree, freeBlocks, blocksWithCost, costOfRange } from "../src/lib/blocks.js";
 import { leegState, migrate, valideerItem, CURRENT_SCHEMA_VERSION, SCHERMEN } from "../src/state/schema.js";
-import { voegItemToe, verwijderItem, huidigeYMD, bereidExportVoor, bereidSamenvoegingVoor, pasConflictKeuzesToe } from "../src/state/store.js";
+import { voegItemToe, verwijderItem, zetDeadlineAfgevinkt, huidigeYMD, bereidExportVoor, bereidSamenvoegingVoor, pasConflictKeuzesToe } from "../src/state/store.js";
 import { chinaAftelling, flexWeekStatus, cnyDrukte, resterendeBlokken, absentieTotaal } from "../src/lib/overzicht.js";
 import { seizoensdataLabel } from "../src/data/season.js";
 import { kortDatum, collegeWeek } from "../src/ui/datumlabels.js";
+import { maandWeken, isStipMoment } from "../src/ui/maandGrid.js";
+import { deadlineSleutel } from "../src/ui/dagblad.js";
 import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -566,7 +568,7 @@ check("leegState() heeft geen items", leegState().items.length, 0);
   check("migrate v0->actueel: start/end afgeleid van datum", vanV0.items[0].start === "2026-11-01" && vanV0.items[0].end === "2026-11-01", true);
 }
 
-// migrate(): schemaVersion 2 -> 3 voegt ui toe zonder iets weg te gooien
+// migrate(): schemaVersion 2 -> actueel (v3 ui, v4 afgevinkteDeadlines) gooit niets weg
 {
   const v2 = {
     schemaVersion: 2,
@@ -574,12 +576,13 @@ check("leegState() heeft geen items", leegState().items.length, 0);
     items: [{ id: "d1", naam: "Item", start: "2026-10-05", end: "2026-10-06", status: "vast", notitie: "", bijgewerkt: "2026-10-01" }],
   };
   const gemigreerd = migrate(v2);
-  check("migrate v2->v3: schemaVersion wordt 3", gemigreerd.schemaVersion, 3);
-  check("migrate v2->v3: laatsteExport blijft behouden", gemigreerd.laatsteExport, "2026-10-01");
-  check("migrate v2->v3: item blijft behouden", gemigreerd.items.length, 1);
-  check("migrate v2->v3: ui.activeScreen default maand", gemigreerd.ui.activeScreen, "maand");
-  check("migrate v2->v3: ui.thema default systeem", gemigreerd.ui.thema, "systeem");
-  check("migrate v2->v3: ui.scrollPositions heeft alle schermen", SCHERMEN.every((s) => gemigreerd.ui.scrollPositions[s] === 0), true);
+  check("migrate v2->actueel: schemaVersion wordt de actuele versie", gemigreerd.schemaVersion, CURRENT_SCHEMA_VERSION);
+  check("migrate v2->actueel: laatsteExport blijft behouden", gemigreerd.laatsteExport, "2026-10-01");
+  check("migrate v2->actueel: item blijft behouden", gemigreerd.items.length, 1);
+  check("migrate v2->actueel: ui.activeScreen default maand", gemigreerd.ui.activeScreen, "maand");
+  check("migrate v2->actueel: ui.thema default systeem", gemigreerd.ui.thema, "systeem");
+  check("migrate v2->actueel: ui.scrollPositions heeft alle schermen", SCHERMEN.every((s) => gemigreerd.ui.scrollPositions[s] === 0), true);
+  check("migrate v2->actueel: afgevinkteDeadlines default leeg", gemigreerd.afgevinkteDeadlines.length, 0);
 
   // een export met een gedeeltelijk ui-veld (bijv. een oudere v3-export) verliest niets
   const v3MetGedeeltelijkeUi = { ...v2, schemaVersion: 3, ui: { activeScreen: "weken", scrollPositions: { maand: 40 } } };
@@ -587,6 +590,14 @@ check("leegState() heeft geen items", leegState().items.length, 0);
   check("migrate v3: bestaand activeScreen blijft staan", behouden.ui.activeScreen, "weken");
   check("migrate v3: bestaande scrollpositie blijft staan", behouden.ui.scrollPositions.maand, 40);
   check("migrate v3: ontbrekende scrollpositie krijgt default 0", behouden.ui.scrollPositions.weken, 0);
+  check("migrate v3->v4: afgevinkteDeadlines default leeg", behouden.afgevinkteDeadlines.length, 0);
+}
+
+// migrate(): schemaVersion 4 (actueel) met bestaande afgevinkteDeadlines blijft ongewijzigd
+{
+  const v4 = { ...leegState(), afgevinkteDeadlines: ["2026-09-24::Term project topic + groepen (5 pers.)"] };
+  const gemigreerd = migrate(v4);
+  check("migrate v4: bestaande afgevinkteDeadlines blijft staan", gemigreerd.afgevinkteDeadlines.length, 1);
 }
 
 // bereidExportVoor(): bestandsnaam met datum, geldige JSON-inhoud
@@ -832,6 +843,92 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   check("sw.js: overzicht.js (oud) niet meer gecachet (vervangen in 8B)", swBron.includes("ui/overzicht.js"), false);
   for (const bestand of ["nav.js", "schermen.js", "datumlabels.js"]) {
     check(`sw.js: APP_SHELL bevat ui/${bestand}`, swBron.includes(`ui/${bestand}`), true);
+  }
+}
+
+// =====================================================================
+// Fase 8C — scherm "Maand"
+// =====================================================================
+
+// maandWeken(): volledige weekrijen (ma-zo), grenzen kloppen voor de drie
+// maanden uit het "Klaar als"-criterium (semestergrens, gewone maand, en de
+// laatste maand van de app-periode — geen schrikkeljaar).
+{
+  for (const [jaar, maand, eersteDagVanMaand, laatsteDagVanMaand] of [
+    [2026, 9, "2026-09-01", "2026-09-30"],
+    [2026, 10, "2026-10-01", "2026-10-31"],
+    [2027, 2, "2027-02-01", "2027-02-28"],
+  ]) {
+    const weken = maandWeken(jaar, maand);
+    const alleDagen = weken.flat();
+    check(`maandWeken(${jaar},${maand}): elke week heeft 7 dagen`, weken.every((w) => w.length === 7), true);
+    check(`maandWeken(${jaar},${maand}): grid begint op maandag`, dayOfWeek(alleDagen[0]), 0);
+    check(`maandWeken(${jaar},${maand}): grid eindigt op zondag`, dayOfWeek(alleDagen.at(-1)), 6);
+    check(`maandWeken(${jaar},${maand}): bevat ${eersteDagVanMaand}`, alleDagen.includes(eersteDagVanMaand), true);
+    check(`maandWeken(${jaar},${maand}): bevat ${laatsteDagVanMaand}`, alleDagen.includes(laatsteDagVanMaand), true);
+    check(`maandWeken(${jaar},${maand}): geen duplicaten`, new Set(alleDagen).size, alleDagen.length);
+  }
+}
+
+// dagblad van 2026-11-04: drie lessen (PSY, Python, Chinees), elk met het
+// juiste syllabusonderwerp uit coursedates.js — het expliciete "Klaar als"-
+// voorbeeld uit FASE-8.md 8C.
+{
+  const dag = dayStatus("2026-11-04");
+  const lessen = dag.vakken.filter((v) => v.type === "les");
+  check("dayStatus(2026-11-04): precies drie lessen", lessen.length, 3);
+  const perVak = Object.fromEntries(lessen.map((v) => [v.course, v.label]));
+  check("dayStatus(2026-11-04): PSY-onderwerp", perVak.PSY, "Learning");
+  check("dayStatus(2026-11-04): Python-onderwerp", perVak.PY, "Nested Structure");
+  check("dayStatus(2026-11-04): Chinees-onderwerp", perVak.CHI, "General Chinese");
+}
+
+// isStipMoment() via de labels: tentamens en presentatie-lessen krijgen een
+// stip, gewone lessen een streepje — heuristiek werkt op de bestaande
+// letterlijke labels, geen nieuw dataveld.
+{
+  const presentatieLes = { type: "les", label: "Term Project Presentations" };
+  const gewoneLes = { type: "les", label: "Signal & Train Control" };
+  const tentamen = { type: "tentamen", label: "Midterm Exam (35%)" };
+  check("isStipMoment: presentatie-les is een stip", isStipMoment(presentatieLes), true);
+  check("isStipMoment: gewone les is geen stip", isStipMoment(gewoneLes), false);
+  check("isStipMoment: tentamen is een stip", isStipMoment(tentamen), true);
+}
+
+// deadlineSleutel(): stabiel en uniek genoeg om af te vinken, ook voor
+// deadlines met alleen een start (geen los date-veld).
+{
+  check("deadlineSleutel: date-veld", deadlineSleutel({ date: "2026-09-24", label: "X" }), "2026-09-24::X");
+  check("deadlineSleutel: start-veld (geen date)", deadlineSleutel({ start: "2026-09-23", end: "2026-09-24", label: "Y" }), "2026-09-23::Y");
+
+  const alleDeadlineSleutels = [...rteActionItems, ...academicDeadlines, chinaVisaFreeDeadline, flexWeekAnnouncementDeadline].map(deadlineSleutel);
+  check("deadlineSleutel: elke deadline heeft een unieke sleutel", new Set(alleDeadlineSleutels).size, alleDeadlineSleutels.length);
+}
+
+// zetDeadlineAfgevinkt(): pure state-transformatie, geen duplicaten
+{
+  let state = leegState();
+  state = zetDeadlineAfgevinkt(state, "sleutel-a", true);
+  check("zetDeadlineAfgevinkt: toevoegen", state.afgevinkteDeadlines, ["sleutel-a"]);
+  state = zetDeadlineAfgevinkt(state, "sleutel-a", true);
+  check("zetDeadlineAfgevinkt: nogmaals afvinken is geen duplicaat", state.afgevinkteDeadlines, ["sleutel-a"]);
+  state = zetDeadlineAfgevinkt(state, "sleutel-a", false);
+  check("zetDeadlineAfgevinkt: uitvinken", state.afgevinkteDeadlines, []);
+}
+
+// sw.js: de fase 8C-bestanden zitten in de app-shell
+{
+  const swBron = readFileSync(join(PROJECT_ROOT, "sw.js"), "utf8");
+  for (const bestand of ["schermMaand.js", "maandGrid.js", "dagblad.js"]) {
+    check(`sw.js: APP_SHELL bevat ui/${bestand}`, swBron.includes(`ui/${bestand}`), true);
+  }
+}
+
+// Geen title-attributen in de fase 8C-bestanden
+{
+  for (const bestand of ["src/ui/maandGrid.js", "src/ui/dagblad.js", "src/ui/schermMaand.js"]) {
+    const bron = readFileSync(join(PROJECT_ROOT, bestand), "utf8");
+    check(`${bestand}: geen title-attributen`, /\.title\s*=|setAttribute\(\s*["']title["']/.test(bron), false);
   }
 }
 

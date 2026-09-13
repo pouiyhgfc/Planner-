@@ -4,6 +4,7 @@ import {
   bewaarState,
   voegItemToe,
   verwijderItem,
+  zetDeadlineAfgevinkt,
   vraagPersistentOpslagAan,
   bereidExportVoor,
   bereidSamenvoegingVoor,
@@ -12,7 +13,8 @@ import {
 } from "../state/store.js";
 import { absentieTotaal } from "../lib/overzicht.js";
 import { initNavigatie, renderTopbar } from "./nav.js";
-import { renderMaandScherm, renderWekenScherm, renderOverzichtScherm, renderVakkenScherm } from "./schermen.js";
+import { initMaandScherm } from "./schermMaand.js";
+import { renderWekenScherm, renderOverzichtScherm, renderVakkenScherm } from "./schermen.js";
 import {
   renderThemaRegel,
   renderPersistRegel,
@@ -82,18 +84,8 @@ function instellingenWeergeven() {
   renderPersistRegel(persistEl, persistToegekend);
   renderExportRegel(exportEl, state.laatsteExport, exporteer);
   renderConflictenPaneel(conflictenEl, openstaandeConflicten, pasConflictenToe);
-  renderPlannerForm(formEl, async (veld) => {
-    state = voegItemToe(state, veld);
-    await bewaarState(state);
-    instellingenWeergeven();
-    topbarWeergeven();
-  });
-  renderEigenItemsLijst(eigenItemsEl, state.items, async (id) => {
-    state = verwijderItem(state, id);
-    await bewaarState(state);
-    instellingenWeergeven();
-    topbarWeergeven();
-  });
+  renderPlannerForm(formEl, (veld) => voegItemEnHerteken(veld));
+  renderEigenItemsLijst(eigenItemsEl, state.items, (id) => verwijderItemEnHerteken(id));
 }
 
 function topbarWeergeven() {
@@ -102,6 +94,32 @@ function topbarWeergeven() {
     { vandaag: huidigeYMD(), absenties: absentieTotaal(state.items) },
     () => navigatie.naarScherm("vakken")
   );
+}
+
+function maandWeergeven() {
+  maandScherm.render({ vandaag: huidigeYMD(), items: state.items, afgevinkteDeadlines: state.afgevinkteDeadlines });
+}
+
+async function voegItemEnHerteken(veld) {
+  state = voegItemToe(state, veld);
+  await bewaarState(state);
+  instellingenWeergeven();
+  topbarWeergeven();
+  maandWeergeven();
+}
+
+async function verwijderItemEnHerteken(id) {
+  state = verwijderItem(state, id);
+  await bewaarState(state);
+  instellingenWeergeven();
+  topbarWeergeven();
+  maandWeergeven();
+}
+
+async function zetDeadlineEnHerteken(sleutel, afgevinkt) {
+  state = zetDeadlineAfgevinkt(state, sleutel, afgevinkt);
+  await bewaarState(state);
+  maandWeergeven();
 }
 
 function downloadBestand(bestandsnaam, inhoud) {
@@ -131,6 +149,7 @@ async function importeerBestand(bestand) {
   openstaandeConflicten = conflicten;
   instellingenWeergeven();
   topbarWeergeven();
+  maandWeergeven();
 }
 exportEl.addEventListener("import-bestand", (e) => importeerBestand(e.detail));
 
@@ -140,6 +159,7 @@ async function pasConflictenToe(keuzes) {
   await bewaarState(state);
   instellingenWeergeven();
   topbarWeergeven();
+  maandWeergeven();
 }
 
 pasThemaToe(state.ui.thema);
@@ -154,13 +174,19 @@ const navigatie = initNavigatie({
   onUiWijzigen: wijzigUi,
 });
 
-renderMaandScherm(schermEls.maand);
+const maandScherm = initMaandScherm(schermEls.maand, {
+  onItemToevoegen: voegItemEnHerteken,
+  onVerwijderItem: verwijderItemEnHerteken,
+  onDeadlineToggle: zetDeadlineEnHerteken,
+});
+
 renderWekenScherm(schermEls.weken);
 renderOverzichtScherm(schermEls.overzicht);
 renderVakkenScherm(schermEls.vakken);
 
 topbarWeergeven();
 instellingenWeergeven();
+maandWeergeven();
 
 vraagPersistentOpslagAan().then((toegekend) => {
   persistToegekend = toegekend;

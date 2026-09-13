@@ -8,7 +8,11 @@ import { parseYMD, dayOfWeek, diffDays } from "../lib/date.js";
 import { semesterMarkers } from "../data/semester.js";
 import { psyDates, agtechDates, rteDates, pythonDates } from "../data/coursedates.js";
 
-const WEEKDAGEN = ["ma", "di", "wo", "do", "vr", "za", "zo"];
+export const WEEKDAGEN = ["ma", "di", "wo", "do", "vr", "za", "zo"];
+const MAANDEN_VOL = [
+  "januari", "februari", "maart", "april", "mei", "juni",
+  "juli", "augustus", "september", "oktober", "november", "december",
+];
 const MAANDEN = ["jan", "feb", "mrt", "apr", "mei", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 
 const LESWEKEN_TOTAAL = Math.max(...[...psyDates, ...agtechDates, ...rteDates, ...pythonDates].map((d) => d.week));
@@ -20,6 +24,24 @@ const LESWEKEN_TOTAAL = Math.max(...[...psyDates, ...agtechDates, ...rteDates, .
 export function kortDatum(ymd) {
   const { d, m } = parseYMD(ymd);
   return `${WEEKDAGEN[dayOfWeek(ymd)]} ${d} ${MAANDEN[m - 1]}`;
+}
+
+/**
+ * @param {string} ymd
+ * @returns {string} bijv. "woensdag 4 november 2026"
+ */
+export function volledigeDatum(ymd) {
+  const { y, d, m } = parseYMD(ymd);
+  const VOLLE_WEEKDAGEN = ["maandag", "dinsdag", "woensdag", "donderdag", "vrijdag", "zaterdag", "zondag"];
+  return `${VOLLE_WEEKDAGEN[dayOfWeek(ymd)]} ${d} ${MAANDEN_VOL[m - 1]} ${y}`;
+}
+
+/**
+ * @param {number} m 1..12
+ * @returns {string}
+ */
+export function maandNaam(m) {
+  return MAANDEN_VOL[m - 1];
 }
 
 /**

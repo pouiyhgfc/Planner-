@@ -9,11 +9,14 @@
  * v3: state kreeg ui (fase 8B, navigatie): actief scherm, scrollpositie per
  *     scherm, en de handmatige thema-keuze — zodat een herlaad de gebruiker
  *     nooit terugzet naar de bovenkant van een lijst of een ander scherm.
+ * v4: state kreeg afgevinkteDeadlines (fase 8C, dagblad): welke deadlines
+ *     zijn afgevinkt, per sleutel "date-of-start::label" — deadlines zelf
+ *     hebben geen eigen id in src/data/deadlines.js of coursedates.js.
  */
 
 import { parseYMD } from "../lib/date.js";
 
-export const CURRENT_SCHEMA_VERSION = 3;
+export const CURRENT_SCHEMA_VERSION = 4;
 
 const STATUS_WAARDEN = ["idee", "vast"];
 export const SCHERMEN = ["maand", "weken", "overzicht", "vakken"];
@@ -31,10 +34,16 @@ function legeUiState() {
 }
 
 /**
- * @returns {{schemaVersion: number, items: object[], laatsteExport: string|null, ui: object}}
+ * @returns {{schemaVersion: number, items: object[], laatsteExport: string|null, ui: object, afgevinkteDeadlines: string[]}}
  */
 export function leegState() {
-  return { schemaVersion: CURRENT_SCHEMA_VERSION, items: [], laatsteExport: null, ui: legeUiState() };
+  return {
+    schemaVersion: CURRENT_SCHEMA_VERSION,
+    items: [],
+    laatsteExport: null,
+    ui: legeUiState(),
+    afgevinkteDeadlines: [],
+  };
 }
 
 /**
@@ -77,7 +86,19 @@ export function migrate(state) {
     };
   }
 
-  if (s.schemaVersion === CURRENT_SCHEMA_VERSION) return { ...s, ui: geldigeUiState(s.ui) };
+  if (s.schemaVersion === 3) {
+    s = {
+      schemaVersion: 4,
+      laatsteExport: s.laatsteExport ?? null,
+      items: s.items ?? [],
+      ui: geldigeUiState(s.ui),
+      afgevinkteDeadlines: s.afgevinkteDeadlines ?? [],
+    };
+  }
+
+  if (s.schemaVersion === CURRENT_SCHEMA_VERSION) {
+    return { ...s, ui: geldigeUiState(s.ui), afgevinkteDeadlines: s.afgevinkteDeadlines ?? [] };
+  }
   throw new Error(`onbekende schemaVersion: ${state.schemaVersion}`);
 }
 

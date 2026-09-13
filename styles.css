@@ -279,6 +279,7 @@ select {
   height: 100%;
   overflow-y: auto;
   padding: 16px;
+  position: relative;
 }
 
 .scherm-kop {
@@ -392,4 +393,169 @@ select {
   align-items: center;
   gap: 8px;
   font-size: var(--fs-min);
+}
+
+/* fase 8C — scherm "Maand" */
+
+.maand-header-rij {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.maand-pijl {
+  padding: 8px 12px;
+  font-family: var(--ff-display);
+}
+.maand-naam {
+  flex: 1;
+  font-family: var(--ff-head);
+  font-size: 20px;
+}
+.maand-vandaag-knop {
+  font-size: var(--fs-min);
+  padding: 8px 10px;
+}
+
+.maand-dagkoppen {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 2px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--fs-min);
+}
+
+.maand-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.dagvak {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  position: relative;
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-day);
+  background: var(--card);
+  padding: 4px;
+  min-width: 0;
+  min-height: 0;
+}
+.dagvak.buiten-maand {
+  opacity: 0.45;
+}
+.dagvak.buiten-periode {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-faint);
+  cursor: default;
+}
+.dagvak.status-gemarkeerd {
+  background: var(--card2);
+}
+.dagvak.status-gemarkeerd .dagvak-cijfer {
+  color: var(--text-faint);
+}
+.dagvak[data-vandaag="true"] {
+  border: 2px solid var(--accent);
+}
+.dagvak.geselecteerd {
+  background: var(--sel-bg);
+}
+.dagvak-cijfer {
+  font-family: var(--ff-display);
+  font-size: 15px;
+}
+.dagvak-streepjes {
+  margin-top: auto;
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+.streepje {
+  width: 8px;
+  height: 3px;
+  border-radius: 2px;
+}
+.stip {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.dagvak-eigen-balk {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 0 0 var(--radius-day) var(--radius-day);
+}
+
+.maand-telling {
+  color: var(--text-muted);
+  font-size: var(--fs-min);
+  margin: 8px 0 0;
+}
+
+.maand-legenda {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: var(--fs-min);
+}
+.maand-legenda li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.legenda-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dagblad-paneel {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  overflow-y: auto;
+  padding: 16px;
+}
+.dagblad-kop-rij {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+.dagblad-datum {
+  font-family: var(--ff-head);
+  font-size: 18px;
+  margin: 0 0 8px;
+}
+.dagblad-kop {
+  font-family: var(--ff-head);
+  font-size: 15px;
+  margin: 16px 0 4px;
+}
+.dagblad-klein {
+  color: var(--text-muted);
+  font-size: var(--fs-min);
+}
+.dagblad-acties {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+  border-top: var(--border-width) solid var(--border);
+  padding-top: 12px;
 }
