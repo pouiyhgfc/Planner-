@@ -235,10 +235,16 @@ de blokberekening rond die dagen automatisch.
 | vrijdag → maandag 18:00 | 0 | 0 |
 | vrijdag → dinsdag | 1 (maandag) | 0 |
 | vrijdag → woensdag | 2 (ma + wo) | 1 (PSY) |
-| Japan 2026-10-30 → 11-09 | **3** (11-02, 11-04, 11-09) | 5 lesmomenten: AgTech 10-29 + 11-05, RTE 10-29 + 11-05, PSY 11-04 |
+| Japan 2026-10-30 → 11-09 | **3** (11-02, 11-04, 11-09) | 3 lesmomenten: AgTech 11-05, RTE 11-05, PSY 11-04 |
 
 De Japan-regel is de belangrijkste controlewaarde in de hele app: komt er iets
 anders dan 3 Chinees-lessen uit, dan zit er een fout in de motor.
+
+**Correctie (bevestigd door Idries):** de eerdere versie van deze tabel noemde
+ook AgTech en RTE op 2026-10-29 (donderdag vóór de boekingsstart 2026-10-30)
+als gemist. Dat klopt niet — Idries gaat die donderdag gewoon naar college; de
+vaste boeking begint pas 2026-10-30. De cijfers hierboven zijn de correcte,
+bevestigde versie: AgTech en RTE elk 1x (11-05), niet 2x.
 
 ---
 

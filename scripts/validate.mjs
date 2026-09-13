@@ -6,6 +6,7 @@ import { psyDates, agtechDates, rteDates, rteActionItems, chineseLessons, chines
 import { trips } from "../src/data/trips.js";
 import { chinaVisaFreeDeadline, flexWeekAnnouncementDeadline, academicDeadlines } from "../src/data/deadlines.js";
 import { dayStatus, genereerKalenderDagen } from "../src/lib/dayStatus.js";
+import { isFree, freeBlocks, blocksWithCost, costOfRange } from "../src/lib/blocks.js";
 
 let failures = 0;
 let passed = 0;
@@ -286,6 +287,65 @@ for (const ymd of rangeDays("2026-10-30", "2026-11-09")) {
 
 // 2027-01-15: vakantie
 check("2027-01-15 status === vakantie", dayStatus("2027-01-15").status, "vakantie");
+
+// =====================================================================
+// Fase 3 — vrije-blokken-motor
+// =====================================================================
+
+// isFree: een lesdag is niet vrij, een vrije dag wel
+check('isFree("2026-11-16") === false (Chinees)', isFree("2026-11-16"), false);
+check('isFree("2026-11-14") === true (zaterdag)', isFree("2026-11-14"), true);
+
+// Terugkerend blok zonder absenties: vrijdag 00:00 → maandag 18:00 = 3,5 dag
+{
+  const week = blocksWithCost(0).find((b) => b.start === "2026-11-13");
+  check("N=0: blok bestaat voor de week van 2026-11-13", Boolean(week), true);
+  check("N=0: eindigt op maandag 2026-11-16", week.end, "2026-11-16");
+  check("N=0: lengte === 3.5 dagen, niet 4", week.length, 3.5);
+  check("N=0: geen enkel gemist lesmoment", week.gemisteLessen.length, 0);
+}
+
+// Bij één toegestane absentie: verlengt naar vrijdag → dinsdag = 5 dagen, 1x Chinees
+{
+  const week = blocksWithCost(1).find((b) => b.start === "2026-11-13");
+  check("N=1: eindigt op dinsdag 2026-11-17", week.end, "2026-11-17");
+  check("N=1: lengte === 5 dagen", week.length, 5);
+  check("N=1: precies 1 gemiste les", week.gemisteLessen.length, 1);
+  check("N=1: de gemiste les is Chinees op maandag", week.gemisteLessen[0].course === "CHI" && week.gemisteLessen[0].date === "2026-11-16", true);
+}
+
+// Bij twee absenties: loopt door tot en met woensdag, kosten 2x Chinees + 1x PSY
+// (bevestigd door Idries: kosten leidend boven de eindtijd-frasering in DATA.md)
+{
+  const week = blocksWithCost(2).find((b) => b.start === "2026-11-13");
+  check("N=2: eindigt op woensdag 2026-11-18", week.end, "2026-11-18");
+  check("N=2: lengte === 6 dagen", week.length, 6);
+  const chinees = week.gemisteLessen.filter((l) => l.course === "CHI").length;
+  const psy = week.gemisteLessen.filter((l) => l.course === "PSY").length;
+  check("N=2: 2x Chinees gemist", chinees, 2);
+  check("N=2: 1x PSY gemist", psy, 1);
+}
+
+// blocksWithCost(0) bevat nooit een lesmoment, ook geen maandag-/woensdagavond
+check("blocksWithCost(0): nergens een gemist lesmoment", blocksWithCost(0).every((b) => b.gemisteLessen.length === 0), true);
+
+// Het langste blok: na het laatste tentamen (2026-12-24) tot de spring semester start (2027-02-22)
+{
+  const langste = freeBlocks().reduce((a, b) => (b.length > a.length ? b : a));
+  check("langste blok: start 2026-12-25 (na de laatste tentamen)", langste.start, "2026-12-25");
+  check("langste blok: eindigt 2027-02-21 (dag vóór spring-semesterstart)", langste.end, "2027-02-21");
+  check("langste blok: bevat de flexibele week als risico", langste.bevatRisicoperiode, true);
+}
+
+// Japan-controlewaarde (DATA.md §3.5, gecorrigeerd en bevestigd door Idries):
+// 3x Chinees is de belangrijkste controlewaarde in de hele app.
+{
+  const kosten = costOfRange("2026-10-30", "2026-11-09").perVak;
+  check("Japan: 3x Chinees (belangrijkste controlewaarde)", kosten.CHI, 3);
+  check("Japan: 1x AgTech", kosten.AGTECH, 1);
+  check("Japan: 1x RTE", kosten.RTE, 1);
+  check("Japan: 1x PSY", kosten.PSY, 1);
+}
 
 console.log(`\n${passed} geslaagd, ${failures} mislukt.`);
 if (failures > 0) process.exit(1);
