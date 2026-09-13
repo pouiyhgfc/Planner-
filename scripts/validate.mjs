@@ -662,5 +662,34 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   }
 }
 
+// =====================================================================
+// Fase 8A — visueel systeem
+// =====================================================================
+
+// Zelf-gehoste fonts: bestaan op schijf, en styles.css verwijst ernaar met
+// @font-face (geen fonts.googleapis.com-link — CLAUDE.md §2, herzien in fase 8)
+{
+  const lettertypen = ["DMSans-Variable.woff2", "Outfit-Variable.woff2", "SchibstedGrotesk-Variable.woff2"];
+  for (const bestand of lettertypen) {
+    check(`fonts/${bestand} bestaat op schijf`, existsSync(join(PROJECT_ROOT, "fonts", bestand)), true);
+  }
+
+  const css = readFileSync(join(PROJECT_ROOT, "styles.css"), "utf8");
+  check('styles.css: geen fonts.googleapis.com-link', css.includes("fonts.googleapis.com"), false);
+  check('styles.css: geen fonts.gstatic.com-link', css.includes("fonts.gstatic.com"), false);
+  for (const bestand of lettertypen) {
+    check(`styles.css: @font-face verwijst naar fonts/${bestand}`, css.includes(`fonts/${bestand}`), true);
+  }
+  check("styles.css: --ff-display token aanwezig", css.includes("--ff-display"), true);
+  check("styles.css: --ff-head token aanwezig", css.includes("--ff-head"), true);
+  check("styles.css: --ff-body token aanwezig", css.includes("--ff-body"), true);
+
+  // fonts moeten ook in de service-worker-cache staan (FASE-8.md §0)
+  const swBron = readFileSync(join(PROJECT_ROOT, "sw.js"), "utf8");
+  for (const bestand of lettertypen) {
+    check(`sw.js: APP_SHELL bevat fonts/${bestand}`, swBron.includes(`fonts/${bestand}`), true);
+  }
+}
+
 console.log(`\n${passed} geslaagd, ${failures} mislukt.`);
 if (failures > 0) process.exit(1);
