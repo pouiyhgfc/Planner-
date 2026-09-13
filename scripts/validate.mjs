@@ -2,7 +2,7 @@ import { parseYMD, toYMD, addDays, dayOfWeek, isoWeek, rangeDays, diffDays } fro
 import { appPeriod, timezone, week12, semesterMarkers, calendarNotes } from "../src/data/semester.js";
 import { holidays } from "../src/data/holidays.js";
 import { courses } from "../src/data/courses.js";
-import { psyDates, agtechDates, rteDates, rteActionItems, chineseLessons, chineseExamSlots } from "../src/data/coursedates.js";
+import { psyDates, agtechDates, rteDates, rteActionItems, chineseLessons, chineseMogelijkeTentamens } from "../src/data/coursedates.js";
 import { trips } from "../src/data/trips.js";
 import { chinaVisaFreeDeadline, flexWeekAnnouncementDeadline, academicDeadlines } from "../src/data/deadlines.js";
 import { dayStatus, genereerKalenderDagen } from "../src/lib/dayStatus.js";
@@ -177,6 +177,20 @@ for (const c of courses) {
   checkBronZekerheid(`courses: ${c.id}.beoordeling`, c.beoordeling);
   check(`courses: ${c.id}.start is HH:MM`, /^\d{2}:\d{2}$/.test(c.start), true);
   check(`courses: ${c.id}.end is HH:MM`, /^\d{2}:\d{2}$/.test(c.end), true);
+  if (c.absentieregels) {
+    checkBronZekerheid(`courses: ${c.id}.absentieregels.puntenaftrek`, c.absentieregels.puntenaftrek);
+    checkBronZekerheid(`courses: ${c.id}.absentieregels.faaldrempel`, c.absentieregels.faaldrempel);
+  }
+}
+
+// General Chinese tijd is gecorrigeerd naar 18:25-21:05 (CORRECTIE-CHINEES.md)
+{
+  const chi = courses.find((c) => c.id === "CHI");
+  check("CHI: onbekendeVelden is nu leeg (code/docent/zaal zijn ZEKER)", chi.onbekendeVelden.length, 0);
+  check("CHI: start === 18:25", chi.start, "18:25");
+  check("CHI: end === 21:05", chi.end, "21:05");
+  check("CHI: puntenaftrek-vrijstelling === 6 uur", chi.absentieregels.puntenaftrek.vrijstellingUren, 6);
+  check("CHI: faaldrempel === 1/3 van de sessies", chi.absentieregels.faaldrempel.drempelFractieSessies, 1 / 3);
 }
 
 for (const d of psyDates) checkItem(`psyDates: ${d.date}`, d);
@@ -184,7 +198,7 @@ for (const d of agtechDates) checkItem(`agtechDates: ${d.date}`, d);
 for (const d of rteDates) checkItem(`rteDates: ${d.date}`, d);
 for (const d of rteActionItems) checkItem(`rteActionItems: ${d.date} ${d.label}`, d);
 for (const d of chineseLessons) checkItem(`chineseLessons: ${d.date}`, d);
-for (const d of chineseExamSlots) checkItem(`chineseExamSlots: ${d.label}`, d);
+for (const d of chineseMogelijkeTentamens) checkItem(`chineseMogelijkeTentamens: ${d.date}`, d);
 
 for (const t of trips) checkItem(`trips: ${t.label}`, t);
 
@@ -202,14 +216,38 @@ for (const d of psyDates) check(`${d.date} is woensdag (PSY)`, dayOfWeek(d.date)
 for (const d of agtechDates) check(`${d.date} is donderdag (AgTech)`, dayOfWeek(d.date), DAG.do);
 for (const d of rteDates) check(`${d.date} is donderdag (RTE)`, dayOfWeek(d.date), DAG.do);
 
-// --- General Chinese generator vs. controlelijst DATA.md §3.4 ---
+// --- General Chinese generator vs. controlelijst DATA.md §3.4 (CORRECTIE-CHINEES.md) ---
 const chiMondays = chineseLessons.filter((l) => dayOfWeek(l.date) === DAG.ma);
 const chiWednesdays = chineseLessons.filter((l) => dayOfWeek(l.date) === DAG.wo);
-check("General Chinese: aantal maandagen", chiMondays.length, 13);
-check("General Chinese: aantal woensdagen", chiWednesdays.length, 15);
-check("General Chinese: totaal aantal lessen", chineseLessons.length, 28);
+check("General Chinese: aantal maandagen", chiMondays.length, 14);
+check("General Chinese: aantal woensdagen", chiWednesdays.length, 16);
+check("General Chinese: totaal aantal lessen", chineseLessons.length, 30);
+check("General Chinese: loopt door tot 2026-12-23", chineseLessons.some((l) => l.date === "2026-12-23"), true);
 check("General Chinese: 2026-09-28 (feestdag) niet in de lijst", chineseLessons.some((l) => l.date === "2026-09-28"), false);
 check("General Chinese: 2026-10-26 (feestdag) niet in de lijst", chineseLessons.some((l) => l.date === "2026-10-26"), false);
+
+// --- mogelijke tentamenmomenten week 9 en week 16: geen keuze gemaakt ---
+check("chineseMogelijkeTentamens: precies 4 kandidaatdagen", chineseMogelijkeTentamens.length, 4);
+check(
+  "chineseMogelijkeTentamens: week 9 = 11-02 en 11-04",
+  chineseMogelijkeTentamens.filter((t) => t.week === 9).map((t) => t.date).sort().join(","),
+  "2026-11-02,2026-11-04"
+);
+check(
+  "chineseMogelijkeTentamens: week 16 = 12-21 en 12-23",
+  chineseMogelijkeTentamens.filter((t) => t.week === 16).map((t) => t.date).sort().join(","),
+  "2026-12-21,2026-12-23"
+);
+check(
+  "chineseMogelijkeTentamens: 11-02 en 11-04 hebben de japanStatus-markering",
+  chineseMogelijkeTentamens.filter((t) => t.date === "2026-11-02" || t.date === "2026-11-04").every((t) => t.japanStatus === "in overleg met docent, uitkomst onbekend"),
+  true
+);
+check(
+  "chineseMogelijkeTentamens: 11-02 en 11-04 staan óók gewoon als les in chineseLessons",
+  chineseLessons.some((l) => l.date === "2026-11-02") && chineseLessons.some((l) => l.date === "2026-11-04"),
+  true
+);
 
 // --- geen dubbele datum binnen hetzelfde vak ---
 function checkNoDuplicateDates(label, items) {
@@ -341,14 +379,22 @@ check("blocksWithCost(0): nergens een gemist lesmoment", blocksWithCost(0).every
   check("langste blok: bevat de flexibele week als risico", langste.bevatRisicoperiode, true);
 }
 
-// Japan-controlewaarde (DATA.md §3.5, gecorrigeerd en bevestigd door Idries):
-// 3x Chinees is de belangrijkste controlewaarde in de hele app.
+// Japan-controlewaarde (DATA.md §3.5, CORRECTIE-CHINEES.md): 3 Chinees-
+// sessies / 9 uur is de belangrijkste controlewaarde in de hele app.
 {
   const kosten = costOfRange("2026-10-30", "2026-11-09").perVak;
   check("Japan: 3x Chinees (belangrijkste controlewaarde)", kosten.CHI, 3);
   check("Japan: 1x AgTech", kosten.AGTECH, 1);
   check("Japan: 1x RTE", kosten.RTE, 1);
   check("Japan: 1x PSY", kosten.PSY, 1);
+
+  const chi = courses.find((c) => c.id === "CHI");
+  const chiUren = kosten.CHI * chi.absentieregels.puntenaftrek.uurPerSessie;
+  check("Japan: 3 Chinees-sessies × 3 uur = 9 uur absentie", chiUren, 9);
+  const urenBovenVrijstelling = Math.max(0, chiUren - chi.absentieregels.puntenaftrek.vrijstellingUren);
+  const puntenaftrek = urenBovenVrijstelling * chi.absentieregels.puntenaftrek.aftrekPerUurBovenVrijstelling;
+  check("Japan: 3 uur boven de vrijstelling van 6 uur", urenBovenVrijstelling, 3);
+  check("Japan: −1,5 punt op aanwezigheid/participatie", puntenaftrek, 1.5);
 }
 
 // =====================================================================

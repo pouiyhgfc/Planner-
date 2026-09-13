@@ -91,15 +91,17 @@ export const rteActionItems = [
 
 /**
  * General Chinese wordt NIET als lijst ingevoerd (DATA.md §3.4): gegenereerd
- * uit weekdag (ma=0, wo=2) + semestergrenzen (2026-09-07 → 2026-12-18) minus
- * feestdagen. De controlelijst in DATA.md (13 ma, 15 wo, 28 totaal) dient
+ * uit weekdag (ma=0, wo=2) + semestergrenzen (2026-09-07 → 2026-12-23) minus
+ * feestdagen. De controlelijst in DATA.md (14 ma, 16 wo, 30 totaal) dient
  * alleen om deze generator te verifiëren in validate.mjs — wijkt de uitkomst
- * af, dan is de feestdagenlijst of deze generator fout.
+ * af, dan is de feestdagenlijst of deze generator fout. Het vak loopt door
+ * tot in de officiële eindtentamenweek (2026-12-23), niet tot 2026-12-18
+ * (die oude einddatum was fout — CORRECTIE-CHINEES.md).
  * @returns {{date: string, type: string, course: string, label: string, bron: string, zekerheid: string}[]}
  */
 export function generateChineseLessons() {
   const start = "2026-09-07";
-  const end = "2026-12-18";
+  const end = "2026-12-23";
   const excluded = new Set(holidayDates());
   const bron = "afgeleid: DATA.md §3.4 (weekdag + semestergrenzen − feestdagen)";
   return rangeDays(start, end)
@@ -116,29 +118,58 @@ export function generateChineseLessons() {
 
 export const chineseLessons = generateChineseLessons();
 
+const BRON_CHI_CORRECTIE = "CORRECTIE-CHINEES.md (NTU Course-pagina + syllabus PTCSL7908-23)";
+
 /**
- * Twee lege, zichtbaar gemarkeerde tentamenslots (DATA.md §3.4). date: null
- * omdat er geen datum bekend is — dit wordt in de UI getoond als
- * "datum onbekend", nooit als een gok. Tellen niet mee als bezet dagdeel
- * zolang zekerheid TE VERIFIËREN blijft.
+ * Beide dagen van week 9 en week 16 zijn een mogelijk tentamenmoment — welke
+ * dag precies is ONBEKEND (DATA.md §3.4), dus de app kiest er geen. Dit zijn
+ * PUUR annotaties voor de UI: elke datum hier staat ook gewoon als normale
+ * "les" in chineseLessons (de generator weet niets van tentamens) en wordt
+ * NIET meegenomen in de les/tentamen-classificatie van dayStatus.js of
+ * lib/blocks.js — anders zou een onbevestigd tentamen de blokberekening al
+ * blokkeren.
  */
-export const chineseExamSlots = [
+export const chineseMogelijkeTentamens = [
   {
-    date: null,
-    type: "tentamen",
+    date: "2026-11-02",
+    week: 9,
+    type: "mogelijk-tentamen",
     course: "CHI",
-    label: "Chinees midterm — datum onbekend",
-    toelichting: "Enige kandidaat in de midterm-week 2026-10-26 → 10-30: maandag 10-26 is feestdag, vak valt alleen op ma/wo. Kandidaat-datum 2026-10-28 (wo, avond) valt samen met de PSY-midterm.",
-    bron: "DATA.md §3.4",
+    label: "Mogelijk Chinees midterm-moment (week 9, 20%)",
+    toelichting: "Midterm valt op 11-02 óf 11-04, welke dag is onbekend.",
+    japanStatus: "in overleg met docent, uitkomst onbekend",
+    bron: BRON_CHI_CORRECTIE,
     zekerheid: "TE VERIFIËREN",
   },
   {
-    date: null,
-    type: "tentamen",
+    date: "2026-11-04",
+    week: 9,
+    type: "mogelijk-tentamen",
     course: "CHI",
-    label: "Chinees eindtentamen — datum onbekend",
-    toelichting: "Tentamenweek 2026-12-21 → 12-25. Kandidaat-datums 2026-12-21 (ma) of 2026-12-23 (wo, samen met PSY-final). De gegenereerde leslijst stopt op 2026-12-18, dus deze datums zitten niet in chineseLessons.",
-    bron: "DATA.md §3.4",
+    label: "Mogelijk Chinees midterm-moment (week 9, 20%)",
+    toelichting: "Midterm valt op 11-02 óf 11-04, welke dag is onbekend.",
+    japanStatus: "in overleg met docent, uitkomst onbekend",
+    bron: BRON_CHI_CORRECTIE,
+    zekerheid: "TE VERIFIËREN",
+  },
+  {
+    date: "2026-12-21",
+    week: 16,
+    type: "mogelijk-tentamen",
+    course: "CHI",
+    label: "Mogelijk Chinees eindtentamen-moment (week 16, 25%)",
+    toelichting: "Final valt op 12-21 óf 12-23, welke dag is onbekend.",
+    bron: BRON_CHI_CORRECTIE,
+    zekerheid: "TE VERIFIËREN",
+  },
+  {
+    date: "2026-12-23",
+    week: 16,
+    type: "mogelijk-tentamen",
+    course: "CHI",
+    label: "Mogelijk Chinees eindtentamen-moment (week 16, 25%)",
+    toelichting: "Final valt op 12-21 óf 12-23, welke dag is onbekend.",
+    bron: BRON_CHI_CORRECTIE,
     zekerheid: "TE VERIFIËREN",
   },
 ];

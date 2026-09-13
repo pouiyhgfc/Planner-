@@ -108,6 +108,9 @@ function renderDagRij(dag, itemsOpDag, onVerwijderItem) {
   for (const d of dag.deadlines) stukken.push(`deadline: ${d.label}`);
   for (const b of dag.vasteBoekingen) stukken.push(b.label);
   for (const f of dag.feestdagen) stukken.push(f.label);
+  for (const t of dag.mogelijkeTentamens) {
+    stukken.push(t.japanStatus ? `${t.label} (${t.japanStatus})` : `${t.label} (${t.zekerheid})`);
+  }
   if (dag.date >= CNY.start && dag.date <= CNY.end) stukken.push(CNY.notitie);
   details.textContent = stukken.join(" · ");
   rij.appendChild(details);

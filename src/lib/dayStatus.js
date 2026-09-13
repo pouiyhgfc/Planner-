@@ -7,16 +7,16 @@ import { rangeDays, dayOfWeek, isoWeek } from "./date.js";
 import { appPeriod, semesterMarkers } from "../data/semester.js";
 import { holidays } from "../data/holidays.js";
 import { courses } from "../data/courses.js";
-import { psyDates, agtechDates, rteDates, chineseLessons, chineseExamSlots, rteActionItems } from "../data/coursedates.js";
+import { psyDates, agtechDates, rteDates, chineseLessons, chineseMogelijkeTentamens, rteActionItems } from "../data/coursedates.js";
 import { trips } from "../data/trips.js";
 import { chinaVisaFreeDeadline, flexWeekAnnouncementDeadline, academicDeadlines } from "../data/deadlines.js";
 
-const alleVakItems = [...psyDates, ...agtechDates, ...rteDates, ...chineseLessons, ...chineseExamSlots];
+const alleVakItems = [...psyDates, ...agtechDates, ...rteDates, ...chineseLessons];
 const alleDeadlineItems = [...rteActionItems, ...academicDeadlines, chinaVisaFreeDeadline, flexWeekAnnouncementDeadline];
 
 const DAGDEEL_NAMEN = ["ochtend", "middag", "avond"];
 const OCHTEND_EINDE = "12:10";
-const MIDDAG_EINDE = "18:00";
+const MIDDAG_EINDE = "18:25";
 
 /**
  * @param {string} ymd
@@ -57,6 +57,7 @@ export function dayStatus(ymd) {
   const vakken = alleVakItems.filter((v) => valtOpDatum(ymd, v));
   const deadlines = alleDeadlineItems.filter((d) => valtOpDatum(ymd, d));
   const feestdagen = holidays.filter((h) => valtOpDatum(ymd, h));
+  const mogelijkeTentamens = chineseMogelijkeTentamens.filter((t) => valtOpDatum(ymd, t));
   const vakantie = semesterMarkers.some((m) => m.type === "vakantie" && valtOpDatum(ymd, m));
   const tentamenperiode = semesterMarkers.some((m) => m.type === "tentamenperiode" && valtOpDatum(ymd, m));
   const risicoperiode = semesterMarkers.some((m) => m.type === "risicoperiode" && valtOpDatum(ymd, m));
@@ -104,6 +105,7 @@ export function dayStatus(ymd) {
     deadlines,
     vasteBoekingen,
     feestdagen,
+    mogelijkeTentamens,
     tentamenperiode,
     risicoperiode,
   };

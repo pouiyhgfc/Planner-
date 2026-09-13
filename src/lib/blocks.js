@@ -7,9 +7,9 @@
  * op hele-dag-niveau.
  *
  * Eén verfijning zit in blocksWithCost: als de dag ná een vrije reeks alléén
- * 's avonds bezet is (vanaf 18:00, zoals General Chinese), telt de ochtend/
+ * 's avonds bezet is (vanaf 18:25, zoals General Chinese), telt de ochtend/
  * middag van die dag nog gratis mee. Dat reproduceert DATA.md's "vrijdag
- * 00:00 → maandag 18:00 = 3,5 dag" zonder Chinees te hoeven missen.
+ * 00:00 → maandag 18:25 = 3,5 dag" zonder Chinees te hoeven missen.
  */
 
 import { rangeDays, diffDays } from "./date.js";
@@ -19,7 +19,7 @@ import { psyDates, agtechDates, rteDates, chineseLessons, rteActionItems } from 
 import { trips } from "../data/trips.js";
 
 const alleLesItems = [...psyDates, ...agtechDates, ...rteDates, ...chineseLessons];
-const AVOND_BEGIN = "18:00";
+const AVOND_BEGIN = "18:25";
 
 function courseVoor(id) {
   return courses.find((c) => c.id === id);
@@ -37,7 +37,7 @@ function valtOpDatum(ymd, item) {
 
 /**
  * @param {{course: string}[]} items
- * @returns {boolean} true als alle items pas vanaf 18:00 beginnen
+ * @returns {boolean} true als alle items pas vanaf AVOND_BEGIN beginnen
  */
 function heeftAlleenAvondLes(items) {
   return items.length > 0 && items.every((v) => courseVoor(v.course).start >= AVOND_BEGIN);
