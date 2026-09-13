@@ -25,29 +25,42 @@ Zekerheidsniveaus:
 
 ## 1. Vaste weekstructuur (lesrooster 115-1)
 
-Bron: de drie syllabi (gecontroleerd). Zekerheid: **ZEKER**, behalve waar vermeld.
+Bron: de drie syllabi (gecontroleerd) + voor General Chinese de NTU
+Course-pagina en syllabus PTCSL7908-23 (zie CORRECTIE-CHINEES.md).
+Zekerheid: **ZEKER**, behalve waar vermeld.
 
 | Vak | Code | Dag | Tijd | Zaal |
 |---|---|---|---|---|
 | General Psychology (普通心理學) | PSY1007-09 | woensdag | 09:10–12:10 | 博雅 101 |
 | Global AgTech Foresight | 946 U0060 (ser. 52089) | donderdag | 09:10–12:10 | ONBEKEND |
 | Railroad Transportation Engineering | 521 EU8770 | donderdag | 14:20–17:20 | 新 103 |
-| General Chinese | ONBEKEND | maandag **en** woensdag | 18:00–21:00 | ONBEKEND |
+| General Chinese (國際生華語(一)) | PTCSL7908, klas 23, course identifier 146 U9080, ser. 34044 | maandag **en** woensdag | **18:25–21:05** | 普502 (Pu 502) |
+
+General Chinese: docent 何宣瑩 (HE, SYUAN-YING), 3 studiepunten, keuzevak,
+voertaal Chinees met Engels als hulptaal, lesmateriaal *Practical
+Audio-Visual Chinese 1* (les 1 t/m 6), alleen voor internationale studenten.
+
+**De eindtijd van General Chinese was eerder fout in dit bestand** (er stond
+18:00–21:00). Overal waar dit tijdstip in berekeningen wordt gebruikt, is de
+grens nu **18:25**.
 
 **Afgeleid (laat de app dit berekenen, niet invoeren):**
 - Bezetting per weekdag:
-  - maandag: avond 18:00–21:00 (Chinees)
+  - maandag: avond 18:25–21:05 (Chinees)
   - dinsdag: vrij
-  - woensdag: 09:10–12:10 (PSY) + 18:00–21:00 (Chinees)
+  - woensdag: 09:10–12:10 (PSY) + 18:25–21:05 (Chinees)
   - donderdag: 09:10–12:10 (AgTech) + 14:20–17:20 (RTE)
   - vrijdag, zaterdag, zondag: vrij
-- **Enige blok zonder enige absentie: vrijdag 00:00 → maandag 18:00.**
+- **Enige blok zonder enige absentie: vrijdag 00:00 → maandag 18:25.**
   Dat is 3,5 kalenderdag, en met heen- en terugreis in de praktijk ± 2,5
   bruikbare dag. Dit is het standaardvenster.
 - **Eén gemiste Chinees-les op maandagavond verlengt dat naar vrijdag → dinsdag
-  = 5 dagen** (terug vóór woensdagochtend PSY). Dit is de goedkoopste ruil in
-  het hele rooster en moet de app expliciet als aparte optie tonen.
-- Woensdagmiddag (12:10–18:00) is vrij maar te kort om mee te tellen.
+  23:59 = 5 dagen** (terug vóór woensdagochtend PSY). Dit is de goedkoopste
+  ruil in het hele rooster en moet de app expliciet als aparte optie tonen.
+- Terug tot woensdag 18:25 kost daarnaast de PSY-ochtend (1 les), maar nog
+  niet de Chinese les van die woensdagavond. Pas terug ná 18:25 (t/m 23:59)
+  kost ook die tweede Chinese les.
+- Woensdagmiddag (12:10–18:25) is vrij maar te kort om mee te tellen.
 
 **Zaalnummer AgTech:** de NOL-link (`nol.ntu.edu.tw/.../print_table.php?course_id=946%20U0060&ser_no=52089`)
 gaf een serverfout bij ophalen. Veld blijft ONBEKEND tot Idries het aanlevert.
@@ -188,57 +201,122 @@ Beoordeling: huiswerk 30% (beste 5 van 7, geen uitstel), term project 25%,
 2 quizzes 20%, comprehensive exam 25%, participatie 5%.
 Klasregels: geen laat huiswerk, geen telefoon, geen eten.
 
-### 3.4 General Chinese (maandag + woensdag 18:00–21:00)
-Bron: opgave Idries. Zekerheid: **ZEKER** voor dag en tijd, **TE VERIFIËREN**
-voor de lesdatums (afgeleid van semestergrenzen en feestdagen, niet uit een
-syllabus).
+### 3.4 General Chinese (maandag + woensdag 18:25–21:05)
+Bron: NTU Course-pagina + syllabus PTCSL7908-23 (CORRECTIE-CHINEES.md,
+aangeleverd door Idries). Zekerheid: **ZEKER**, behalve waar vermeld.
 
-Aangenomen: loopt van de eerste lesdag (2026-09-07) t/m de laatste lesdag
-(2026-12-18), elke maandag en woensdag, met uitzondering van feestdagen.
+**Dag/zaal-conflict opgelost:** de NTU-pagina bevatte een tegenstrijdig
+"Course Description"-blok dat dinsdag/donderdag en zaal 普406 noemde, met een
+hoger cursusniveau (deel 4 i.p.v. deel 1). Twee onafhankelijke bronnen (de
+syllabus en de gestructureerde cursusvelden) bevestigen **maandag + woensdag,
+zaal 普502, deel 1** — dit is nu ZEKER, niet langer een open punt.
 
-**Maandagen (15 kalenderdata, waarvan 13 les):**
-09-07 · 09-14 · 09-21 · ~~09-28 feestdag~~ · 10-05 · 10-12 · 10-19 ·
-~~10-26 feestdag~~ · 11-02 · 11-09 · 11-16 · 11-23 · 11-30 · 12-07 · 12-14
+Loopt van de eerste lesdag (2026-09-07) t/m **2026-12-23** (binnen de
+officiële eindtentamenweek), elke maandag en woensdag, met uitzondering van
+feestdagen. Week 1 = Placement Test (Prepared Week).
 
-**Woensdagen (15, alle 15 les — geen feestdag valt op een woensdag):**
-09-09 · 09-16 · 09-23 · 09-30 · 10-07 · 10-14 · 10-21 · 10-28 · 11-04 ·
-11-11 · 11-18 · 11-25 · 12-02 · 12-09 · 12-16
+**Weeknummers → datums (afgeleid, TE VERIFIËREN, door de app te genereren —
+niet intypen):**
 
-→ **28 lessen totaal.** De app berekent deze lijst zelf uit weekdag +
-semestergrenzen + feestdagen; hij staat hier alleen om de berekening te
-controleren.
+| Week | Maandag | Woensdag | Onderwerp |
+|---|---|---|---|
+| 1 | 09-07 | 09-09 | Placement Test (Prepared Week) |
+| 2 | 09-14 | 09-16 | Hanyu Pinyin, Classroom Phrases |
+| 3 | 09-21 | 09-23 | Hanyu Pinyin + Lesson 1 |
+| 4 | ~~09-28 feestdag~~ | 09-30 | Lesson 1 |
+| 5 | 10-05 | 10-07 | Lesson 1, Lesson 2 |
+| 6 | 10-12 | 10-14 | Lesson 2 |
+| 7 | 10-19 | 10-21 | Lesson 3 |
+| 8 | ~~10-26 feestdag~~ | 10-28 | Lesson 3 |
+| **9** | **11-02** | **11-04** | **★ Midterm Exam (20%)** |
+| 10 | 11-09 | 11-11 | Lesson 4 |
+| 11 | 11-16 | 11-18 | Lesson 4 |
+| 12 | 11-23 | 11-25 | Lesson 5 |
+| 13 | 11-30 | 12-02 | Lesson 5, Lesson 6 |
+| 14 | 12-07 | 12-09 | Lesson 6 |
+| 15 | 12-14 | 12-16 | Lesson 6 |
+| **16** | **12-21** | **12-23** | **★ Final Exam (25%)** |
 
-**ONBEKEND en dus niet invullen:**
-- vakcode, docent, zaal
-- of het vak echt in week 1 begint (placement test was 2026-09-05)
-- of er een midterm/eindtentamen is, en op welke datum
-- het absentiebeleid en de weging ervan
+→ **Controlewaarden: 14 maandagen (16 min 2 feestdagen), 16 woensdagen, 30
+lessessies totaal.** Dit vervangt de oude waarde van 28 (die stopte op
+2026-12-18 — fout, het vak loopt door tot 2026-12-23). Het kalender-effect
+van de twee feestdagen (09-28, 10-26) op de lesstof is ONBEKEND — de docent
+kan schuiven; niet compenseren in de datalaag.
 
-**Tentamens — voorlopige velden, status TE VERIFIËREN:**
-Idries verwacht dat General Chinese een tentamen in de midterm-week heeft.
-De app maakt hiervoor twee lege, zichtbaar gemarkeerde slots aan. **Vul er geen
-datum in**; toon "datum onbekend" tot Idries het aanlevert.
+**Tentamens — binnen welke dag van week 9 en week 16 is ONBEKEND:**
+op welke van de twee dagen in week 9 (11-02 of 11-04) en week 16 (12-21 of
+12-23) het tentamen precies valt, is niet vastgelegd door de bron. Beide
+dagen van beide weken staan als "mogelijk tentamenmoment" met status
+TE VERIFIËREN — de app kiest er geen. Elke dag telt intussen ook gewoon als
+reguliere les in de gegenereerde lijst (het is onbekend of de andere dag van
+dat weekpaar wél gewoon lesstof behandelt).
 
-| Slot | Mogelijke datum | Toelichting |
-|---|---|---|
-| Chinees midterm | 2026-10-28 (wo, avond) | Enige kandidaat in de midterm-week 10-26 → 10-30: maandag 10-26 is feestdag, en het vak valt alleen op ma/wo. **Zelfde dag als de PSY-midterm 's ochtends.** |
-| Chinees eindtentamen | 2026-12-21 (ma) of 2026-12-23 (wo) | Tentamenweek 12-21 → 12-25. 12-23 is ook de PSY-final 's ochtends. Let op: de gegenereerde leslijst stopt op 12-18, dus deze dagen zitten er nu níet in. |
+**11-02 en 11-04 vallen binnen de Japan-boeking (§4) en dus binnen week 9
+(de midterm-week).** Status: "in overleg met docent, uitkomst onbekend" —
+Idries wil met docent 何宣瑩 afspreken hoe dit wordt opgelost. Dit is een apart
+open punt (zie §9), los van de vraag welke dag exact het tentamen is.
 
-Zolang de status TE VERIFIËREN is, rekent de motor deze twee dagen **niet** mee
-als bezet. Zodra de datum bekend is, worden ze normale tentamenitems en verandert
-de blokberekening rond die dagen automatisch.
+#### Absentieregels (§3.4a/b) — twee onafhankelijke, los geteste grenzen
+
+Vervangt "absentiebeleid ONBEKEND". Deze twee regels staan **los** van elkaar
+in het datamodel en worden **niet** met elkaar verrekend — de app toont beide
+standen naast elkaar.
+
+**a) Puntenaftrek** — bron syllabus PTCSL7908-23, zekerheid **ZEKER**:
+6 uur absentie vrij per semester, mits vooraf per e-mail afgemeld. Vanaf het
+7e uur: **−0,5 punt per uur** op het onderdeel aanwezigheid/participatie (15%
+van het eindcijfer). Eén lessessie = 3 uur (periodes A/B/C). Meer dan 20
+minuten te laat, of meer dan 20 minuten te vroeg weg = 1 uur absentie.
+
+**b) Faaldrempel** — bron: hetzelfde "Course Description"-blok dat de
+onjuiste dag/zaal noemde, zekerheid **TE VERIFIËREN**: meer dan 1/3 van de
+sessies missen kan betekenen niet halen; 5 of meer ongeoorloofde absenties
+betekent niet halen. Op 30 sessies is 1/3 = 10 sessies. Ziekte- en
+verlofmeldingen met bewijs tellen mee in het absentietotaal, maar kosten geen
+punten.
+
+**Overige weging** (bron syllabus, ZEKER): aanwezigheid/participatie 15%,
+huiswerk 20%, quizzen/toetsen (dictee, bijna elke les) 20%, midterm 20%,
+final 25%.
+
+- Huiswerk: te laat = −10 punten, moet binnen een week alsnog, daarna 0
+  punten. Handgeschreven verplicht.
+- Dictee-quizzen: bijna elke les, geen herkansing, beste 15 scores tellen.
+- Herhalingstoetsen: na elke les, in het laatste lesuur. Eén
+  herkansingsaanvraag per student per semester, binnen een week.
+- **Midterm en final (samen 45%) hebben geen ruime regeling.** Herkansing
+  alleen met melding minstens 1 dag vooraf, een medische verklaring én een
+  afgeronde online verlofprocedure — en dan binnen 3 dagen. Lukt dat niet:
+  0 punten voor dat tentamen.
+- Gedragsregels: vanaf de 4e waarschuwing −1 punt per overtreding (valt
+  onder het aanwezigheidscijfer).
 
 ### 3.5 Afgeleide lesbelasting — controlewaarden
 
-| Trip-venster | Gemiste Chinees-lessen | Gemiste overige lessen |
+**Correctie:** de eindtijd van Chinees is 18:25, niet 18:00 (zie §1) — dit
+schuift de trip-vensters hieronder op. Deze tabel vervangt de vorige versie.
+
+| Trip-venster | Chinees | Overige lessen |
 |---|---|---|
-| vrijdag → maandag 18:00 | 0 | 0 |
-| vrijdag → dinsdag | 1 (maandag) | 0 |
-| vrijdag → woensdag | 2 (ma + wo) | 1 (PSY) |
-| Japan 2026-10-30 → 11-09 | **3** (11-02, 11-04, 11-09) | 5 lesmomenten: AgTech 10-29 + 11-05, RTE 10-29 + 11-05, PSY 11-04 |
+| vrijdag 00:00 → maandag 18:25 | 0 | 0 |
+| vrijdag → dinsdag 23:59 | 1 (maandag) | 0 |
+| vrijdag → woensdag 18:25 | 1 (maandag) | 1 (PSY-ochtend) |
+| vrijdag → woensdag 23:59 | 2 (ma + wo) | 1 (PSY-ochtend) |
+
+**De harde controlewaarde — Japan, 2026-10-30 → 11-09:**
+- Chinees: 3 sessies (11-02, 11-04, 11-09) = **9 uur absentie**, waarvan 6 uur
+  binnen de vrijstelling (§3.4a) vallen → **3 uur boven de vrijstelling →
+  −1,5 punt** op het aanwezigheidscijfer.
+- **11-02 en 11-04 zijn week 9 = de midterm-week (20% van het eindcijfer)** —
+  zie de "in overleg met docent"-status in §3.4.
+- Overige lessen: AgTech 11-05, RTE 11-05, PSY 11-04 (3 lesmomenten).
 
 De Japan-regel is de belangrijkste controlewaarde in de hele app: komt er iets
-anders dan 3 Chinees-lessen uit, dan zit er een fout in de motor.
+anders dan 3 Chinees-sessies / 9 uur uit, dan zit er een fout in de motor.
+
+**Eerdere correctie (bevestigd door Idries, blijft staan):** AgTech en RTE op
+2026-10-29 (donderdag vóór de boekingsstart) tellen niet mee — Idries gaat die
+donderdag gewoon naar college.
 
 ---
 
@@ -249,6 +327,13 @@ anders dan 3 Chinees-lessen uit, dan zit er een fout in de motor.
 | Vlucht TPE → KIX (Peach Aviation) | 2026-10-30 | ZEKER |
 | Japan: Osaka 2 nachten → Kyoto 3 → Kawaguchiko/Fuji 1 → Tokyo 4 | 2026-10-30 → 11-09 | ZEKER |
 | Vlucht NRT → TPE (Peach Aviation) | 2026-11-09 | ZEKER |
+| Filipijnen-trip: vertrek vrijdagochtend | 2026-09-25 | ZEKER |
+| Filipijnen-trip: terugkomst (± 10:00) | 2026-09-30 | ZEKER |
+
+Bron: opgave Idries. Let op: 2026-09-25 is ook Moon Festival (feestdag, zie §2) —
+de vaste boeking heeft voorrang in de statusbepaling (zie fase 2-regels). De
+terugkomst is een woensdag; Idries mist daardoor de PSY-les die ochtend
+(09:10–12:10, §3.1). Dit vak neemt geen aanwezigheid op.
 
 ---
 
@@ -315,7 +400,7 @@ op te bouwen.
 | ISO-weeknummer | Het klassieke `Date`-object is hiervoor onbetrouwbaar | Eigen `isoWeek()` implementeren + testen |
 | Vercel statisch | `index.html` in de root zonder build-stap werkt; `vercel.json` alleen nodig voor rewrites/headers | Geen `vercel.json` tenzij nodig |
 | Vercel Hobby-limieten | 100 GB data transfer; max 100 deploys per dag; 50 custom domains per project | Geen beperking voor dit project |
-| Manifest-velden en iconformaten Android | **niet gevonden** | ONBEKEND — fase 7 begint met dit opzoeken |
+| Manifest-velden en iconformaten Android | Gevonden in fase 7 (web.dev/learn/pwa/web-app-manifest, developer.chrome.com/docs/lighthouse/pwa/installable-manifest): verplicht `name`, `short_name`, `start_url`, `display` (standalone/fullscreen/minimal-ui), `background_color`, `theme_color`, iconen 192×192 en 512×512 PNG; maskable icoon (`purpose: "any maskable"`) heeft de hoofdinhoud binnen een cirkel met straal 40% van de iconbreedte, gecentreerd | ZEKER, met bron — verwerkt in `manifest.json` |
 | Offline zonder service worker | Werkt niet offline zonder SW; installeerbaarheid vereist technisch niet altijd een SW | Fase 7: minimale SW |
 
 ---
@@ -325,9 +410,12 @@ op te bouwen.
 De app maakt hiervoor lege, gemarkeerde velden — géén aannames.
 
 1. Zaalnummer Global AgTech Foresight.
-1b. General Chinese: vakcode, docent, zaal, startdatum, tentamendata en
-    absentiebeleid. Idries wil met deze docent afspraken maken over afwezigheid —
-    de uitkomst daarvan hoort hier als aparte regel terug te komen.
+1b. General Chinese: exacte tentamendatum binnen week 9 (11-02 of 11-04) en
+    binnen week 16 (12-21 of 12-23). Ook: uitkomst van het gesprek met docent
+    何宣瑩 (HE, SYUAN-YING) over de afwezigheid tijdens week 9 door de
+    Japan-boeking, en of een herkansing zonder medische verklaring mogelijk is.
+    (Vakcode, docent, zaal, startdatum en absentiebeleid zijn nu ZEKER — zie
+    §1 en §3.4.)
 2. Of de docenten inhaallessen plannen in de flexibele week 2026-12-28 → 12-31.
    Aankondiging uiterlijk 2026-11-28 volgens de kalender.
 3. Datum en duur van de afstudeeropdracht in Nederland (februari 2027) — bepaalt
