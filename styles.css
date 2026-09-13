@@ -65,9 +65,11 @@
   --purple-border: #ddd6fe;
   --purple-text: #6d28d9;
 
-  /* vakkleuren — vast, overal identiek, niet per thema aangepast */
+  /* vakkleuren — licht. Kleur codeert het vak, nooit de status. */
   --vak-psy-bg: #fdf3f2;
   --vak-psy-text: #c0392f;
+  --vak-py-bg: #f5f3ff;
+  --vak-py-text: #6d28d9;
   --vak-agtech-bg: #eef7f2;
   --vak-agtech-text: #0a5a3c;
   --vak-rte-bg: #eef4fb;
@@ -101,6 +103,18 @@
     --purple-bg: #1c1830;
     --purple-border: #352c54;
     --purple-text: #c4b5fd;
+
+    /* vakkleuren — donker */
+    --vak-psy-bg: #2a1614;
+    --vak-psy-text: #f0867c;
+    --vak-py-bg: #1c1830;
+    --vak-py-text: #c4b5fd;
+    --vak-agtech-bg: #10251b;
+    --vak-agtech-text: #5fd6a0;
+    --vak-rte-bg: #132435;
+    --vak-rte-text: #8cc0f0;
+    --vak-chi-bg: #2b2008;
+    --vak-chi-text: #f0c47a;
   }
 }
 
@@ -128,6 +142,18 @@
   --purple-bg: #1c1830;
   --purple-border: #352c54;
   --purple-text: #c4b5fd;
+
+  /* vakkleuren — donker */
+  --vak-psy-bg: #2a1614;
+  --vak-psy-text: #f0867c;
+  --vak-py-bg: #1c1830;
+  --vak-py-text: #c4b5fd;
+  --vak-agtech-bg: #10251b;
+  --vak-agtech-text: #5fd6a0;
+  --vak-rte-bg: #132435;
+  --vak-rte-text: #8cc0f0;
+  --vak-chi-bg: #2b2008;
+  --vak-chi-text: #f0c47a;
 }
 
 * {
