@@ -7,10 +7,11 @@ import { trips } from "../src/data/trips.js";
 import { chinaVisaFreeDeadline, flexWeekAnnouncementDeadline, academicDeadlines } from "../src/data/deadlines.js";
 import { dayStatus, genereerKalenderDagen } from "../src/lib/dayStatus.js";
 import { isFree, freeBlocks, blocksWithCost, costOfRange } from "../src/lib/blocks.js";
-import { leegState, migrate, valideerItem, CURRENT_SCHEMA_VERSION } from "../src/state/schema.js";
+import { leegState, migrate, valideerItem, CURRENT_SCHEMA_VERSION, SCHERMEN } from "../src/state/schema.js";
 import { voegItemToe, verwijderItem, huidigeYMD, bereidExportVoor, bereidSamenvoegingVoor, pasConflictKeuzesToe } from "../src/state/store.js";
 import { chinaAftelling, flexWeekStatus, cnyDrukte, resterendeBlokken, absentieTotaal } from "../src/lib/overzicht.js";
 import { seizoensdataLabel } from "../src/data/season.js";
+import { kortDatum, collegeWeek } from "../src/ui/datumlabels.js";
 import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -551,17 +552,41 @@ check("leegState() heeft geen items", leegState().items.length, 0);
     items: [{ id: "b1", naam: "Oud item", start: "2026-10-05", end: "2026-10-06", status: "vast", notitie: "" }],
   };
   const gemigreerd = migrate(v1);
-  check("migrate v1->v2: schemaVersion wordt 2", gemigreerd.schemaVersion, 2);
-  check("migrate v1->v2: laatsteExport default null", gemigreerd.laatsteExport, null);
-  check("migrate v1->v2: item blijft behouden", gemigreerd.items.length, 1);
-  check("migrate v1->v2: bijgewerkt default null", gemigreerd.items[0].bijgewerkt, null);
-  check("migrate v1->v2: naam blijft behouden", gemigreerd.items[0].naam, "Oud item");
+  check("migrate v1->actueel: schemaVersion wordt de actuele versie", gemigreerd.schemaVersion, CURRENT_SCHEMA_VERSION);
+  check("migrate v1->actueel: laatsteExport default null", gemigreerd.laatsteExport, null);
+  check("migrate v1->actueel: item blijft behouden", gemigreerd.items.length, 1);
+  check("migrate v1->actueel: bijgewerkt default null", gemigreerd.items[0].bijgewerkt, null);
+  check("migrate v1->actueel: naam blijft behouden", gemigreerd.items[0].naam, "Oud item");
+  check("migrate v1->actueel: ui krijgt een default", gemigreerd.ui.activeScreen, "maand");
 
-  // volledige keten v0 -> v2
+  // volledige keten v0 -> actueel
   const v0 = { schemaVersion: 0, items: [{ id: "c1", naam: "Zeer oud item", datum: "2026-11-01" }] };
   const vanV0 = migrate(v0);
-  check("migrate v0->v2: schemaVersion wordt 2", vanV0.schemaVersion, 2);
-  check("migrate v0->v2: start/end afgeleid van datum", vanV0.items[0].start === "2026-11-01" && vanV0.items[0].end === "2026-11-01", true);
+  check("migrate v0->actueel: schemaVersion wordt de actuele versie", vanV0.schemaVersion, CURRENT_SCHEMA_VERSION);
+  check("migrate v0->actueel: start/end afgeleid van datum", vanV0.items[0].start === "2026-11-01" && vanV0.items[0].end === "2026-11-01", true);
+}
+
+// migrate(): schemaVersion 2 -> 3 voegt ui toe zonder iets weg te gooien
+{
+  const v2 = {
+    schemaVersion: 2,
+    laatsteExport: "2026-10-01",
+    items: [{ id: "d1", naam: "Item", start: "2026-10-05", end: "2026-10-06", status: "vast", notitie: "", bijgewerkt: "2026-10-01" }],
+  };
+  const gemigreerd = migrate(v2);
+  check("migrate v2->v3: schemaVersion wordt 3", gemigreerd.schemaVersion, 3);
+  check("migrate v2->v3: laatsteExport blijft behouden", gemigreerd.laatsteExport, "2026-10-01");
+  check("migrate v2->v3: item blijft behouden", gemigreerd.items.length, 1);
+  check("migrate v2->v3: ui.activeScreen default maand", gemigreerd.ui.activeScreen, "maand");
+  check("migrate v2->v3: ui.thema default systeem", gemigreerd.ui.thema, "systeem");
+  check("migrate v2->v3: ui.scrollPositions heeft alle schermen", SCHERMEN.every((s) => gemigreerd.ui.scrollPositions[s] === 0), true);
+
+  // een export met een gedeeltelijk ui-veld (bijv. een oudere v3-export) verliest niets
+  const v3MetGedeeltelijkeUi = { ...v2, schemaVersion: 3, ui: { activeScreen: "weken", scrollPositions: { maand: 40 } } };
+  const behouden = migrate(v3MetGedeeltelijkeUi);
+  check("migrate v3: bestaand activeScreen blijft staan", behouden.ui.activeScreen, "weken");
+  check("migrate v3: bestaande scrollpositie blijft staan", behouden.ui.scrollPositions.maand, 40);
+  check("migrate v3: ontbrekende scrollpositie krijgt default 0", behouden.ui.scrollPositions.weken, 0);
 }
 
 // bereidExportVoor(): bestandsnaam met datum, geldige JSON-inhoud
@@ -743,6 +768,70 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   const swBron = readFileSync(join(PROJECT_ROOT, "sw.js"), "utf8");
   for (const bestand of lettertypen) {
     check(`sw.js: APP_SHELL bevat fonts/${bestand}`, swBron.includes(`fonts/${bestand}`), true);
+  }
+}
+
+// =====================================================================
+// Fase 8B — navigatie en schermen
+// =====================================================================
+
+// kortDatum(): "wo 4 nov"-formaat, geverifieerd tegen bekende weekdagen
+{
+  check("kortDatum: 2026-11-04 is een woensdag", kortDatum("2026-11-04"), "wo 4 nov");
+  check("kortDatum: 2026-09-07 is een maandag (semesterstart)", kortDatum("2026-09-07"), "ma 7 sep");
+  check("kortDatum: jaargrens 2026-12-31", kortDatum("2026-12-31"), "do 31 dec");
+  check("kortDatum: jaargrens 2027-01-01", kortDatum("2027-01-01"), "vr 1 jan");
+  check("kortDatum: 28 februari 2027 (geen schrikkeljaar)", kortDatum("2027-02-28"), "zo 28 feb");
+}
+
+// collegeWeek(): afgeleid uit semesterMarkers + de week-velden in coursedates.js,
+// niet hardcoded — 2026-11-04 staat als week 9 bij alle vier de wekelijkse vakken.
+{
+  const w = collegeWeek("2026-11-04");
+  check("collegeWeek: 2026-11-04 is week 9", w?.week, 9);
+  check("collegeWeek: totaal is 16 (afgeleid uit coursedates.js, niet ingevoerd)", w?.totaal, 16);
+  check("collegeWeek: semesterstart zelf is week 1", collegeWeek("2026-09-07")?.week, 1);
+  check("collegeWeek: voor semesterstart is null", collegeWeek("2026-09-01"), null);
+  check("collegeWeek: diep in de wintervakantie is null", collegeWeek("2027-01-15"), null);
+}
+
+// index.html: de vier schermen, de tabbalk en het instellingenpaneel bestaan
+{
+  const html = readFileSync(join(PROJECT_ROOT, "index.html"), "utf8");
+  for (const scherm of SCHERMEN) {
+    check(`index.html: scherm-${scherm} aanwezig`, html.includes(`id="scherm-${scherm}"`), true);
+    check(`index.html: navknop voor ${scherm} aanwezig`, html.includes(`data-scherm="${scherm}"`), true);
+  }
+  check("index.html: topbar aanwezig", html.includes('id="topbar"'), true);
+  check("index.html: bottomnav aanwezig", html.includes('id="bottomnav"'), true);
+  check("index.html: instellingenpaneel aanwezig", html.includes('id="instellingen-paneel"'), true);
+  check("index.html: geen title-attributen (tooltips bestaan niet op Android)", /\stitle=/.test(html), false);
+}
+
+// Geen title-attributen in de nieuwe UI-laag van fase 8B
+{
+  for (const bestand of ["src/ui/main.js", "src/ui/nav.js", "src/ui/schermen.js", "src/ui/datumlabels.js", "src/ui/planner.js"]) {
+    const bron = readFileSync(join(PROJECT_ROOT, bestand), "utf8");
+    check(`${bestand}: geen title-attributen`, /\.title\s*=|setAttribute\(\s*["']title["']/.test(bron), false);
+  }
+}
+
+// main.js: de thema-waarden ("licht"/"donker") moeten mappen op de Engelse
+// data-theme-attribuutwaarden ("light"/"dark") die styles.css (fase 8A)
+// daadwerkelijk gebruikt — anders werkt de handmatige schakelaar niet.
+{
+  const mainBron = readFileSync(join(PROJECT_ROOT, "src/ui/main.js"), "utf8");
+  check('main.js: "licht" mapt naar data-theme="light"', /licht:\s*"light"/.test(mainBron), true);
+  check('main.js: "donker" mapt naar data-theme="dark"', /donker:\s*"dark"/.test(mainBron), true);
+}
+
+// sw.js: de oude fase 1-6 UI-bestanden zijn vervangen, niet blijven hangen
+{
+  const swBron = readFileSync(join(PROJECT_ROOT, "sw.js"), "utf8");
+  check("sw.js: render.js niet meer gecachet (vervangen in 8B)", swBron.includes("render.js"), false);
+  check("sw.js: overzicht.js (oud) niet meer gecachet (vervangen in 8B)", swBron.includes("ui/overzicht.js"), false);
+  for (const bestand of ["nav.js", "schermen.js", "datumlabels.js"]) {
+    check(`sw.js: APP_SHELL bevat ui/${bestand}`, swBron.includes(`ui/${bestand}`), true);
   }
 }
 

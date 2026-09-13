@@ -6,19 +6,35 @@
  * v1: items met start/end-bereik, status, notitie (fase 4).
  * v2: state kreeg laatsteExport; items kregen bijgewerkt (interne metadata,
  *     geen invoerveld) voor de merge-conflictresolutie in fase 5.
+ * v3: state kreeg ui (fase 8B, navigatie): actief scherm, scrollpositie per
+ *     scherm, en de handmatige thema-keuze — zodat een herlaad de gebruiker
+ *     nooit terugzet naar de bovenkant van een lijst of een ander scherm.
  */
 
 import { parseYMD } from "../lib/date.js";
 
-export const CURRENT_SCHEMA_VERSION = 2;
+export const CURRENT_SCHEMA_VERSION = 3;
 
 const STATUS_WAARDEN = ["idee", "vast"];
+export const SCHERMEN = ["maand", "weken", "overzicht", "vakken"];
+const THEMA_WAARDEN = ["systeem", "licht", "donker"];
 
 /**
- * @returns {{schemaVersion: number, items: object[], laatsteExport: string|null}}
+ * @returns {{activeScreen: string, scrollPositions: Record<string, number>, thema: string}}
+ */
+function legeUiState() {
+  return {
+    activeScreen: "maand",
+    scrollPositions: Object.fromEntries(SCHERMEN.map((s) => [s, 0])),
+    thema: "systeem",
+  };
+}
+
+/**
+ * @returns {{schemaVersion: number, items: object[], laatsteExport: string|null, ui: object}}
  */
 export function leegState() {
-  return { schemaVersion: CURRENT_SCHEMA_VERSION, items: [], laatsteExport: null };
+  return { schemaVersion: CURRENT_SCHEMA_VERSION, items: [], laatsteExport: null, ui: legeUiState() };
 }
 
 /**
@@ -52,8 +68,34 @@ export function migrate(state) {
     };
   }
 
-  if (s.schemaVersion === CURRENT_SCHEMA_VERSION) return s;
+  if (s.schemaVersion === 2) {
+    s = {
+      schemaVersion: 3,
+      laatsteExport: s.laatsteExport ?? null,
+      items: s.items ?? [],
+      ui: geldigeUiState(s.ui),
+    };
+  }
+
+  if (s.schemaVersion === CURRENT_SCHEMA_VERSION) return { ...s, ui: geldigeUiState(s.ui) };
   throw new Error(`onbekende schemaVersion: ${state.schemaVersion}`);
+}
+
+/**
+ * Vult ontbrekende ui-velden aan zonder een geldig aanwezig veld te
+ * overschrijven — nodig omdat een import van een oudere export dit veld
+ * kan missen (zie schema v3-migratie hierboven).
+ * @param {object|undefined} ui
+ * @returns {{activeScreen: string, scrollPositions: Record<string, number>, thema: string}}
+ */
+function geldigeUiState(ui) {
+  const leeg = legeUiState();
+  if (!ui) return leeg;
+  return {
+    activeScreen: SCHERMEN.includes(ui.activeScreen) ? ui.activeScreen : leeg.activeScreen,
+    scrollPositions: { ...leeg.scrollPositions, ...ui.scrollPositions },
+    thema: THEMA_WAARDEN.includes(ui.thema) ? ui.thema : leeg.thema,
+  };
 }
 
 /**

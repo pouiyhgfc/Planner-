@@ -1,6 +1,4 @@
-import { renderCalendar } from "./render.js";
-import { renderPlannerForm, renderPersistRegel, renderExportRegel, renderConflictenPaneel } from "./planner.js";
-import { renderOverzichtPaneel } from "./overzicht.js";
+import { SCHERMEN } from "../state/schema.js";
 import {
   laadState,
   bewaarState,
@@ -12,36 +10,98 @@ import {
   pasConflictKeuzesToe,
   huidigeYMD,
 } from "../state/store.js";
+import { absentieTotaal } from "../lib/overzicht.js";
+import { initNavigatie, renderTopbar } from "./nav.js";
+import { renderMaandScherm, renderWekenScherm, renderOverzichtScherm, renderVakkenScherm } from "./schermen.js";
+import {
+  renderThemaRegel,
+  renderPersistRegel,
+  renderExportRegel,
+  renderConflictenPaneel,
+  renderPlannerForm,
+  renderEigenItemsLijst,
+} from "./planner.js";
 
+const foutEl = document.getElementById("fout-melding");
+window.addEventListener("error", (e) => toonFout(e.error ?? e.message));
+window.addEventListener("unhandledrejection", (e) => toonFout(e.reason));
+
+function toonFout(fout) {
+  foutEl.hidden = false;
+  foutEl.textContent = `Fout: ${fout?.message ?? fout}`;
+}
+
+const topbarWeekEl = document.getElementById("topbar-week");
+const topbarAbsentieEl = document.getElementById("topbar-absentie");
+const instellingenKnopEl = document.getElementById("instellingen-knop");
+const instellingenPaneelEl = document.getElementById("instellingen-paneel");
+const instellingenSluitEl = document.getElementById("instellingen-sluit");
+const themaEl = document.getElementById("thema-regel");
 const persistEl = document.getElementById("persist-regel");
-const overzichtEl = document.getElementById("overzicht-paneel");
 const exportEl = document.getElementById("export-regel");
 const conflictenEl = document.getElementById("conflicten-paneel");
 const formEl = document.getElementById("planner-form");
-const kalenderEl = document.getElementById("app");
+const eigenItemsEl = document.getElementById("eigen-items-lijst");
+
+const schermEls = Object.fromEntries(SCHERMEN.map((s) => [s, document.getElementById(`scherm-${s}`)]));
+const navKnopEls = [...document.querySelectorAll(".navknop")];
 
 let state = await laadState();
 let openstaandeConflicten = [];
+let persistToegekend = null;
 
-async function opnieuwRenderen() {
-  renderOverzichtPaneel(overzichtEl, huidigeYMD(), state.items);
+const THEMA_ATTRIBUUT = { licht: "light", donker: "dark" };
 
+/**
+ * De state bewaart de Nederlandse labelwaarden ("licht"/"donker"); styles.css
+ * (fase 8A) verwacht het Engelse data-theme="light"/"dark" op <html>.
+ */
+function pasThemaToe(waarde) {
+  const attribuut = THEMA_ATTRIBUUT[waarde];
+  if (attribuut) document.documentElement.setAttribute("data-theme", attribuut);
+  else document.documentElement.removeAttribute("data-theme");
+}
+
+async function wijzigUi(nieuweUi) {
+  state = { ...state, ui: nieuweUi };
+  await bewaarState(state);
+}
+
+async function wijzigThema(waarde) {
+  pasThemaToe(waarde);
+  await wijzigUi({ ...state.ui, thema: waarde });
+  themaWeergeven();
+}
+
+function themaWeergeven() {
+  renderThemaRegel(themaEl, state.ui.thema, wijzigThema);
+}
+
+function instellingenWeergeven() {
+  themaWeergeven();
+  renderPersistRegel(persistEl, persistToegekend);
   renderExportRegel(exportEl, state.laatsteExport, exporteer);
-  exportEl.addEventListener("import-bestand", (e) => importeerBestand(e.detail), { once: true });
-
   renderConflictenPaneel(conflictenEl, openstaandeConflicten, pasConflictenToe);
-
   renderPlannerForm(formEl, async (veld) => {
     state = voegItemToe(state, veld);
     await bewaarState(state);
-    opnieuwRenderen();
+    instellingenWeergeven();
+    topbarWeergeven();
   });
-
-  renderCalendar(kalenderEl, state.items, async (id) => {
+  renderEigenItemsLijst(eigenItemsEl, state.items, async (id) => {
     state = verwijderItem(state, id);
     await bewaarState(state);
-    opnieuwRenderen();
+    instellingenWeergeven();
+    topbarWeergeven();
   });
+}
+
+function topbarWeergeven() {
+  renderTopbar(
+    { weekEl: topbarWeekEl, absentieEl: topbarAbsentieEl },
+    { vandaag: huidigeYMD(), absenties: absentieTotaal(state.items) },
+    () => navigatie.naarScherm("vakken")
+  );
 }
 
 function downloadBestand(bestandsnaam, inhoud) {
@@ -59,7 +119,7 @@ async function exporteer() {
   state = nieuweState;
   await bewaarState(state);
   downloadBestand(bestandsnaam, inhoud);
-  opnieuwRenderen();
+  instellingenWeergeven();
 }
 
 async function importeerBestand(bestand) {
@@ -69,18 +129,43 @@ async function importeerBestand(bestand) {
   state = { ...state, items };
   await bewaarState(state);
   openstaandeConflicten = conflicten;
-  opnieuwRenderen();
+  instellingenWeergeven();
+  topbarWeergeven();
 }
+exportEl.addEventListener("import-bestand", (e) => importeerBestand(e.detail));
 
 async function pasConflictenToe(keuzes) {
   state = { ...state, items: pasConflictKeuzesToe(state.items, openstaandeConflicten, keuzes) };
   openstaandeConflicten = [];
   await bewaarState(state);
-  opnieuwRenderen();
+  instellingenWeergeven();
+  topbarWeergeven();
 }
 
-vraagPersistentOpslagAan().then((toegekend) => renderPersistRegel(persistEl, toegekend));
-opnieuwRenderen();
+pasThemaToe(state.ui.thema);
+
+const navigatie = initNavigatie({
+  schermEls,
+  navKnopEls,
+  instellingenKnopEl,
+  instellingenPaneelEl,
+  instellingenSluitEl,
+  ui: state.ui,
+  onUiWijzigen: wijzigUi,
+});
+
+renderMaandScherm(schermEls.maand);
+renderWekenScherm(schermEls.weken);
+renderOverzichtScherm(schermEls.overzicht);
+renderVakkenScherm(schermEls.vakken);
+
+topbarWeergeven();
+instellingenWeergeven();
+
+vraagPersistentOpslagAan().then((toegekend) => {
+  persistToegekend = toegekend;
+  renderPersistRegel(persistEl, persistToegekend);
+});
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("./sw.js");

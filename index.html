@@ -10,12 +10,48 @@
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<div id="persist-regel"></div>
-<div id="overzicht-paneel"></div>
-<div id="export-regel"></div>
-<div id="conflicten-paneel" hidden></div>
-<div id="planner-form"></div>
-<div id="app"></div>
+<div id="fout-melding" hidden></div>
+
+<header id="topbar">
+  <div id="topbar-week"></div>
+  <div id="topbar-rechts">
+    <div id="topbar-absentie"></div>
+    <button id="instellingen-knop" type="button" class="tap-target">Instellingen</button>
+  </div>
+</header>
+
+<main id="schermen">
+  <section id="scherm-maand" class="scherm" data-scherm="maand"></section>
+  <section id="scherm-weken" class="scherm" data-scherm="weken" hidden></section>
+  <section id="scherm-overzicht" class="scherm" data-scherm="overzicht" hidden></section>
+  <section id="scherm-vakken" class="scherm" data-scherm="vakken" hidden></section>
+</main>
+
+<nav id="bottomnav">
+  <button type="button" class="tap-target navknop" data-scherm="maand">Maand</button>
+  <button type="button" class="tap-target navknop" data-scherm="weken">Weken</button>
+  <button type="button" class="tap-target navknop" data-scherm="overzicht">Overzicht</button>
+  <button type="button" class="tap-target navknop" data-scherm="vakken">Vakken</button>
+</nav>
+
+<div id="instellingen-paneel" hidden>
+  <div id="instellingen-inhoud">
+    <div id="instellingen-kop">
+      <h2>Instellingen</h2>
+      <button id="instellingen-sluit" type="button" class="tap-target">Sluiten</button>
+    </div>
+    <div id="thema-regel"></div>
+    <div id="persist-regel"></div>
+    <div id="export-regel"></div>
+    <div id="conflicten-paneel" hidden></div>
+    <div id="eigen-items-kop">
+      <h3>Eigen items</h3>
+    </div>
+    <div id="planner-form"></div>
+    <div id="eigen-items-lijst"></div>
+  </div>
+</div>
+
 <script type="module" src="src/ui/main.js"></script>
 </body>
 </html>
