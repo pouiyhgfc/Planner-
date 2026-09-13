@@ -5,6 +5,10 @@
 
 import { parseYMD } from "../lib/date.js";
 import { genereerKalenderDagen } from "../lib/dayStatus.js";
+import { cnyDrukte } from "../lib/overzicht.js";
+import { seizoensdataLabel } from "../data/season.js";
+
+const CNY = cnyDrukte();
 
 const MAAND_NAMEN = [
   "januari", "februari", "maart", "april", "mei", "juni",
@@ -66,7 +70,7 @@ function renderKop(aantalDagen) {
 function renderMaandkop(y, m) {
   const kop = document.createElement("h2");
   kop.className = "maandkop";
-  kop.textContent = `${MAAND_NAMEN[m - 1]} ${y}`;
+  kop.textContent = `${MAAND_NAMEN[m - 1]} ${y} — ${seizoensdataLabel(m)}`;
   return kop;
 }
 
@@ -104,6 +108,7 @@ function renderDagRij(dag, itemsOpDag, onVerwijderItem) {
   for (const d of dag.deadlines) stukken.push(`deadline: ${d.label}`);
   for (const b of dag.vasteBoekingen) stukken.push(b.label);
   for (const f of dag.feestdagen) stukken.push(f.label);
+  if (dag.date >= CNY.start && dag.date <= CNY.end) stukken.push(CNY.notitie);
   details.textContent = stukken.join(" · ");
   rij.appendChild(details);
 

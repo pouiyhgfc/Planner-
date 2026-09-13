@@ -1,5 +1,6 @@
 import { renderCalendar } from "./render.js";
 import { renderPlannerForm, renderPersistRegel, renderExportRegel, renderConflictenPaneel } from "./planner.js";
+import { renderOverzichtPaneel } from "./overzicht.js";
 import {
   laadState,
   bewaarState,
@@ -9,9 +10,11 @@ import {
   bereidExportVoor,
   bereidSamenvoegingVoor,
   pasConflictKeuzesToe,
+  huidigeYMD,
 } from "../state/store.js";
 
 const persistEl = document.getElementById("persist-regel");
+const overzichtEl = document.getElementById("overzicht-paneel");
 const exportEl = document.getElementById("export-regel");
 const conflictenEl = document.getElementById("conflicten-paneel");
 const formEl = document.getElementById("planner-form");
@@ -21,6 +24,8 @@ let state = await laadState();
 let openstaandeConflicten = [];
 
 async function opnieuwRenderen() {
+  renderOverzichtPaneel(overzichtEl, huidigeYMD(), state.items);
+
   renderExportRegel(exportEl, state.laatsteExport, exporteer);
   exportEl.addEventListener("import-bestand", (e) => importeerBestand(e.detail), { once: true });
 

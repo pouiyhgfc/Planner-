@@ -146,6 +146,31 @@ body {
   border-bottom: 1px solid var(--kleur-rand);
 }
 
+.overzicht-paneel {
+  padding: 6px 12px;
+  background: var(--kleur-maandkop-bg);
+  border-bottom: 2px solid var(--kleur-rand-week);
+  font-size: 12px;
+}
+
+.overzicht-regel {
+  padding: 1px 0;
+}
+
+.overzicht-regel.overzicht-waarschuwing {
+  color: #a33;
+  font-weight: bold;
+}
+
+.overzicht-blokken {
+  margin: 2px 0;
+  padding-left: 18px;
+}
+
+.overzicht-absenties {
+  font-weight: bold;
+}
+
 .export-regel {
   display: flex;
   align-items: center;

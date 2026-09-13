@@ -9,6 +9,8 @@ import { dayStatus, genereerKalenderDagen } from "../src/lib/dayStatus.js";
 import { isFree, freeBlocks, blocksWithCost, costOfRange } from "../src/lib/blocks.js";
 import { leegState, migrate, valideerItem, CURRENT_SCHEMA_VERSION } from "../src/state/schema.js";
 import { voegItemToe, verwijderItem, huidigeYMD, bereidExportVoor, bereidSamenvoegingVoor, pasConflictKeuzesToe } from "../src/state/store.js";
+import { chinaAftelling, flexWeekStatus, cnyDrukte, resterendeBlokken, absentieTotaal } from "../src/lib/overzicht.js";
+import { seizoensdataLabel } from "../src/data/season.js";
 
 let failures = 0;
 let passed = 0;
@@ -503,6 +505,60 @@ check("leegState() heeft geen items", leegState().items.length, 0);
   const opgelost = pasConflictKeuzesToe(items, conflicten, { [botsendId]: "geimporteerd" });
   const gekozenItem = opgelost.find((i) => i.id === botsendId);
   check("conflict opgelost met 'geimporteerd': naam bijgewerkt", gekozenItem.naam, "Botst (gewijzigd)");
+}
+
+// =====================================================================
+// Fase 6 — deadlines en waarschuwingen (op een gesimuleerde datum)
+// =====================================================================
+
+const GESIMULEERD_VANDAAG = "2026-11-01";
+
+// China-aftelling
+{
+  const china = chinaAftelling(GESIMULEERD_VANDAAG);
+  check("China-aftelling: dagen resterend", china.dagenResterend, diffDays(GESIMULEERD_VANDAAG, "2026-12-31"));
+  check("China-aftelling: zekerheid TE VERIFIËREN zichtbaar", china.zekerheid, "TE VERIFIËREN");
+}
+
+// Flexibele-week-waarschuwing
+{
+  const flexVoorDeadline = flexWeekStatus("2026-11-01");
+  check("flexWeek vóór 2026-11-28: nog niet gepasseerd", flexVoorDeadline.gepasseerd, false);
+  const flexNaDeadline = flexWeekStatus("2026-12-01");
+  check("flexWeek ná 2026-11-28: gepasseerd", flexNaDeadline.gepasseerd, true);
+}
+
+// Chinees Nieuwjaar-drukte, afgeleid uit holidays.js (niet hardcoded)
+{
+  const cny = cnyDrukte();
+  check("cnyDrukte: start", cny.start, "2027-02-04");
+  check("cnyDrukte: end", cny.end, "2027-02-10");
+  check("cnyDrukte: notitie", cny.notitie, "vervoer en hotels extreem druk");
+}
+
+// Overzichtspaneel: aantal resterende blokken op de gesimuleerde datum
+{
+  const blokken = resterendeBlokken(GESIMULEERD_VANDAAG);
+  check("resterendeBlokken: 3,5-dagenblokken > 0", blokken.drieËnHalf > 0, true);
+  check("resterendeBlokken: 5-dagenblokken > 0", blokken.vijfMetEenAbsentie > 0, true);
+  check("resterendeBlokken: precies 1 lang blok in de wintervakantie", blokken.langBlokInVakantie, 1);
+}
+
+// Absentieteller: alleen status "vast" telt mee, "idee" niet
+{
+  const items = [
+    { start: "2026-10-30", end: "2026-11-09", status: "vast", naam: "x", notitie: "", id: "1" },
+    { start: "2026-09-25", end: "2026-09-30", status: "idee", naam: "y", notitie: "", id: "2" },
+  ];
+  const totaal = absentieTotaal(items);
+  check("absentieTotaal: CHI van het vaste item", totaal.CHI, 3);
+  check("absentieTotaal: PSY van het vaste item", totaal.PSY, 1);
+  check("absentieTotaal: idee-item niet meegeteld (geen extra PSY uit Filipijnen)", absentieTotaal([items[1]]).PSY, undefined);
+}
+
+// Seizoensdata: elke maand zonder data toont de vaste tekst, nooit een schatting
+for (const m of [9, 10, 11, 12, 1, 2]) {
+  check(`seizoensdataLabel(${m}) === "seizoensdata ontbreekt"`, seizoensdataLabel(m), "seizoensdata ontbreekt");
 }
 
 console.log(`\n${passed} geslaagd, ${failures} mislukt.`);
