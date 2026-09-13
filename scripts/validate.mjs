@@ -245,18 +245,34 @@ for (const ymd of rangeDays("2026-10-30", "2026-11-09")) {
   check(`${ymd} status === vaste-boeking`, dayStatus(ymd).status, "vaste-boeking");
 }
 
-// 2026-09-25: feestdag, geen les
+// 2026-10-10: feestdag (National Day), geen les — niet gedekt door een vaste boeking
 {
-  const dag = dayStatus("2026-09-25");
-  check("2026-09-25 status === feestdag", dag.status, "feestdag");
-  check("2026-09-25 geen vakken", dag.vakken.length, 0);
+  const dag = dayStatus("2026-10-10");
+  check("2026-10-10 status === feestdag", dag.status, "feestdag");
+  check("2026-10-10 geen vakken", dag.vakken.length, 0);
 }
 
-// 2026-09-28: feestdag, normaal een Chinees-maandag, maar geen les
+// 2026-09-25 en 2026-09-28: feestdag, normaal een Chinees-maandag (28e), maar
+// vallen nu binnen de Filipijnen-boeking (2026-09-25 → 09-30) — vaste boeking
+// wint per de voorrangsorde, en er wordt sowieso geen Chinese les gegenereerd
+// op een feestdag.
 {
-  const dag = dayStatus("2026-09-28");
-  check("2026-09-28 status === feestdag", dag.status, "feestdag");
-  check("2026-09-28 geen Chinese les", dag.vakken.some((v) => v.course === "CHI"), false);
+  const dag25 = dayStatus("2026-09-25");
+  check("2026-09-25 status === vaste-boeking (wint van feestdag)", dag25.status, "vaste-boeking");
+  check("2026-09-25 is nog altijd geregistreerd als feestdag", dag25.feestdagen.length > 0, true);
+
+  const dag28 = dayStatus("2026-09-28");
+  check("2026-09-28 status === vaste-boeking (wint van feestdag)", dag28.status, "vaste-boeking");
+  check("2026-09-28 geen Chinese les", dag28.vakken.some((v) => v.course === "CHI"), false);
+}
+
+// 2026-09-30: terugkomst Filipijnen (± 10:00) — hele dag telt als vaste
+// boeking, dus ook de PSY-les die ochtend wordt hierdoor "verborgen" achter
+// de vaste-boeking-status (het vak zelf blijft wel in dag.vakken staan).
+{
+  const dag = dayStatus("2026-09-30");
+  check("2026-09-30 status === vaste-boeking", dag.status, "vaste-boeking");
+  check("2026-09-30 heeft PSY die dag (gemist)", dag.vakken.some((v) => v.course === "PSY"), true);
 }
 
 // 2026-11-16 (maandag): ochtend/middag vrij, avond bezet (Chinees)

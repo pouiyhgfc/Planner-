@@ -249,6 +249,13 @@ anders dan 3 Chinees-lessen uit, dan zit er een fout in de motor.
 | Vlucht TPE → KIX (Peach Aviation) | 2026-10-30 | ZEKER |
 | Japan: Osaka 2 nachten → Kyoto 3 → Kawaguchiko/Fuji 1 → Tokyo 4 | 2026-10-30 → 11-09 | ZEKER |
 | Vlucht NRT → TPE (Peach Aviation) | 2026-11-09 | ZEKER |
+| Filipijnen-trip: vertrek vrijdagochtend | 2026-09-25 | ZEKER |
+| Filipijnen-trip: terugkomst (± 10:00) | 2026-09-30 | ZEKER |
+
+Bron: opgave Idries. Let op: 2026-09-25 is ook Moon Festival (feestdag, zie §2) —
+de vaste boeking heeft voorrang in de statusbepaling (zie fase 2-regels). De
+terugkomst is een woensdag; Idries mist daardoor de PSY-les die ochtend
+(09:10–12:10, §3.1). Dit vak neemt geen aanwezigheid op.
 
 ---
 
