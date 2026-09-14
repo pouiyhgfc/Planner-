@@ -16,8 +16,9 @@ import { renderDagblad } from "./dagblad.js";
  *   onItemToevoegen: (veld: object) => void,
  *   onVerwijderItem: (id: string) => void,
  *   onDeadlineToggle: (sleutel: string, afgevinkt: boolean) => void,
+ *   onVeldWijzigen: (sleutel: string, waarde: string) => void,
  * }} callbacks
- * @returns {{render: (ctx: {vandaag: string, items: object[], afgevinkteDeadlines: string[], pythonAfgewezen: boolean, tripStatusOverrides: Record<string, string>}) => void}}
+ * @returns {{render: (ctx: {vandaag: string, items: object[], afgevinkteDeadlines: string[], pythonAfgewezen: boolean, tripStatusOverrides: Record<string, string>, eigenReizen: object[], vakkenVeldwaarden: Record<string, string>}) => void}}
  */
 export function initMaandScherm(root, callbacks) {
   const gridEl = document.createElement("div");
@@ -51,16 +52,16 @@ export function initMaandScherm(root, callbacks) {
 
   function tekenen() {
     if (!laatsteCtx) return;
-    const { vandaag, items, afgevinkteDeadlines, pythonAfgewezen, tripStatusOverrides = {} } = laatsteCtx;
+    const { vandaag, items, afgevinkteDeadlines, pythonAfgewezen, tripStatusOverrides = {}, eigenReizen = [], vakkenVeldwaarden = {} } = laatsteCtx;
 
-    renderMaandGrid(gridEl, { jaar, maand, vandaag, geselecteerd, items, pythonAfgewezen, tripStatusOverrides }, toonDag, toonMaand);
+    renderMaandGrid(gridEl, { jaar, maand, vandaag, geselecteerd, items, pythonAfgewezen, tripStatusOverrides, eigenReizen }, toonDag, toonMaand);
 
     dagbladEl.hidden = geselecteerd === null;
     if (geselecteerd !== null) {
       const eigenItems = items.filter((item) => item.start <= geselecteerd && geselecteerd <= item.end);
       renderDagblad(
         dagbladEl,
-        { ymd: geselecteerd, dag: dayStatus(geselecteerd, pythonAfgewezen, tripStatusOverrides), eigenItems, afgevinkteDeadlines, pythonAfgewezen },
+        { ymd: geselecteerd, dag: dayStatus(geselecteerd, pythonAfgewezen, tripStatusOverrides, eigenReizen), eigenItems, afgevinkteDeadlines, pythonAfgewezen, vakkenVeldwaarden },
         {
           onSluiten: sluitDagblad,
           onItemToevoegen: callbacks.onItemToevoegen,
@@ -70,6 +71,7 @@ export function initMaandScherm(root, callbacks) {
             callbacks.onItemToevoegen({ naam: "Notitie", start: geselecteerd, end: geselecteerd, status: "idee", notitie: tekst }),
           onVerwijderItem: callbacks.onVerwijderItem,
           onDeadlineToggle: callbacks.onDeadlineToggle,
+          onVeldWijzigen: callbacks.onVeldWijzigen,
         }
       );
     }

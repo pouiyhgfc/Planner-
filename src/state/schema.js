@@ -35,12 +35,18 @@
  *     dayStatus.js en blocks.js kregen hiervoor een optionele
  *     tripStatusOverrides-parameter, default {}, dus geen gedragswijziging
  *     voor bestaande aanroepen.
+ * v9: state kreeg eigenReizen (FASE-9.md B1 punt 5): door de gebruiker zelf
+ *     toegevoegde reizen (naam, start/end, status, optioneel losse
+ *     vluchten), dezelfde vorm als trips.js na eigenReisItems() in
+ *     src/data/trips.js. dayStatus.js en blocks.js kregen hiervoor een
+ *     optionele eigenReizen-parameter, default [], dus geen
+ *     gedragswijziging voor bestaande aanroepen.
  */
 
 import { parseYMD } from "../lib/date.js";
 import { trips, TRIP_STATUSSEN } from "../data/trips.js";
 
-export const CURRENT_SCHEMA_VERSION = 8;
+export const CURRENT_SCHEMA_VERSION = 9;
 
 const STATUS_WAARDEN = ["idee", "vast"];
 export const SCHERMEN = ["maand", "weken", "overzicht", "vakken"];
@@ -82,6 +88,7 @@ export function leegState() {
     pythonInschrijving: "onbevestigd",
     vakkenVeldwaarden: {},
     tripStatusOverrides: {},
+    eigenReizen: [],
   };
 }
 
@@ -190,6 +197,23 @@ export function migrate(state) {
     };
   }
 
+  if (s.schemaVersion === 8) {
+    s = {
+      schemaVersion: 9,
+      laatsteExport: s.laatsteExport ?? null,
+      items: s.items ?? [],
+      ui: geldigeUiState(s.ui),
+      afgevinkteDeadlines: s.afgevinkteDeadlines ?? [],
+      weekWeergave: geldigeWeekWeergave(s.weekWeergave),
+      afgevinkteMijlpalen: s.afgevinkteMijlpalen ?? [],
+      eigenProjecten: s.eigenProjecten ?? [],
+      pythonInschrijving: PYTHON_INSCHRIJVING_WAARDEN.includes(s.pythonInschrijving) ? s.pythonInschrijving : "onbevestigd",
+      vakkenVeldwaarden: s.vakkenVeldwaarden ?? {},
+      tripStatusOverrides: geldigeTripStatusOverrides(s.tripStatusOverrides),
+      eigenReizen: s.eigenReizen ?? [],
+    };
+  }
+
   if (s.schemaVersion === CURRENT_SCHEMA_VERSION) {
     return {
       ...s,
@@ -201,6 +225,7 @@ export function migrate(state) {
       pythonInschrijving: PYTHON_INSCHRIJVING_WAARDEN.includes(s.pythonInschrijving) ? s.pythonInschrijving : "onbevestigd",
       vakkenVeldwaarden: s.vakkenVeldwaarden ?? {},
       tripStatusOverrides: geldigeTripStatusOverrides(s.tripStatusOverrides),
+      eigenReizen: s.eigenReizen ?? [],
     };
   }
   throw new Error(`onbekende schemaVersion: ${state.schemaVersion}`);
@@ -279,5 +304,21 @@ export function valideerProject(project) {
   for (const mijlpaal of project.mijlpalen) {
     parseYMD(mijlpaal.datum);
     if (!mijlpaal.label) throw new Error("mijlpaal mist label");
+  }
+}
+
+/**
+ * @param {object} reis
+ * @throws {Error} als de eigen reis ongeldig is
+ */
+export function valideerReis(reis) {
+  if (!reis.id) throw new Error("reis mist id");
+  if (!reis.naam) throw new Error("reis mist naam");
+  parseYMD(reis.start);
+  parseYMD(reis.end);
+  if (reis.start > reis.end) throw new Error(`start (${reis.start}) ligt na end (${reis.end})`);
+  if (!TRIP_STATUSSEN.includes(reis.status)) throw new Error(`ongeldige status: ${reis.status}`);
+  for (const vlucht of reis.vluchten ?? []) {
+    parseYMD(vlucht.datum);
   }
 }

@@ -7,7 +7,7 @@
 import { costOfRange } from "../lib/blocks.js";
 import { diffDays } from "../lib/date.js";
 import { huidigeYMD } from "../state/store.js";
-import { trips, effectieveTripStatus } from "../data/trips.js";
+import { trips, effectieveTripStatus, TRIP_STATUSSEN } from "../data/trips.js";
 
 const EXPORT_WAARSCHUWING_DAGEN = 14;
 
@@ -262,6 +262,128 @@ export function renderReisstatusPaneel(root, tripStatusOverrides, onWijzigen) {
 
     root.appendChild(rij);
   }
+}
+
+/**
+ * FASE-9.md B1 punt 5: eigen reis toevoegen — naam, begin/eind, status en
+ * optioneel losse vluchten (datum + tijd + label). Landt in state.eigenReizen,
+ * niet in src/data/ (src/data/trips.js:eigenReisItems() maakt hem daarna
+ * visueel identiek aan een reis uit trips.js).
+ * @param {HTMLElement} root
+ * @param {(veld: {naam: string, start: string, end: string, status: string, vluchten: {datum: string, tijd: string|null, label: string}[]}) => void} onToevoegen
+ */
+export function renderReisForm(root, onToevoegen) {
+  root.textContent = "";
+  root.className = "reis-form";
+
+  const naam = veldInput("text", "Naam");
+  naam.required = true;
+  const start = veldInput("date", "Van");
+  const eind = veldInput("date", "Tot");
+  const status = document.createElement("select");
+  for (const waarde of TRIP_STATUSSEN) {
+    const optie = document.createElement("option");
+    optie.value = waarde;
+    optie.textContent = waarde;
+    status.appendChild(optie);
+  }
+
+  const vluchtenWrap = document.createElement("div");
+  vluchtenWrap.className = "reis-vluchten";
+  const vluchtRijen = [];
+
+  function voegVluchtRijToe() {
+    const rij = document.createElement("div");
+    rij.className = "reis-vlucht-rij";
+    const datum = document.createElement("input");
+    datum.type = "date";
+    const tijd = document.createElement("input");
+    tijd.type = "time";
+    const label = veldInput("text", "Label (optioneel)");
+    const verwijder = document.createElement("button");
+    verwijder.type = "button";
+    verwijder.textContent = "×";
+    verwijder.setAttribute("aria-label", "Verwijder deze vlucht");
+    rij.appendChild(datum);
+    rij.appendChild(tijd);
+    rij.appendChild(label);
+    rij.appendChild(verwijder);
+    vluchtenWrap.appendChild(rij);
+    const rijData = { datum, tijd, label };
+    vluchtRijen.push(rijData);
+    verwijder.addEventListener("click", () => {
+      rij.remove();
+      vluchtRijen.splice(vluchtRijen.indexOf(rijData), 1);
+    });
+  }
+
+  const vluchtToevoegKnop = document.createElement("button");
+  vluchtToevoegKnop.type = "button";
+  vluchtToevoegKnop.textContent = "Losse vlucht toevoegen";
+  vluchtToevoegKnop.addEventListener("click", voegVluchtRijToe);
+
+  const knop = document.createElement("button");
+  knop.type = "submit";
+  knop.textContent = "Reis toevoegen";
+
+  const form = document.createElement("form");
+  for (const el of [naam, start, eind, status]) form.appendChild(el);
+  form.appendChild(vluchtenWrap);
+  form.appendChild(vluchtToevoegKnop);
+  form.appendChild(knop);
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (!naam.value || !start.value || !eind.value) return;
+    const vluchten = vluchtRijen
+      .filter((r) => r.datum.value)
+      .map((r) => ({ datum: r.datum.value, tijd: r.tijd.value || null, label: r.label.value || "" }));
+    onToevoegen({ naam: naam.value, start: start.value, end: eind.value, status: status.value, vluchten });
+    form.reset();
+    vluchtenWrap.textContent = "";
+    vluchtRijen.length = 0;
+  });
+
+  root.appendChild(form);
+}
+
+/**
+ * @param {HTMLElement} root
+ * @param {object[]} reizen
+ * @param {(id: string) => void} onVerwijderen
+ */
+export function renderEigenReizenLijst(root, reizen, onVerwijderen) {
+  root.className = "eigen-items-lijst";
+  root.textContent = "";
+
+  if (reizen.length === 0) {
+    const leeg = document.createElement("p");
+    leeg.className = "eigen-items-leeg";
+    leeg.textContent = "Nog geen eigen reizen.";
+    root.appendChild(leeg);
+    return;
+  }
+
+  const lijst = document.createElement("ul");
+  for (const reis of [...reizen].sort((a, b) => a.start.localeCompare(b.start))) {
+    const li = document.createElement("li");
+    li.className = "eigen-item-rij";
+
+    const tekst = document.createElement("span");
+    const vluchtenTekst = reis.vluchten?.length > 0 ? ` — ${reis.vluchten.length} vlucht(en)` : "";
+    tekst.textContent = `${reis.start} → ${reis.end} — ${reis.naam} (${reis.status})${vluchtenTekst}`;
+    li.appendChild(tekst);
+
+    const verwijder = document.createElement("button");
+    verwijder.type = "button";
+    verwijder.textContent = "×";
+    verwijder.setAttribute("aria-label", `Verwijder "${reis.naam}"`);
+    verwijder.addEventListener("click", () => onVerwijderen(reis.id));
+    li.appendChild(verwijder);
+
+    lijst.appendChild(li);
+  }
+  root.appendChild(lijst);
 }
 
 /**

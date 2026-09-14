@@ -3,7 +3,7 @@ import { appPeriod, timezone, week12, semesterMarkers, calendarNotes } from "../
 import { holidays } from "../src/data/holidays.js";
 import { courses } from "../src/data/courses.js";
 import { psyDates, agtechDates, rteDates, pythonDates, rteActionItems, chineseLessons, chineseTentamens } from "../src/data/coursedates.js";
-import { trips, effectieveTripStatus, TRIP_STATUSSEN } from "../src/data/trips.js";
+import { trips, effectieveTripStatus, TRIP_STATUSSEN, eigenReisItems, alleTripItems } from "../src/data/trips.js";
 import { chinaVisaFreeDeadline, flexWeekAnnouncementDeadline, academicDeadlines, japanUitersteTerugkomstDeadline } from "../src/data/deadlines.js";
 import { dayStatus, genereerKalenderDagen } from "../src/lib/dayStatus.js";
 import { isFree, freeBlocks, blocksWithCost, costOfRange } from "../src/lib/blocks.js";
@@ -12,6 +12,7 @@ import {
   migrate,
   valideerItem,
   valideerProject,
+  valideerReis,
   CURRENT_SCHEMA_VERSION,
   SCHERMEN,
   PERIODES,
@@ -27,6 +28,8 @@ import {
   zetPythonInschrijving,
   zetVakVeld,
   zetTripStatus,
+  voegReisToe,
+  verwijderReis,
   huidigeYMD,
   bereidExportVoor,
   bereidSamenvoegingVoor,
@@ -51,6 +54,7 @@ import {
   rijenFeestdagen,
   rijenEigenItems,
   rijenVrijeBlokken,
+  rijenReizen,
 } from "../src/ui/overzichtData.js";
 import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -1663,6 +1667,107 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
     const dag = rteDates.find((d) => d.week === Number(week));
     check(`rteDates week ${week}: vorm === "${vorm}"`, dag.vorm, vorm);
   }
+}
+
+// =====================================================================
+// FASE-9.md B1 — Reizen zichtbaar maken
+// =====================================================================
+
+// Filipijnen: alleen bereik + terugkomsttijd zijn ZEKER, de rest is ONBEKEND
+// als invulbare velden (niet verzonnen).
+{
+  const filipijnen = trips.find((t) => t.variant === "filipijnen-geboekt");
+  check(
+    "Filipijnen: onbekendeVelden = vluchtnummer, luchthavens, overnachtingen",
+    [...filipijnen.onbekendeVelden].sort().join(","),
+    "luchthavens,overnachtingen,vluchtnummer"
+  );
+}
+
+// eigenReisItems(): zet een eigen reis om naar dezelfde vorm als trips.js
+{
+  const reis = {
+    id: "test-reis-1",
+    naam: "Weekendje Kaohsiung",
+    start: "2026-10-02",
+    end: "2026-10-04",
+    status: "geboekt",
+    vluchten: [{ datum: "2026-10-02", tijd: "08:00", label: "" }],
+  };
+  const items = eigenReisItems(reis);
+  check("eigenReisItems: 2 items (verblijf + 1 vlucht)", items.length, 2);
+  const verblijf = items.find((i) => i.type === "vaste-boeking");
+  check("eigenReisItems: verblijf heeft de juiste dagen", `${verblijf.start} → ${verblijf.end}`, "2026-10-02 → 2026-10-04");
+  check("eigenReisItems: verblijf label === reis.naam", verblijf.label, "Weekendje Kaohsiung");
+  check("eigenReisItems: bron === eigen invoer", verblijf.bron, "eigen invoer");
+  const vlucht = items.find((i) => i.type === "vlucht");
+  check("eigenReisItems: vlucht zonder label krijgt een afgeleid label met de tijd", vlucht.label, "Vlucht (08:00)");
+  check("eigenReisItems: alle items delen dezelfde variant/groep === reis.id", items.every((i) => i.variant === "test-reis-1" && i.groep === "test-reis-1"), true);
+
+  const alles = alleTripItems([reis]);
+  check("alleTripItems: bevat zowel trips.js als de eigen reis", alles.length, trips.length + 2);
+}
+
+// dayStatus()/blocks.js: een eigen reis blokkeert een dag net als trips.js
+{
+  const eigenReis = { id: "test-reis-2", naam: "Test", start: "2026-09-15", end: "2026-09-16", status: "geboekt", vluchten: [] };
+  const zonder = dayStatus("2026-09-15");
+  check("2026-09-15 zonder eigen reis: gewoon een lesdag", zonder.status !== "vaste-boeking", true);
+  const met = dayStatus("2026-09-15", false, {}, [eigenReis]);
+  check("2026-09-15 met eigen reis: status === vaste-boeking", met.status, "vaste-boeking");
+  check("2026-09-15 met eigen reis: isFree() === false", isFree("2026-09-15", false, {}, [eigenReis]), false);
+}
+
+// rijenReizen(): één rij per niet-vervallen reis, voor de filterchip "Reizen"
+{
+  const rijen = rijenReizen();
+  check("rijenReizen: bevat de Japan-omboeking", rijen.some((r) => r.inhoud.includes("Japan (omboeking)")), true);
+  check("rijenReizen: bevat de Filipijnen-trip", rijen.some((r) => r.inhoud.includes("Filipijnen-trip")), true);
+  check("rijenReizen: de vervallen oorspronkelijke Japan-boeking staat er niet in", rijen.some((r) => r.inhoud.includes("Osaka 2 nachten")), false);
+}
+
+// valideerReis() / voegReisToe() / verwijderReis()
+{
+  let fout = null;
+  try {
+    valideerReis({ id: "x", naam: "Test", start: "2026-10-05", end: "2026-10-01", status: "geboekt" });
+  } catch (e) {
+    fout = e;
+  }
+  check("valideerReis: start na end gooit een Error", fout instanceof Error, true);
+
+  fout = null;
+  try {
+    valideerReis({ id: "x", naam: "Test", start: "2026-10-01", end: "2026-10-05", status: "onzin" });
+  } catch (e) {
+    fout = e;
+  }
+  check("valideerReis: ongeldige status gooit een Error", fout instanceof Error, true);
+
+  let state = leegState();
+  state = voegReisToe(state, { naam: "Weekendje weg", start: "2026-10-01", end: "2026-10-03", status: "geboekt" });
+  check("voegReisToe: eigenReizen heeft nu 1 reis", state.eigenReizen.length, 1);
+  check("voegReisToe: vluchten default lege array", state.eigenReizen[0].vluchten.length, 0);
+  const id = state.eigenReizen[0].id;
+  state = verwijderReis(state, id);
+  check("verwijderReis: eigenReizen weer leeg", state.eigenReizen.length, 0);
+}
+
+// migrate(): schemaVersion 8 -> 9 voegt eigenReizen toe
+{
+  const v8 = { ...leegState(), schemaVersion: 8 };
+  delete v8.eigenReizen;
+  const gemigreerd = migrate(v8);
+  check("migrate v8->v9: schemaVersion wordt de actuele versie", gemigreerd.schemaVersion, CURRENT_SCHEMA_VERSION);
+  check("migrate v8->v9: eigenReizen default lege array", gemigreerd.eigenReizen.length, 0);
+}
+
+// 2026-09-30: laatste Filipijnen-dag én drie lessen (B1 "Klaar als")
+{
+  const dag = dayStatus("2026-09-30");
+  const reis = dag.vasteBoekingen.find((v) => v.type === "vaste-boeking");
+  check("2026-09-30: is de laatste dag van de Filipijnen-trip", reis?.end, "2026-09-30");
+  check("2026-09-30: drie lessen staan nog gewoon in dag.vakken (status verbergt ze niet)", dag.vakken.filter((v) => v.type === "les").length, 3);
 }
 
 console.log(`\n${passed} geslaagd, ${failures} mislukt.`);

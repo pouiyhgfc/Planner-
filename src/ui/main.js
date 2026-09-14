@@ -11,6 +11,8 @@ import {
   zetPythonInschrijving,
   zetVakVeld,
   zetTripStatus,
+  voegReisToe,
+  verwijderReis,
   vraagPersistentOpslagAan,
   bereidExportVoor,
   bereidSamenvoegingVoor,
@@ -29,6 +31,8 @@ import {
   renderExportRegel,
   renderConflictenPaneel,
   renderReisstatusPaneel,
+  renderReisForm,
+  renderEigenReizenLijst,
   renderPlannerForm,
   renderEigenItemsLijst,
 } from "./planner.js";
@@ -52,6 +56,8 @@ const persistEl = document.getElementById("persist-regel");
 const exportEl = document.getElementById("export-regel");
 const conflictenEl = document.getElementById("conflicten-paneel");
 const reisstatusEl = document.getElementById("reisstatus-paneel");
+const reisFormEl = document.getElementById("reis-form");
+const eigenReizenEl = document.getElementById("eigen-reizen-lijst");
 const formEl = document.getElementById("planner-form");
 const eigenItemsEl = document.getElementById("eigen-items-lijst");
 
@@ -95,6 +101,8 @@ function instellingenWeergeven() {
   renderExportRegel(exportEl, state.laatsteExport, exporteer);
   renderConflictenPaneel(conflictenEl, openstaandeConflicten, pasConflictenToe);
   renderReisstatusPaneel(reisstatusEl, state.tripStatusOverrides, (variant, nieuweStatus) => zetTripStatusEnHerteken(variant, nieuweStatus));
+  renderReisForm(reisFormEl, (veld) => voegReisEnHerteken(veld));
+  renderEigenReizenLijst(eigenReizenEl, state.eigenReizen, (id) => verwijderReisEnHerteken(id));
   renderPlannerForm(formEl, (veld) => voegItemEnHerteken(veld));
   renderEigenItemsLijst(eigenItemsEl, state.items, (id) => verwijderItemEnHerteken(id));
 }
@@ -118,6 +126,8 @@ function maandWeergeven() {
     afgevinkteDeadlines: state.afgevinkteDeadlines,
     pythonAfgewezen: pythonAfgewezen(),
     tripStatusOverrides: state.tripStatusOverrides,
+    eigenReizen: state.eigenReizen,
+    vakkenVeldwaarden: state.vakkenVeldwaarden,
   });
 }
 
@@ -127,6 +137,7 @@ function wekenWeergeven() {
     vandaag: huidigeYMD(),
     pythonAfgewezen: pythonAfgewezen(),
     tripStatusOverrides: state.tripStatusOverrides,
+    eigenReizen: state.eigenReizen,
   });
 }
 
@@ -150,6 +161,7 @@ function overzichtWeergeven() {
     eigenProjecten: state.eigenProjecten,
     pythonAfgewezen: pythonAfgewezen(),
     tripStatusOverrides: state.tripStatusOverrides,
+    eigenReizen: state.eigenReizen,
   });
 }
 
@@ -166,10 +178,29 @@ async function zetVakVeldEnHerteken(sleutel, waarde) {
   state = zetVakVeld(state, sleutel, waarde);
   await bewaarState(state);
   vakkenWeergeven();
+  maandWeergeven();
 }
 
 async function zetTripStatusEnHerteken(variant, nieuweStatus) {
   state = zetTripStatus(state, variant, nieuweStatus);
+  await bewaarState(state);
+  instellingenWeergeven();
+  maandWeergeven();
+  wekenWeergeven();
+  overzichtWeergeven();
+}
+
+async function voegReisEnHerteken(veld) {
+  state = voegReisToe(state, veld);
+  await bewaarState(state);
+  instellingenWeergeven();
+  maandWeergeven();
+  wekenWeergeven();
+  overzichtWeergeven();
+}
+
+async function verwijderReisEnHerteken(id) {
+  state = verwijderReis(state, id);
   await bewaarState(state);
   instellingenWeergeven();
   maandWeergeven();
@@ -297,6 +328,7 @@ const maandScherm = initMaandScherm(schermEls.maand, {
   onItemToevoegen: voegItemEnHerteken,
   onVerwijderItem: verwijderItemEnHerteken,
   onDeadlineToggle: zetDeadlineEnHerteken,
+  onVeldWijzigen: zetVakVeldEnHerteken,
 });
 
 const wekenScherm = initWekenScherm(schermEls.weken, {

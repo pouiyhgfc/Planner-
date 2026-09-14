@@ -36,6 +36,7 @@ function kopSectie(titel) {
  *   eigenItems: object[],
  *   afgevinkteDeadlines: string[],
  *   pythonAfgewezen: boolean,
+ *   vakkenVeldwaarden: Record<string, string>,
  * }} data
  * @param {{
  *   onSluiten: () => void,
@@ -44,9 +45,10 @@ function kopSectie(titel) {
  *   onNotitieToevoegen: (tekst: string) => void,
  *   onVerwijderItem: (id: string) => void,
  *   onDeadlineToggle: (sleutel: string, afgevinkt: boolean) => void,
+ *   onVeldWijzigen: (sleutel: string, waarde: string) => void,
  * }} acties
  */
-export function renderDagblad(root, { ymd, dag, eigenItems, afgevinkteDeadlines, pythonAfgewezen = false }, acties) {
+export function renderDagblad(root, { ymd, dag, eigenItems, afgevinkteDeadlines, pythonAfgewezen = false, vakkenVeldwaarden = {} }, acties) {
   root.textContent = "";
 
   const kop = document.createElement("div");
@@ -67,10 +69,27 @@ export function renderDagblad(root, { ymd, dag, eigenItems, afgevinkteDeadlines,
   datumEl.textContent = datumTekst;
   root.appendChild(datumEl);
 
+  // 2. Reizen (fase 9 B1)
+  const reizen = dag.vasteBoekingen.filter((v) => v.type === "vaste-boeking");
+  const vluchtenVandaag = dag.vasteBoekingen.filter((v) => v.type === "vlucht");
+  if (reizen.length > 0 || vluchtenVandaag.length > 0) {
+    root.appendChild(kopSectie("Reizen"));
+    const lijst = document.createElement("ul");
+    for (const reis of reizen) {
+      lijst.appendChild(renderReisRij(reis, ymd, vluchtenVandaag, vakkenVeldwaarden, acties.onVeldWijzigen));
+    }
+    for (const vlucht of vluchtenVandaag.filter((v) => !reizen.some((r) => r.variant === v.variant))) {
+      const li = document.createElement("li");
+      li.textContent = `${vlucht.label} — ${vlucht.status}`;
+      lijst.appendChild(li);
+    }
+    root.appendChild(lijst);
+  }
+
   const lessen = dag.vakken.filter((v) => v.type === "les");
   const tentamens = dag.vakken.filter((v) => v.type === "tentamen" || /presentat/i.test(v.label));
 
-  // 2. Lessen
+  // 3. Lessen
   if (lessen.length > 0) {
     root.appendChild(kopSectie("Lessen"));
     const lijst = document.createElement("ul");
@@ -85,7 +104,7 @@ export function renderDagblad(root, { ymd, dag, eigenItems, afgevinkteDeadlines,
     root.appendChild(lijst);
   }
 
-  // 3. Tentamens en presentaties
+  // 4. Tentamens en presentaties
   if (tentamens.length > 0) {
     root.appendChild(kopSectie("Tentamens en presentaties"));
     const lijst = document.createElement("ul");
@@ -104,7 +123,7 @@ export function renderDagblad(root, { ymd, dag, eigenItems, afgevinkteDeadlines,
     root.appendChild(lijst);
   }
 
-  // 4. Deadlines
+  // 5. Deadlines
   if (dag.deadlines.length > 0) {
     root.appendChild(kopSectie("Deadlines"));
     const lijst = document.createElement("ul");
@@ -126,9 +145,9 @@ export function renderDagblad(root, { ymd, dag, eigenItems, afgevinkteDeadlines,
     root.appendChild(lijst);
   }
 
-  // 5. Projecten — nog geen projectdata (volgt in fase 8E), dus altijd leeg.
+  // 6. Projecten — nog geen projectdata (volgt in fase 8E), dus altijd leeg.
 
-  // 6. Eigen items
+  // 7. Eigen items
   if (eigenItems.length > 0) {
     root.appendChild(kopSectie("Eigen items"));
     const lijst = document.createElement("ul");
@@ -138,7 +157,7 @@ export function renderDagblad(root, { ymd, dag, eigenItems, afgevinkteDeadlines,
     root.appendChild(lijst);
   }
 
-  // 7. Wat deze dag kost
+  // 8. Wat deze dag kost
   const { perVak } = costOfRange(ymd, ymd, pythonAfgewezen);
   const vakken = Object.entries(perVak);
   if (vakken.length > 0) {
@@ -153,6 +172,61 @@ export function renderDagblad(root, { ymd, dag, eigenItems, afgevinkteDeadlines,
   }
 
   root.appendChild(renderActieknoppen(ymd, acties));
+}
+
+/**
+ * Eén reisrij (fase 9 B1): label, of het de eerste/laatste/enige/
+ * tussenliggende dag is, de status, en de vlucht als die op deze dag valt.
+ * Eigen reizen (bron "eigen invoer") krijgen een klein onderscheid; een reis
+ * met onbekendeVelden (bijv. Filipijnen — vluchtnummer/luchthavens/
+ * overnachtingen) krijgt invulbare velden, geen gok.
+ * @param {object} reis
+ * @param {string} ymd
+ * @param {object[]} vluchtenVandaag
+ * @param {Record<string, string>} vakkenVeldwaarden
+ * @param {(sleutel: string, waarde: string) => void} onVeldWijzigen
+ */
+function renderReisRij(reis, ymd, vluchtenVandaag, vakkenVeldwaarden, onVeldWijzigen) {
+  const li = document.createElement("li");
+
+  const positie =
+    reis.start === reis.end ? "enige dag" : reis.start === ymd ? "eerste dag" : reis.end === ymd ? "laatste dag" : "tussenliggende dag";
+  const herkomst = reis.bron === "eigen invoer" ? " (eigen invoer)" : "";
+  const naamRegel = document.createElement("div");
+  naamRegel.textContent = `${reis.label} — ${positie} — ${reis.status}${herkomst}`;
+  li.appendChild(naamRegel);
+
+  const vluchtVandaag = vluchtenVandaag.find((v) => v.variant === reis.variant);
+  if (vluchtVandaag) {
+    const vluchtRegel = document.createElement("div");
+    vluchtRegel.className = "dagblad-klein";
+    vluchtRegel.textContent = vluchtVandaag.label;
+    li.appendChild(vluchtRegel);
+  }
+
+  if (reis.onbekendeVelden?.length > 0) {
+    li.appendChild(renderOnbekendeVeldenForm(reis, vakkenVeldwaarden, onVeldWijzigen));
+  }
+
+  return li;
+}
+
+function renderOnbekendeVeldenForm(reis, vakkenVeldwaarden, onVeldWijzigen) {
+  const wrap = document.createElement("div");
+  wrap.className = "dagblad-onbekende-velden";
+  for (const veld of reis.onbekendeVelden) {
+    const sleutel = `${reis.variant}.${veld}`;
+    const label = document.createElement("label");
+    label.textContent = `${veld}: `;
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = vakkenVeldwaarden[sleutel] ?? "";
+    input.placeholder = "ONBEKEND";
+    input.addEventListener("change", () => onVeldWijzigen(sleutel, input.value));
+    label.appendChild(input);
+    wrap.appendChild(label);
+  }
+  return wrap;
 }
 
 function renderEigenItemRij(item, onVerwijderen) {

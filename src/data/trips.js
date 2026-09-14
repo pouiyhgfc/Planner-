@@ -31,8 +31,23 @@ export const trips = [
   { id: "japan-omboeking-verblijf", variant: "japan-omboeking", groep: "japan", start: "2026-11-06", end: "2026-11-16", type: "vaste-boeking", label: "Japan (omboeking)", status: "geboekt", bron: BRON_OMBOEKING, zekerheid: "ZEKER" },
   { id: "japan-omboeking-terug", variant: "japan-omboeking", groep: "japan", date: "2026-11-16", type: "vlucht", label: "NRT → TPE (Peach Aviation, 12:25)", status: "geboekt", bron: BRON_OMBOEKING, zekerheid: "ZEKER" },
 
-  // Filipijnen — enige variant, geboekt.
-  { id: "filipijnen-geboekt", variant: "filipijnen-geboekt", groep: "filipijnen", start: "2026-09-25", end: "2026-09-30", type: "vaste-boeking", label: "Filipijnen-trip (terug ± 10:00 op woensdag)", status: "geboekt", bron: BRON_FILIPIJNEN, zekerheid: "ZEKER" },
+  // Filipijnen — enige variant, geboekt. Alleen het bereik en de terugkomsttijd
+  // staan vast (DATA.md §4/FASE-9.md B1); vluchtnummer, luchthavens en
+  // overnachtingen zijn ONBEKEND — invulbare velden, niet verzonnen (zie
+  // dagblad.js, gebruikt dezelfde vakkenVeldwaarden-opslag als src/ui/schermVakken.js).
+  {
+    id: "filipijnen-geboekt",
+    variant: "filipijnen-geboekt",
+    groep: "filipijnen",
+    start: "2026-09-25",
+    end: "2026-09-30",
+    type: "vaste-boeking",
+    label: "Filipijnen-trip (terug ± 10:00 op woensdag)",
+    status: "geboekt",
+    onbekendeVelden: ["vluchtnummer", "luchthavens", "overnachtingen"],
+    bron: BRON_FILIPIJNEN,
+    zekerheid: "ZEKER",
+  },
 ];
 
 /**
@@ -44,4 +59,55 @@ export const trips = [
  */
 export function effectieveTripStatus(item, overrides = {}) {
   return overrides[item.variant] ?? item.status;
+}
+
+/**
+ * Zet een eigen reis (FASE-9.md B1 punt 5, state.eigenReizen — niet
+ * src/data/) om naar dezelfde platte item-vorm als trips.js: één
+ * vaste-boeking-item plus per losse vlucht een vlucht-item. Dezelfde velden
+ * (variant/groep/type/status/bron/zekerheid) zodat dayStatus.js/blocks.js en
+ * de UI-laag geen onderscheid hoeven te maken — alleen bron wijkt af
+ * ("eigen invoer"), zodat het dagblad de herkomst kan tonen.
+ * @param {{id: string, naam: string, start: string, end: string, status: string, vluchten?: {datum: string, tijd?: string|null, label?: string}[]}} reis
+ * @returns {object[]}
+ */
+export function eigenReisItems(reis) {
+  const items = [
+    {
+      id: `${reis.id}-verblijf`,
+      variant: reis.id,
+      groep: reis.id,
+      type: "vaste-boeking",
+      start: reis.start,
+      end: reis.end,
+      label: reis.naam,
+      status: reis.status,
+      bron: "eigen invoer",
+      zekerheid: "ZEKER",
+    },
+  ];
+  (reis.vluchten ?? []).forEach((vlucht, i) => {
+    items.push({
+      id: `${reis.id}-vlucht-${i}`,
+      variant: reis.id,
+      groep: reis.id,
+      type: "vlucht",
+      date: vlucht.datum,
+      label: vlucht.label || (vlucht.tijd ? `Vlucht (${vlucht.tijd})` : "Vlucht"),
+      status: reis.status,
+      bron: "eigen invoer",
+      zekerheid: "ZEKER",
+    });
+  });
+  return items;
+}
+
+/**
+ * Alle reisitems: de vaste trips.js-boekingen plus de eigen reizen uit de
+ * state, plat gemaakt tot dezelfde vorm.
+ * @param {object[]} [eigenReizen] state.eigenReizen
+ * @returns {object[]}
+ */
+export function alleTripItems(eigenReizen = []) {
+  return [...trips, ...eigenReizen.flatMap(eigenReisItems)];
 }

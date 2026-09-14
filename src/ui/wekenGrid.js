@@ -110,6 +110,9 @@ function grootsteFeit(weekDagen) {
   const tentamens = weekDagen.flatMap((d) => d.vakken.filter((v) => v.type === "tentamen"));
   if (tentamens.length > 0) return `Tentamen: ${courseVoor(tentamens[0].course).name}`;
 
+  const reizen = weekDagen.flatMap((d) => d.vasteBoekingen.filter((v) => v.type === "vaste-boeking"));
+  if (reizen.length > 0) return reizen[0].label;
+
   const presentaties = weekDagen.flatMap((d) => d.vakken.filter((v) => v.type === "les" && /presentat/i.test(v.label)));
   if (presentaties.length > 0) return `Presentatie: ${courseVoor(presentaties[0].course).name}`;
 
@@ -145,12 +148,13 @@ function uitzonderingen(weekDagen) {
  * @param {string} weekMaandag
  * @param {boolean} pythonAfgewezen
  * @param {Record<string, string>} tripStatusOverrides
+ * @param {object[]} eigenReizen
  * @param {(ymd: string) => void} onOpenWeek
  * @param {(weekMaandag: string) => void} onItemErbij
  */
-function renderWeekkaart(root, weekMaandag, pythonAfgewezen, tripStatusOverrides, onOpenWeek, onItemErbij) {
+function renderWeekkaart(root, weekMaandag, pythonAfgewezen, tripStatusOverrides, eigenReizen, onOpenWeek, onItemErbij) {
   const dagen = [];
-  for (let i = 0; i < 7; i++) dagen.push(dayStatus(addDays(weekMaandag, i), pythonAfgewezen, tripStatusOverrides));
+  for (let i = 0; i < 7; i++) dagen.push(dayStatus(addDays(weekMaandag, i), pythonAfgewezen, tripStatusOverrides, eigenReizen));
 
   const kaart = document.createElement("div");
   kaart.className = "card weekkaart";
@@ -207,6 +211,26 @@ function renderWeekkaart(root, weekMaandag, pythonAfgewezen, tripStatusOverrides
       grid.appendChild(cel);
     }
   }
+
+  // Reisband (fase 9 B1 punt 3): een extra rij onder de 3×7-strip, alleen als
+  // deze week een reis raakt.
+  if (dagen.some((d) => d.vasteBoekingen.some((v) => v.type === "vaste-boeking"))) {
+    const reisLabel = document.createElement("span");
+    reisLabel.className = "weekkaart-dagdeelkop";
+    grid.appendChild(reisLabel);
+    for (const dag of dagen) {
+      const cel = document.createElement("span");
+      cel.className = "weekkaart-reis-cel";
+      const reis = dag.vasteBoekingen.find((v) => v.type === "vaste-boeking");
+      if (reis) {
+        cel.classList.add("bezet");
+        if (reis.start === dag.date) cel.classList.add("reis-eerste");
+        if (reis.end === dag.date) cel.classList.add("reis-laatste");
+        if (reis.status === "wijziging-aangevraagd") cel.classList.add("reis-aangevraagd");
+      }
+      grid.appendChild(cel);
+    }
+  }
   kaart.appendChild(grid);
 
   const uitz = uitzonderingen(dagen);
@@ -242,13 +266,13 @@ function renderWeekkaart(root, weekMaandag, pythonAfgewezen, tripStatusOverrides
 
 /**
  * @param {HTMLElement} root
- * @param {{startWeeks: string[], pythonAfgewezen: boolean, tripStatusOverrides: Record<string, string>}} data
+ * @param {{startWeeks: string[], pythonAfgewezen: boolean, tripStatusOverrides: Record<string, string>, eigenReizen: object[]}} data
  * @param {(ymd: string) => void} onOpenWeek
  * @param {(weekMaandag: string) => void} onItemErbij
  */
-export function renderWeekstrips(root, { startWeeks, pythonAfgewezen, tripStatusOverrides = {} }, onOpenWeek, onItemErbij) {
+export function renderWeekstrips(root, { startWeeks, pythonAfgewezen, tripStatusOverrides = {}, eigenReizen = [] }, onOpenWeek, onItemErbij) {
   root.textContent = "";
   for (const weekMaandag of startWeeks) {
-    renderWeekkaart(root, weekMaandag, pythonAfgewezen, tripStatusOverrides, onOpenWeek, onItemErbij);
+    renderWeekkaart(root, weekMaandag, pythonAfgewezen, tripStatusOverrides, eigenReizen, onOpenWeek, onItemErbij);
   }
 }

@@ -3,7 +3,7 @@
  * localStorage — zie CLAUDE.md §4.
  */
 
-import { leegState, migrate, valideerItem, valideerProject, CURRENT_SCHEMA_VERSION } from "./schema.js";
+import { leegState, migrate, valideerItem, valideerProject, valideerReis, CURRENT_SCHEMA_VERSION } from "./schema.js";
 import { trips, TRIP_STATUSSEN } from "../data/trips.js";
 
 const DB_NAAM = "planner";
@@ -126,6 +126,28 @@ export function voegProjectToe(state, veld) {
  */
 export function verwijderProject(state, id) {
   return { ...state, eigenProjecten: state.eigenProjecten.filter((p) => p.id !== id) };
+}
+
+/**
+ * FASE-9.md B1 punt 5: een eigen reis toevoegen (niet in src/data/, wordt in
+ * dayStatus.js/blocks.js meegenomen via eigenReisItems()).
+ * @param {{eigenReizen: object[]}} state
+ * @param {{naam: string, start: string, end: string, status: string, vluchten?: {datum: string, tijd?: string|null, label?: string}[]}} veld
+ * @returns {{eigenReizen: object[]}}
+ */
+export function voegReisToe(state, veld) {
+  const reis = { id: crypto.randomUUID(), vluchten: [], ...veld };
+  valideerReis(reis);
+  return { ...state, eigenReizen: [...state.eigenReizen, reis] };
+}
+
+/**
+ * @param {{eigenReizen: object[]}} state
+ * @param {string} id
+ * @returns {{eigenReizen: object[]}}
+ */
+export function verwijderReis(state, id) {
+  return { ...state, eigenReizen: state.eigenReizen.filter((r) => r.id !== id) };
 }
 
 /**

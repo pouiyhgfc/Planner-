@@ -53,7 +53,7 @@ export function initWekenScherm(root, callbacks) {
     const starts = weekStarts(w.startWeek, w.periode, w.eigenStart, w.eigenEind);
     renderWeekstrips(
       stripsEl,
-      { startWeeks: starts, pythonAfgewezen: laatsteCtx.pythonAfgewezen, tripStatusOverrides: laatsteCtx.tripStatusOverrides },
+      { startWeeks: starts, pythonAfgewezen: laatsteCtx.pythonAfgewezen, tripStatusOverrides: laatsteCtx.tripStatusOverrides, eigenReizen: laatsteCtx.eigenReizen },
       callbacks.onOpenWeek,
       (weekMaandag) => {
         invoegEl.textContent = "";

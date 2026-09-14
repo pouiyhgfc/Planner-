@@ -13,6 +13,7 @@ import { academicDeadlines, chinaVisaFreeDeadline, flexWeekAnnouncementDeadline 
 import { projects } from "../data/projects.js";
 import { genereerKalenderDagen } from "../lib/dayStatus.js";
 import { freeBlocks } from "../lib/blocks.js";
+import { alleTripItems, effectieveTripStatus } from "../data/trips.js";
 import { isStipMoment } from "./maandGrid.js";
 import { deadlineSleutel } from "./dagblad.js";
 
@@ -60,13 +61,31 @@ export function aantalOpenstaandeDeadlines(vandaag, afgevinkteDeadlines) {
   }).length;
 }
 
-/** @param {boolean} [pythonAfgewezen] @param {Record<string, string>} [tripStatusOverrides] @returns {{datum: string, inhoud: string}[]} */
-export function rijenSchooldagen(pythonAfgewezen = false, tripStatusOverrides = {}) {
-  return genereerKalenderDagen(pythonAfgewezen, tripStatusOverrides)
+/** @param {boolean} [pythonAfgewezen] @param {Record<string, string>} [tripStatusOverrides] @param {object[]} [eigenReizen] @returns {{datum: string, inhoud: string}[]} */
+export function rijenSchooldagen(pythonAfgewezen = false, tripStatusOverrides = {}, eigenReizen = []) {
+  return genereerKalenderDagen(pythonAfgewezen, tripStatusOverrides, eigenReizen)
     .filter((d) => d.status === "les")
     .map((d) => ({
       datum: d.date,
       inhoud: [...new Set(d.vakken.filter((v) => v.type === "les").map((v) => courseNaam(v.course)))].join(", "),
+    }));
+}
+
+/**
+ * FASE-9.md B1 punt 4: reizen als eigen filterchip, standaard aan. Eén rij
+ * per reis (niet per dag), alleen niet-vervallen exemplaren.
+ * @param {Record<string, string>} [tripStatusOverrides]
+ * @param {object[]} [eigenReizen]
+ * @returns {{datum: string, inhoud: string}[]}
+ */
+export function rijenReizen(tripStatusOverrides = {}, eigenReizen = []) {
+  return alleTripItems(eigenReizen)
+    .filter((t) => t.type === "vaste-boeking")
+    .map((t) => ({ ...t, status: effectieveTripStatus(t, tripStatusOverrides) }))
+    .filter((t) => t.status !== "vervallen")
+    .map((t) => ({
+      datum: t.start,
+      inhoud: t.end !== t.start ? `${t.label} (${t.start} t/m ${t.end}) — ${t.status}` : `${t.label} — ${t.status}`,
     }));
 }
 
@@ -116,7 +135,7 @@ export function rijenEigenItems(items) {
   }));
 }
 
-/** @param {boolean} [pythonAfgewezen] @param {Record<string, string>} [tripStatusOverrides] @returns {{datum: string, inhoud: string}[]} */
-export function rijenVrijeBlokken(pythonAfgewezen = false, tripStatusOverrides = {}) {
-  return freeBlocks(pythonAfgewezen, tripStatusOverrides).map((b) => ({ datum: b.start, inhoud: `${b.length} dagen vrij (t/m ${b.end})` }));
+/** @param {boolean} [pythonAfgewezen] @param {Record<string, string>} [tripStatusOverrides] @param {object[]} [eigenReizen] @returns {{datum: string, inhoud: string}[]} */
+export function rijenVrijeBlokken(pythonAfgewezen = false, tripStatusOverrides = {}, eigenReizen = []) {
+  return freeBlocks(pythonAfgewezen, tripStatusOverrides, eigenReizen).map((b) => ({ datum: b.start, inhoud: `${b.length} dagen vrij (t/m ${b.end})` }));
 }

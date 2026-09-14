@@ -8,7 +8,7 @@ import { appPeriod, semesterMarkers } from "../data/semester.js";
 import { holidays } from "../data/holidays.js";
 import { courses } from "../data/courses.js";
 import { psyDates, agtechDates, rteDates, pythonDates, chineseLessons, chineseTentamens, rteActionItems } from "../data/coursedates.js";
-import { trips, effectieveTripStatus } from "../data/trips.js";
+import { alleTripItems, effectieveTripStatus } from "../data/trips.js";
 import { chinaVisaFreeDeadline, flexWeekAnnouncementDeadline, academicDeadlines, japanUitersteTerugkomstDeadline } from "../data/deadlines.js";
 
 const alleVakItems = [...psyDates, ...agtechDates, ...rteDates, ...pythonDates, ...chineseLessons, ...chineseTentamens];
@@ -55,16 +55,19 @@ function legeDagdelen() {
  *   nadat de gebruiker een omboeking bevestigt. Standaard {}: elke reisvariant
  *   gebruikt dan zijn eigen status-veld uit trips.js, dus geen gedragswijziging
  *   voor bestaande aanroepen.
+ * @param {object[]} [eigenReizen] state.eigenReizen (FASE-9.md B1 punt 5) —
+ *   door de gebruiker zelf toegevoegde reizen, dezelfde vorm als trips.js
+ *   na eigenReisItems(). Standaard []: geen gedragswijziging voor bestaande aanroepen.
  * @returns {object} status van één dag
  */
-export function dayStatus(ymd, pythonAfgewezen = false, tripStatusOverrides = {}) {
+export function dayStatus(ymd, pythonAfgewezen = false, tripStatusOverrides = {}, eigenReizen = []) {
   const weekday = dayOfWeek(ymd);
   const { isoYear, week } = isoWeek(ymd);
 
   // Alle niet-vervallen reisitems zijn zichtbaar (FASE-9.md A2 punt 3), maar
   // alleen "geboekt" telt mee voor de dagstatus en de bezette dagdelen —
   // "wijziging-aangevraagd" is een vergelijking, geen vervanging (A2 punt 5).
-  const vasteBoekingen = trips
+  const vasteBoekingen = alleTripItems(eigenReizen)
     .filter((t) => valtOpDatum(ymd, t))
     .map((t) => ({ ...t, status: effectieveTripStatus(t, tripStatusOverrides) }))
     .filter((t) => t.status !== "vervallen");
@@ -127,8 +130,9 @@ export function dayStatus(ymd, pythonAfgewezen = false, tripStatusOverrides = {}
 /**
  * @param {boolean} [pythonAfgewezen]
  * @param {Record<string, string>} [tripStatusOverrides]
+ * @param {object[]} [eigenReizen]
  * @returns {ReturnType<typeof dayStatus>[]} status van alle 181 dagen in de app-periode
  */
-export function genereerKalenderDagen(pythonAfgewezen = false, tripStatusOverrides = {}) {
-  return rangeDays(appPeriod.start, appPeriod.end).map((ymd) => dayStatus(ymd, pythonAfgewezen, tripStatusOverrides));
+export function genereerKalenderDagen(pythonAfgewezen = false, tripStatusOverrides = {}, eigenReizen = []) {
+  return rangeDays(appPeriod.start, appPeriod.end).map((ymd) => dayStatus(ymd, pythonAfgewezen, tripStatusOverrides, eigenReizen));
 }

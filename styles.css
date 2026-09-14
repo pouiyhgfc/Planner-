@@ -369,10 +369,25 @@ select {
   color: var(--danger-text);
 }
 
-#planner-form form {
+#planner-form form,
+.reis-form form {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+.reis-vluchten {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.reis-vlucht-rij {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.reis-vlucht-rij input {
+  min-width: 0;
+  flex: 1;
 }
 .kosten-waarschuwing {
   background: var(--danger-bg);
@@ -510,6 +525,34 @@ select {
   background: var(--accent);
   border-radius: 0 0 var(--radius-day) var(--radius-day);
 }
+.dagvak-reis-band {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: var(--accent-bg);
+  border: var(--border-width) solid var(--accent-border);
+  border-bottom: none;
+}
+.dagvak-reis-band.reis-eerste {
+  border-top-left-radius: var(--radius-day);
+}
+.dagvak-reis-band.reis-laatste {
+  border-top-right-radius: var(--radius-day);
+}
+.dagvak-reis-band.reis-aangevraagd {
+  border-style: dashed;
+}
+.dagvak-reis-vlucht {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  transform: rotate(45deg);
+}
 
 .maand-telling {
   color: var(--text-muted);
@@ -537,6 +580,13 @@ select {
   border-radius: 50%;
   flex-shrink: 0;
 }
+.legenda-swatch-reis {
+  width: 14px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--accent-bg);
+  border: var(--border-width) solid var(--accent-border);
+}
 
 .dagblad-paneel {
   position: absolute;
@@ -563,6 +613,17 @@ select {
 .dagblad-klein {
   color: var(--text-muted);
   font-size: var(--fs-min);
+}
+.dagblad-onbekende-velden {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: var(--fs-min);
+  color: var(--text-muted);
+}
+.dagblad-onbekende-velden input {
+  width: 8em;
 }
 .dagblad-acties {
   display: flex;
@@ -671,6 +732,24 @@ select {
   height: 14px;
   border-radius: 3px;
   background: var(--border-soft);
+}
+.weekkaart-reis-cel {
+  height: 6px;
+}
+.weekkaart-reis-cel.bezet {
+  background: var(--accent-bg);
+  border: var(--border-width) solid var(--accent-border);
+}
+.weekkaart-reis-cel.reis-eerste {
+  border-top-left-radius: 3px;
+  border-bottom-left-radius: 3px;
+}
+.weekkaart-reis-cel.reis-laatste {
+  border-top-right-radius: 3px;
+  border-bottom-right-radius: 3px;
+}
+.weekkaart-reis-cel.reis-aangevraagd {
+  border-style: dashed;
 }
 
 .weekkaart-uitzonderingen {
