@@ -28,11 +28,19 @@
  *     Ook vakkenVeldwaarden: generieke gebruikersinvoer voor onbekende
  *     velden (zaal, docent, groepsgrootte, ...) en tellers (bijv. Python
  *     ingeleverde/totaal opdrachten), sleutel "VAKID.veldnaam".
+ * v8: state kreeg tripStatusOverrides (FASE-9.md A2): welke reisvariant uit
+ *     src/data/trips.js momenteel "geboekt" / "wijziging-aangevraagd" /
+ *     "vervallen" is, sleutel = de variant-id uit trips.js. Ontbreekt een
+ *     variant hierin, dan geldt zijn standaardstatus uit trips.js — src/lib/
+ *     dayStatus.js en blocks.js kregen hiervoor een optionele
+ *     tripStatusOverrides-parameter, default {}, dus geen gedragswijziging
+ *     voor bestaande aanroepen.
  */
 
 import { parseYMD } from "../lib/date.js";
+import { trips, TRIP_STATUSSEN } from "../data/trips.js";
 
-export const CURRENT_SCHEMA_VERSION = 7;
+export const CURRENT_SCHEMA_VERSION = 8;
 
 const STATUS_WAARDEN = ["idee", "vast"];
 export const SCHERMEN = ["maand", "weken", "overzicht", "vakken"];
@@ -73,6 +81,7 @@ export function leegState() {
     eigenProjecten: [],
     pythonInschrijving: "onbevestigd",
     vakkenVeldwaarden: {},
+    tripStatusOverrides: {},
   };
 }
 
@@ -165,6 +174,22 @@ export function migrate(state) {
     };
   }
 
+  if (s.schemaVersion === 7) {
+    s = {
+      schemaVersion: 8,
+      laatsteExport: s.laatsteExport ?? null,
+      items: s.items ?? [],
+      ui: geldigeUiState(s.ui),
+      afgevinkteDeadlines: s.afgevinkteDeadlines ?? [],
+      weekWeergave: geldigeWeekWeergave(s.weekWeergave),
+      afgevinkteMijlpalen: s.afgevinkteMijlpalen ?? [],
+      eigenProjecten: s.eigenProjecten ?? [],
+      pythonInschrijving: PYTHON_INSCHRIJVING_WAARDEN.includes(s.pythonInschrijving) ? s.pythonInschrijving : "onbevestigd",
+      vakkenVeldwaarden: s.vakkenVeldwaarden ?? {},
+      tripStatusOverrides: geldigeTripStatusOverrides(s.tripStatusOverrides),
+    };
+  }
+
   if (s.schemaVersion === CURRENT_SCHEMA_VERSION) {
     return {
       ...s,
@@ -175,6 +200,7 @@ export function migrate(state) {
       eigenProjecten: s.eigenProjecten ?? [],
       pythonInschrijving: PYTHON_INSCHRIJVING_WAARDEN.includes(s.pythonInschrijving) ? s.pythonInschrijving : "onbevestigd",
       vakkenVeldwaarden: s.vakkenVeldwaarden ?? {},
+      tripStatusOverrides: geldigeTripStatusOverrides(s.tripStatusOverrides),
     };
   }
   throw new Error(`onbekende schemaVersion: ${state.schemaVersion}`);
@@ -210,6 +236,23 @@ function geldigeUiState(ui) {
     scrollPositions: { ...leeg.scrollPositions, ...ui.scrollPositions },
     thema: THEMA_WAARDEN.includes(ui.thema) ? ui.thema : leeg.thema,
   };
+}
+
+/**
+ * Filtert een geïmporteerde/opgeslagen tripStatusOverrides-map op geldige
+ * reisvarianten (moet bestaan in trips.js) en geldige statuswaarden — een
+ * onbekende of foutieve entry wordt genegeerd, niet blind overgenomen.
+ * @param {object|undefined} overrides
+ * @returns {Record<string, string>}
+ */
+function geldigeTripStatusOverrides(overrides) {
+  if (!overrides || typeof overrides !== "object") return {};
+  const geldigeVarianten = new Set(trips.map((t) => t.variant));
+  const resultaat = {};
+  for (const [variant, status] of Object.entries(overrides)) {
+    if (geldigeVarianten.has(variant) && TRIP_STATUSSEN.includes(status)) resultaat[variant] = status;
+  }
+  return resultaat;
 }
 
 /**

@@ -4,6 +4,7 @@
  */
 
 import { leegState, migrate, valideerItem, valideerProject, CURRENT_SCHEMA_VERSION } from "./schema.js";
+import { trips, TRIP_STATUSSEN } from "../data/trips.js";
 
 const DB_NAAM = "planner";
 const DB_VERSIE = 1;
@@ -144,6 +145,32 @@ export function zetPythonInschrijving(state, waarde) {
  */
 export function zetVakVeld(state, sleutel, waarde) {
   return { ...state, vakkenVeldwaarden: { ...state.vakkenVeldwaarden, [sleutel]: waarde } };
+}
+
+/**
+ * Zet de status van één reisvariant (FASE-9.md A2). Zet je een variant op
+ * "geboekt", dan gaat elke andere variant binnen dezelfde reis (groep) die
+ * op dat moment "geboekt" is automatisch naar "vervallen" — er kan maar één
+ * variant tegelijk de actieve, geboekte reis zijn.
+ * @param {{tripStatusOverrides: Record<string, string>}} state
+ * @param {string} variant een trips.js variant-id, bijv. "japan-voorgenomen"
+ * @param {string} nieuweStatus
+ * @returns {{tripStatusOverrides: Record<string, string>}}
+ */
+export function zetTripStatus(state, variant, nieuweStatus) {
+  if (!TRIP_STATUSSEN.includes(nieuweStatus)) throw new Error(`ongeldige status: ${nieuweStatus}`);
+  const item = trips.find((t) => t.variant === variant);
+  if (!item) throw new Error(`onbekende reisvariant: ${variant}`);
+
+  const overrides = { ...state.tripStatusOverrides, [variant]: nieuweStatus };
+  if (nieuweStatus === "geboekt") {
+    for (const t of trips) {
+      if (t.groep !== item.groep || t.variant === variant) continue;
+      const huidigeStatus = overrides[t.variant] ?? t.status;
+      if (huidigeStatus === "geboekt") overrides[t.variant] = "vervallen";
+    }
+  }
+  return { ...state, tripStatusOverrides: overrides };
 }
 
 /**

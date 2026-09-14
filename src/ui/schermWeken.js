@@ -13,7 +13,7 @@ import { renderPlannerForm } from "./planner.js";
 /**
  * @param {HTMLElement} root
  * @param {{onWeekWeergaveWijzigen: (w: object) => void, onOpenWeek: (ymd: string) => void, onItemToevoegen: (veld: object) => void}} callbacks
- * @returns {{render: (ctx: {weekWeergave: object, vandaag: string}) => void}}
+ * @returns {{render: (ctx: {weekWeergave: object, vandaag: string, pythonAfgewezen: boolean, tripStatusOverrides: Record<string, string>}) => void}}
  */
 export function initWekenScherm(root, callbacks) {
   const koppenEl = document.createElement("div");
@@ -51,17 +51,22 @@ export function initWekenScherm(root, callbacks) {
     invoegEl.textContent = "";
 
     const starts = weekStarts(w.startWeek, w.periode, w.eigenStart, w.eigenEind);
-    renderWeekstrips(stripsEl, { startWeeks: starts, pythonAfgewezen: laatsteCtx.pythonAfgewezen }, callbacks.onOpenWeek, (weekMaandag) => {
-      invoegEl.textContent = "";
-      renderPlannerForm(
-        invoegEl,
-        (veld) => {
-          callbacks.onItemToevoegen(veld);
-          invoegEl.textContent = "";
-        },
-        { start: weekMaandag, end: addDays(weekMaandag, 6) }
-      );
-    });
+    renderWeekstrips(
+      stripsEl,
+      { startWeeks: starts, pythonAfgewezen: laatsteCtx.pythonAfgewezen, tripStatusOverrides: laatsteCtx.tripStatusOverrides },
+      callbacks.onOpenWeek,
+      (weekMaandag) => {
+        invoegEl.textContent = "";
+        renderPlannerForm(
+          invoegEl,
+          (veld) => {
+            callbacks.onItemToevoegen(veld);
+            invoegEl.textContent = "";
+          },
+          { start: weekMaandag, end: addDays(weekMaandag, 6) }
+        );
+      }
+    );
   }
 
   function renderPeriodekiezer(w) {

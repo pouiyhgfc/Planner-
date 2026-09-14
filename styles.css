@@ -387,6 +387,19 @@ select {
   gap: 4px;
   font-size: var(--fs-min);
 }
+.reisstatus-paneel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.reisstatus-rij {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: var(--fs-min);
+}
 #export-regel {
   display: flex;
   flex-wrap: wrap;

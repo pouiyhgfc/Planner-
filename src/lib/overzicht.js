@@ -64,14 +64,15 @@ function overlaptVakantie(start, end) {
  * (zie lib/blocks.js) — freeBlocks() geeft hier alleen hele dagen (3).
  * @param {string} vandaag
  * @param {boolean} [pythonAfgewezen] Python-inschrijving afgewezen (fase 8F).
+ * @param {Record<string, string>} [tripStatusOverrides] FASE-9.md A2.
  * @returns {{drieËnHalf: number, vijfMetEenAbsentie: number, langBlokInVakantie: number}}
  */
-export function resterendeBlokken(vandaag, pythonAfgewezen = false) {
-  const nulAbsenties = blocksWithCost(0, pythonAfgewezen);
+export function resterendeBlokken(vandaag, pythonAfgewezen = false, tripStatusOverrides = {}) {
+  const nulAbsenties = blocksWithCost(0, pythonAfgewezen, tripStatusOverrides);
 
   const drieËnHalf = nulAbsenties.filter((b) => b.length === 3.5 && b.start >= vandaag).length;
 
-  const vijfMetEenAbsentie = blocksWithCost(1, pythonAfgewezen).filter(
+  const vijfMetEenAbsentie = blocksWithCost(1, pythonAfgewezen, tripStatusOverrides).filter(
     (b) => b.length === 5 && b.budgetGebruikt === 1 && b.start >= vandaag
   ).length;
 

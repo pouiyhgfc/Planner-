@@ -77,7 +77,7 @@ export function initOverzichtScherm(root, callbacks) {
   }
 
   function tekenenTelkaarten() {
-    const { vandaag, afgevinkteDeadlines, pythonAfgewezen } = laatsteCtx;
+    const { vandaag, afgevinkteDeadlines, pythonAfgewezen, tripStatusOverrides = {} } = laatsteCtx;
     telkaartenEl.textContent = "";
 
     const volgende = volgendeTentamenOfPresentatie(vandaag, pythonAfgewezen);
@@ -92,7 +92,7 @@ export function initOverzichtScherm(root, callbacks) {
     const openstaand = aantalOpenstaandeDeadlines(vandaag, afgevinkteDeadlines);
     telkaartenEl.appendChild(telkaart(String(openstaand), "openstaande deadlines", () => zetFilters(new Set(["deadlines"]))));
 
-    const blokken = resterendeBlokken(vandaag, pythonAfgewezen);
+    const blokken = resterendeBlokken(vandaag, pythonAfgewezen, tripStatusOverrides);
     telkaartenEl.appendChild(
       telkaart(String(blokken.vijfMetEenAbsentie), "vrije blokken van 5 dagen die nog komen", () => zetFilters(new Set(["vrijeBlokken"])))
     );
@@ -220,9 +220,9 @@ export function initOverzichtScherm(root, callbacks) {
   }
 
   function bouwRijen() {
-    const { items, eigenProjecten, pythonAfgewezen } = laatsteCtx;
+    const { items, eigenProjecten, pythonAfgewezen, tripStatusOverrides = {} } = laatsteCtx;
     let rijen = [];
-    if (actieveFilters.has("schooldagen")) rijen.push(...rijenSchooldagen(pythonAfgewezen).map((r) => ({ ...r, categorie: "schooldagen" })));
+    if (actieveFilters.has("schooldagen")) rijen.push(...rijenSchooldagen(pythonAfgewezen, tripStatusOverrides).map((r) => ({ ...r, categorie: "schooldagen" })));
     if (actieveFilters.has("tentamens")) rijen.push(...rijenTentamens(pythonAfgewezen).map((r) => ({ ...r, categorie: "tentamens" })));
     if (actieveFilters.has("deadlines")) rijen.push(...rijenDeadlines().map((r) => ({ ...r, categorie: "deadlines" })));
     if (actieveFilters.has("projecten")) {
@@ -235,7 +235,7 @@ export function initOverzichtScherm(root, callbacks) {
     }
     if (actieveFilters.has("feestdagen")) rijen.push(...rijenFeestdagen().map((r) => ({ ...r, categorie: "feestdagen" })));
     if (actieveFilters.has("eigenItems")) rijen.push(...rijenEigenItems(items).map((r) => ({ ...r, categorie: "eigenItems" })));
-    if (actieveFilters.has("vrijeBlokken")) rijen.push(...rijenVrijeBlokken(pythonAfgewezen).map((r) => ({ ...r, categorie: "vrijeBlokken" })));
+    if (actieveFilters.has("vrijeBlokken")) rijen.push(...rijenVrijeBlokken(pythonAfgewezen, tripStatusOverrides).map((r) => ({ ...r, categorie: "vrijeBlokken" })));
     rijen.sort((a, b) => a.datum.localeCompare(b.datum));
     return rijen;
   }

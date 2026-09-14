@@ -60,9 +60,9 @@ export function aantalOpenstaandeDeadlines(vandaag, afgevinkteDeadlines) {
   }).length;
 }
 
-/** @param {boolean} [pythonAfgewezen] @returns {{datum: string, inhoud: string}[]} */
-export function rijenSchooldagen(pythonAfgewezen = false) {
-  return genereerKalenderDagen(pythonAfgewezen)
+/** @param {boolean} [pythonAfgewezen] @param {Record<string, string>} [tripStatusOverrides] @returns {{datum: string, inhoud: string}[]} */
+export function rijenSchooldagen(pythonAfgewezen = false, tripStatusOverrides = {}) {
+  return genereerKalenderDagen(pythonAfgewezen, tripStatusOverrides)
     .filter((d) => d.status === "les")
     .map((d) => ({
       datum: d.date,
@@ -116,7 +116,7 @@ export function rijenEigenItems(items) {
   }));
 }
 
-/** @param {boolean} [pythonAfgewezen] @returns {{datum: string, inhoud: string}[]} */
-export function rijenVrijeBlokken(pythonAfgewezen = false) {
-  return freeBlocks(pythonAfgewezen).map((b) => ({ datum: b.start, inhoud: `${b.length} dagen vrij (t/m ${b.end})` }));
+/** @param {boolean} [pythonAfgewezen] @param {Record<string, string>} [tripStatusOverrides] @returns {{datum: string, inhoud: string}[]} */
+export function rijenVrijeBlokken(pythonAfgewezen = false, tripStatusOverrides = {}) {
+  return freeBlocks(pythonAfgewezen, tripStatusOverrides).map((b) => ({ datum: b.start, inhoud: `${b.length} dagen vrij (t/m ${b.end})` }));
 }

@@ -144,12 +144,13 @@ function uitzonderingen(weekDagen) {
  * @param {HTMLElement} root
  * @param {string} weekMaandag
  * @param {boolean} pythonAfgewezen
+ * @param {Record<string, string>} tripStatusOverrides
  * @param {(ymd: string) => void} onOpenWeek
  * @param {(weekMaandag: string) => void} onItemErbij
  */
-function renderWeekkaart(root, weekMaandag, pythonAfgewezen, onOpenWeek, onItemErbij) {
+function renderWeekkaart(root, weekMaandag, pythonAfgewezen, tripStatusOverrides, onOpenWeek, onItemErbij) {
   const dagen = [];
-  for (let i = 0; i < 7; i++) dagen.push(dayStatus(addDays(weekMaandag, i), pythonAfgewezen));
+  for (let i = 0; i < 7; i++) dagen.push(dayStatus(addDays(weekMaandag, i), pythonAfgewezen, tripStatusOverrides));
 
   const kaart = document.createElement("div");
   kaart.className = "card weekkaart";
@@ -241,13 +242,13 @@ function renderWeekkaart(root, weekMaandag, pythonAfgewezen, onOpenWeek, onItemE
 
 /**
  * @param {HTMLElement} root
- * @param {{startWeeks: string[], pythonAfgewezen: boolean}} data
+ * @param {{startWeeks: string[], pythonAfgewezen: boolean, tripStatusOverrides: Record<string, string>}} data
  * @param {(ymd: string) => void} onOpenWeek
  * @param {(weekMaandag: string) => void} onItemErbij
  */
-export function renderWeekstrips(root, { startWeeks, pythonAfgewezen }, onOpenWeek, onItemErbij) {
+export function renderWeekstrips(root, { startWeeks, pythonAfgewezen, tripStatusOverrides = {} }, onOpenWeek, onItemErbij) {
   root.textContent = "";
   for (const weekMaandag of startWeeks) {
-    renderWeekkaart(root, weekMaandag, pythonAfgewezen, onOpenWeek, onItemErbij);
+    renderWeekkaart(root, weekMaandag, pythonAfgewezen, tripStatusOverrides, onOpenWeek, onItemErbij);
   }
 }

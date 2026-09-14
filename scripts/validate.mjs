@@ -3,8 +3,8 @@ import { appPeriod, timezone, week12, semesterMarkers, calendarNotes } from "../
 import { holidays } from "../src/data/holidays.js";
 import { courses } from "../src/data/courses.js";
 import { psyDates, agtechDates, rteDates, pythonDates, rteActionItems, chineseLessons, chineseTentamens } from "../src/data/coursedates.js";
-import { trips } from "../src/data/trips.js";
-import { chinaVisaFreeDeadline, flexWeekAnnouncementDeadline, academicDeadlines } from "../src/data/deadlines.js";
+import { trips, effectieveTripStatus, TRIP_STATUSSEN } from "../src/data/trips.js";
+import { chinaVisaFreeDeadline, flexWeekAnnouncementDeadline, academicDeadlines, japanUitersteTerugkomstDeadline } from "../src/data/deadlines.js";
 import { dayStatus, genereerKalenderDagen } from "../src/lib/dayStatus.js";
 import { isFree, freeBlocks, blocksWithCost, costOfRange } from "../src/lib/blocks.js";
 import {
@@ -26,6 +26,7 @@ import {
   verwijderProject,
   zetPythonInschrijving,
   zetVakVeld,
+  zetTripStatus,
   huidigeYMD,
   bereidExportVoor,
   bereidSamenvoegingVoor,
@@ -1441,6 +1442,162 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
 {
   const psyGerelateerdeDeadlines = academicDeadlines.filter((d) => d.label?.toLowerCase().includes("psychol"));
   check("Geen verzonnen wekelijkse PSY-opdrachten in academicDeadlines (VAKKEN.md §3 waarschuwing)", psyGerelateerdeDeadlines.length, 0);
+}
+
+// =====================================================================
+// FASE-9.md A2 — Japan-reis: omboeking in behandeling
+// =====================================================================
+
+// trips.js: structuur — status/variant/groep per item, geen boeking overschreven
+{
+  check("trips: precies 7 items (3 japan-geboekt + 3 japan-voorgenomen + 1 filipijnen)", trips.length, 7);
+  check("TRIP_STATUSSEN bevat de drie statussen", TRIP_STATUSSEN, ["geboekt", "wijziging-aangevraagd", "vervallen"]);
+  check("trips: elk item heeft een geldige status", trips.every((t) => TRIP_STATUSSEN.includes(t.status)), true);
+  check("trips: elk item heeft variant + groep", trips.every((t) => typeof t.variant === "string" && typeof t.groep === "string"), true);
+
+  const japanGeboekt = trips.filter((t) => t.variant === "japan-geboekt");
+  check("japan-geboekt: 3 items (heenvlucht, verblijf, terugvlucht)", japanGeboekt.length, 3);
+  check("japan-geboekt: allemaal status geboekt", japanGeboekt.every((t) => t.status === "geboekt"), true);
+  check("japan-geboekt: verblijf 2026-10-30 → 2026-11-09 (ongewijzigd)", japanGeboekt.find((t) => t.type === "vaste-boeking").start, "2026-10-30");
+
+  const japanVoorgenomen = trips.filter((t) => t.variant === "japan-voorgenomen");
+  check("japan-voorgenomen: 3 items", japanVoorgenomen.length, 3);
+  check("japan-voorgenomen: allemaal status wijziging-aangevraagd", japanVoorgenomen.every((t) => t.status === "wijziging-aangevraagd"), true);
+  const voorgenomenVerblijf = japanVoorgenomen.find((t) => t.type === "vaste-boeking");
+  check("japan-voorgenomen: verblijf 2026-11-05 → 2026-11-16", `${voorgenomenVerblijf.start} → ${voorgenomenVerblijf.end}`, "2026-11-05 → 2026-11-16");
+
+  check("filipijnen: nog altijd 1 item, status geboekt, datums ongewijzigd", trips.find((t) => t.variant === "filipijnen-geboekt").start, "2026-09-25");
+}
+
+// effectieveTripStatus(): override wint van het standaardveld
+{
+  const item = trips.find((t) => t.variant === "japan-voorgenomen" && t.type === "vaste-boeking");
+  check("effectieveTripStatus zonder override: standaardstatus", effectieveTripStatus(item), "wijziging-aangevraagd");
+  check("effectieveTripStatus met override: override wint", effectieveTripStatus(item, { "japan-voorgenomen": "geboekt" }), "geboekt");
+}
+
+// dayStatus(): beide Japan-varianten zichtbaar in de overlap (05-11 t/m 09-11),
+// maar alleen de geboekte telt mee voor status/dagdelen
+{
+  const dag = dayStatus("2026-11-06");
+  check("2026-11-06: beide reisvarianten zichtbaar in vasteBoekingen", dag.vasteBoekingen.length, 2);
+  check(
+    "2026-11-06: statussen zijn geboekt en wijziging-aangevraagd",
+    dag.vasteBoekingen.map((v) => v.status).sort().join(","),
+    "geboekt,wijziging-aangevraagd"
+  );
+  check("2026-11-06: dagstatus === vaste-boeking (via de geboekte variant)", dag.status, "vaste-boeking");
+}
+
+// dayStatus(): met een override die japan-voorgenomen "geboekt" maakt, gaat
+// 2026-11-16 (alleen gedekt door de voorgenomen variant) ook op vaste-boeking
+{
+  const zonder = dayStatus("2026-11-16");
+  check("2026-11-16 zonder override: geen vaste boeking (voorgenomen telt niet mee)", zonder.status !== "vaste-boeking", true);
+
+  const metOverride = dayStatus("2026-11-16", false, { "japan-voorgenomen": "geboekt" });
+  check("2026-11-16 met japan-voorgenomen=geboekt: status === vaste-boeking", metOverride.status, "vaste-boeking");
+}
+
+// zetTripStatus(): cascade — nieuwe variant op geboekt zet de oude op vervallen
+{
+  let state = leegState();
+  state = zetTripStatus(state, "japan-voorgenomen", "geboekt");
+  check("zetTripStatus: japan-voorgenomen is nu geboekt", state.tripStatusOverrides["japan-voorgenomen"], "geboekt");
+  check("zetTripStatus: japan-geboekt (dezelfde groep) automatisch vervallen", state.tripStatusOverrides["japan-geboekt"], "vervallen");
+  check("zetTripStatus: filipijnen (andere groep) blijft ongemoeid", state.tripStatusOverrides["filipijnen-geboekt"], undefined);
+
+  const nuVervallen = trips.find((t) => t.variant === "japan-geboekt" && t.type === "vaste-boeking");
+  check(
+    "2026-11-02 na de omwissel: de oude Japan-boeking is niet meer zichtbaar in vasteBoekingen",
+    dayStatus("2026-11-02", false, state.tripStatusOverrides).vasteBoekingen.some((v) => v.variant === "japan-geboekt"),
+    false
+  );
+  check("de vervallen variant blijft wél in trips.js staan (data niet weggegooid)", Boolean(nuVervallen), true);
+}
+
+// zetTripStatus(): ongeldige status of variant gooit een fout
+{
+  let fout = null;
+  try {
+    zetTripStatus(leegState(), "japan-voorgenomen", "onzin");
+  } catch (e) {
+    fout = e;
+  }
+  check("zetTripStatus: ongeldige status gooit een Error", fout instanceof Error, true);
+
+  fout = null;
+  try {
+    zetTripStatus(leegState(), "bestaat-niet", "geboekt");
+  } catch (e) {
+    fout = e;
+  }
+  check("zetTripStatus: onbekende variant gooit een Error", fout instanceof Error, true);
+}
+
+// migrate(): schemaVersion 7 -> 8 voegt tripStatusOverrides toe, filtert ongeldige entries
+{
+  const v7 = { ...leegState(), schemaVersion: 7 };
+  delete v7.tripStatusOverrides;
+  const gemigreerd = migrate(v7);
+  check("migrate v7->v8: schemaVersion wordt de actuele versie", gemigreerd.schemaVersion, CURRENT_SCHEMA_VERSION);
+  check("migrate v7->v8: tripStatusOverrides default leeg object", Object.keys(gemigreerd.tripStatusOverrides).length, 0);
+
+  const metOngeldigeData = migrate({
+    ...leegState(),
+    tripStatusOverrides: { "japan-voorgenomen": "geboekt", "onbekende-variant": "geboekt", "japan-geboekt": "onzin-status" },
+  });
+  check("migrate: geldige override blijft staan", metOngeldigeData.tripStatusOverrides["japan-voorgenomen"], "geboekt");
+  check("migrate: onbekende variant wordt genegeerd", "onbekende-variant" in metOngeldigeData.tripStatusOverrides, false);
+  check("migrate: ongeldige statuswaarde wordt genegeerd", "japan-geboekt" in metOngeldigeData.tripStatusOverrides, false);
+}
+
+// Uiterste terugkomst: 2026-11-19 als deadline-item, los van welke variant actief is
+{
+  check("japanUitersteTerugkomstDeadline: datum === 2026-11-19", japanUitersteTerugkomstDeadline.date, "2026-11-19");
+  const dag = dayStatus("2026-11-19");
+  check("2026-11-19: uiterste-terugkomst-deadline aanwezig", dag.deadlines.some((d) => d.label === japanUitersteTerugkomstDeadline.label), true);
+  check("2026-11-19: RTE Assignment #7 (visit) staat er ook los van", dag.deadlines.some((d) => d.label.includes("Assignment #7")), true);
+}
+
+// Kostenvergelijking (DATA.md §4.1 / FASE-9.md A2-tabel): "laat de motor dit
+// zelf uitrekenen" — costOfRange() rekent, wij kiezen alleen de juiste
+// datumbereiken. Huidige boeking: het volledige, letterlijke bereik (geen
+// tijdsgrens gesteld). Voorgenomen: vertrek na 17:20 (ná RTE) en terugkomst
+// vóór 18:25 (vóór Chinees) betekenen dat 11-05 en 11-16 zelf geen les
+// missen — het gemiste bereik is dus 11-06 t/m 11-15.
+{
+  const huidig = costOfRange("2026-10-30", "2026-11-09").perVak;
+  check("Kostenvergelijking huidig: 3x Chinees", huidig.CHI, 3);
+  check("Kostenvergelijking huidig: 1x AgTech (11-05; 10-29 valt buiten het bereik)", huidig.AGTECH, 1);
+  check("Kostenvergelijking huidig: 1x RTE (11-05)", huidig.RTE, 1);
+  check("Kostenvergelijking huidig: 1x PSY (11-04)", huidig.PSY, 1);
+  check("Kostenvergelijking huidig: 1x Python (11-04)", huidig.PY, 1);
+
+  const tentamensGeraaktHuidig = chineseTentamens.filter((t) => t.date >= "2026-10-30" && t.date <= "2026-11-09");
+  check("Kostenvergelijking huidig: 2 van 3 CHI-tentamenonderdelen geraakt (02-11, 04-11)", tentamensGeraaktHuidig.length, 2);
+  check(
+    "Kostenvergelijking huidig: het zijn schriftelijk en presentatie, niet mondeling",
+    tentamensGeraaktHuidig.map((t) => t.onderdeel).sort().join(","),
+    "presentatie,schriftelijk"
+  );
+
+  const voorgenomen = costOfRange("2026-11-06", "2026-11-15").perVak;
+  check("Kostenvergelijking voorgenomen: 2x Chinees (11-09, 11-11 — niet 11-16)", voorgenomen.CHI, 2);
+  check("Kostenvergelijking voorgenomen: 1x AgTech (11-12 — niet 11-05)", voorgenomen.AGTECH, 1);
+  check("Kostenvergelijking voorgenomen: 1x RTE (11-12)", voorgenomen.RTE, 1);
+  check("Kostenvergelijking voorgenomen: 1x PSY (11-11)", voorgenomen.PSY, 1);
+  check("Kostenvergelijking voorgenomen: 1x Python (11-11)", voorgenomen.PY, 1);
+
+  const tentamensGeraaktVoorgenomen = chineseTentamens.filter((t) => t.date >= "2026-11-05" && t.date <= "2026-11-16");
+  check("Kostenvergelijking voorgenomen: 0 CHI-tentamenonderdelen geraakt", tentamensGeraaktVoorgenomen.length, 0);
+
+  const chi = courses.find((c) => c.id === "CHI");
+  check(
+    "Kostenvergelijking voorgenomen: 2 sessies × 3 uur = 6 uur, precies de vrijstelling",
+    voorgenomen.CHI * chi.absentieregels.puntenaftrek.uurPerSessie,
+    chi.absentieregels.puntenaftrek.vrijstellingUren
+  );
 }
 
 console.log(`\n${passed} geslaagd, ${failures} mislukt.`);

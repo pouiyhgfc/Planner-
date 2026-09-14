@@ -83,17 +83,17 @@ function gesorteerdOpTijd(vakken) {
  * @param {HTMLElement} root
  * @param {{
  *   jaar: number, maand: number, vandaag: string, geselecteerd: string|null,
- *   items: object[], pythonAfgewezen: boolean,
+ *   items: object[], pythonAfgewezen: boolean, tripStatusOverrides: Record<string, string>,
  * }} opts
  * @param {(ymd: string) => void} onDagKlik
  * @param {(jaar: number, maand: number) => void} onNavigeren
  */
 export function renderMaandScherm(root, opts, onDagKlik, onNavigeren) {
-  const { jaar, maand, vandaag, geselecteerd, items, pythonAfgewezen } = opts;
+  const { jaar, maand, vandaag, geselecteerd, items, pythonAfgewezen, tripStatusOverrides = {} } = opts;
   root.textContent = "";
 
   root.appendChild(renderHeader(jaar, maand, vandaag, onNavigeren));
-  root.appendChild(renderGrid(jaar, maand, vandaag, geselecteerd, items, pythonAfgewezen, onDagKlik));
+  root.appendChild(renderGrid(jaar, maand, vandaag, geselecteerd, items, pythonAfgewezen, tripStatusOverrides, onDagKlik));
   root.appendChild(renderLegenda());
 }
 
@@ -144,7 +144,7 @@ function renderHeader(jaar, maand, vandaag, onNavigeren) {
   return wrap;
 }
 
-function renderGrid(jaar, maand, vandaag, geselecteerd, items, pythonAfgewezen, onDagKlik) {
+function renderGrid(jaar, maand, vandaag, geselecteerd, items, pythonAfgewezen, tripStatusOverrides, onDagKlik) {
   const weken = maandWeken(jaar, maand);
   const frag = document.createDocumentFragment();
 
@@ -169,7 +169,7 @@ function renderGrid(jaar, maand, vandaag, geselecteerd, items, pythonAfgewezen, 
       const buitenPeriode = ymd < appPeriod.start || ymd > appPeriod.end;
       const buitenMaand = m !== maand;
       grid.appendChild(
-        renderDagvak(ymd, buitenPeriode, buitenMaand, vandaag, geselecteerd, items, pythonAfgewezen, onDagKlik, (dag) => {
+        renderDagvak(ymd, buitenPeriode, buitenMaand, vandaag, geselecteerd, items, pythonAfgewezen, tripStatusOverrides, onDagKlik, (dag) => {
           if (buitenMaand || buitenPeriode) return;
           lesmomenten += dag.vakken.filter((v) => v.type === "les").length;
           tentamens += dag.vakken.filter((v) => v.type === "tentamen").length;
@@ -181,7 +181,7 @@ function renderGrid(jaar, maand, vandaag, geselecteerd, items, pythonAfgewezen, 
 
   const eersteDag = toYMD({ y: jaar, m: maand, d: 1 });
   const laatsteDag = laatsteDagVanMaand(jaar, maand);
-  const vrijeBlokken = freeBlocks(pythonAfgewezen).filter((b) => b.start >= eersteDag && b.start <= laatsteDag).length;
+  const vrijeBlokken = freeBlocks(pythonAfgewezen, tripStatusOverrides).filter((b) => b.start >= eersteDag && b.start <= laatsteDag).length;
 
   const telling = document.createElement("p");
   telling.className = "maand-telling";
@@ -191,7 +191,7 @@ function renderGrid(jaar, maand, vandaag, geselecteerd, items, pythonAfgewezen, 
   return frag;
 }
 
-function renderDagvak(ymd, buitenPeriode, buitenMaand, vandaag, geselecteerd, items, pythonAfgewezen, onDagKlik, telMee) {
+function renderDagvak(ymd, buitenPeriode, buitenMaand, vandaag, geselecteerd, items, pythonAfgewezen, tripStatusOverrides, onDagKlik, telMee) {
   const { d } = parseYMD(ymd);
   const knop = document.createElement("button");
   knop.type = "button";
@@ -211,7 +211,7 @@ function renderDagvak(ymd, buitenPeriode, buitenMaand, vandaag, geselecteerd, it
     return knop;
   }
 
-  const dag = dayStatus(ymd, pythonAfgewezen);
+  const dag = dayStatus(ymd, pythonAfgewezen, tripStatusOverrides);
   telMee(dag);
 
   if (dag.status === "feestdag" || dag.status === "geen-les") knop.classList.add("status-gemarkeerd");

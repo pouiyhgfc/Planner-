@@ -27,6 +27,19 @@ export const flexWeekAnnouncementDeadline = {
   zekerheid: "ZEKER",
 };
 
+/**
+ * Harde grens uit FASE-9.md A2: een reis moet afgelopen zijn vóór de RTE
+ * technical visit + Assignment #7 (2026-11-19, DATA.md §3.3) — een excursie
+ * is niet in te halen. Staat los van welke Japan-boekingsvariant actief is
+ * (DATA.md §4.1).
+ */
+export const japanUitersteTerugkomstDeadline = {
+  date: "2026-11-19",
+  label: "Uiterste terugkomst (RTE technical visit + Assignment #7 — niet in te halen)",
+  bron: "FASE-9.md A2 (opgave Idries)",
+  zekerheid: "ZEKER",
+};
+
 /** Overige deadline/admin-regels uit DATA.md §2, niet elders ondergebracht. */
 export const academicDeadlines = [
   { date: "2026-09-19", type: "deadline", label: "Laatste dag online vakken laten vallen", bron: BRON_KALENDER, zekerheid: "ZEKER" },

@@ -10,6 +10,7 @@ import {
   verwijderProject,
   zetPythonInschrijving,
   zetVakVeld,
+  zetTripStatus,
   vraagPersistentOpslagAan,
   bereidExportVoor,
   bereidSamenvoegingVoor,
@@ -27,6 +28,7 @@ import {
   renderPersistRegel,
   renderExportRegel,
   renderConflictenPaneel,
+  renderReisstatusPaneel,
   renderPlannerForm,
   renderEigenItemsLijst,
 } from "./planner.js";
@@ -49,6 +51,7 @@ const themaEl = document.getElementById("thema-regel");
 const persistEl = document.getElementById("persist-regel");
 const exportEl = document.getElementById("export-regel");
 const conflictenEl = document.getElementById("conflicten-paneel");
+const reisstatusEl = document.getElementById("reisstatus-paneel");
 const formEl = document.getElementById("planner-form");
 const eigenItemsEl = document.getElementById("eigen-items-lijst");
 
@@ -91,6 +94,7 @@ function instellingenWeergeven() {
   renderPersistRegel(persistEl, persistToegekend);
   renderExportRegel(exportEl, state.laatsteExport, exporteer);
   renderConflictenPaneel(conflictenEl, openstaandeConflicten, pasConflictenToe);
+  renderReisstatusPaneel(reisstatusEl, state.tripStatusOverrides, (variant, nieuweStatus) => zetTripStatusEnHerteken(variant, nieuweStatus));
   renderPlannerForm(formEl, (veld) => voegItemEnHerteken(veld));
   renderEigenItemsLijst(eigenItemsEl, state.items, (id) => verwijderItemEnHerteken(id));
 }
@@ -113,11 +117,17 @@ function maandWeergeven() {
     items: state.items,
     afgevinkteDeadlines: state.afgevinkteDeadlines,
     pythonAfgewezen: pythonAfgewezen(),
+    tripStatusOverrides: state.tripStatusOverrides,
   });
 }
 
 function wekenWeergeven() {
-  wekenScherm.render({ weekWeergave: state.weekWeergave, vandaag: huidigeYMD(), pythonAfgewezen: pythonAfgewezen() });
+  wekenScherm.render({
+    weekWeergave: state.weekWeergave,
+    vandaag: huidigeYMD(),
+    pythonAfgewezen: pythonAfgewezen(),
+    tripStatusOverrides: state.tripStatusOverrides,
+  });
 }
 
 async function wijzigWeekWeergave(nieuweWeekWeergave) {
@@ -139,6 +149,7 @@ function overzichtWeergeven() {
     afgevinkteMijlpalen: state.afgevinkteMijlpalen,
     eigenProjecten: state.eigenProjecten,
     pythonAfgewezen: pythonAfgewezen(),
+    tripStatusOverrides: state.tripStatusOverrides,
   });
 }
 
@@ -155,6 +166,15 @@ async function zetVakVeldEnHerteken(sleutel, waarde) {
   state = zetVakVeld(state, sleutel, waarde);
   await bewaarState(state);
   vakkenWeergeven();
+}
+
+async function zetTripStatusEnHerteken(variant, nieuweStatus) {
+  state = zetTripStatus(state, variant, nieuweStatus);
+  await bewaarState(state);
+  instellingenWeergeven();
+  maandWeergeven();
+  wekenWeergeven();
+  overzichtWeergeven();
 }
 
 async function zetPythonInschrijvingEnHerteken(waarde) {

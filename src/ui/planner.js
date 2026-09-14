@@ -7,6 +7,7 @@
 import { costOfRange } from "../lib/blocks.js";
 import { diffDays } from "../lib/date.js";
 import { huidigeYMD } from "../state/store.js";
+import { trips, effectieveTripStatus } from "../data/trips.js";
 
 const EXPORT_WAARSCHUWING_DAGEN = 14;
 
@@ -226,6 +227,41 @@ export function renderConflictenPaneel(root, conflicten, onOplossen) {
   knop.textContent = "Conflicten toepassen";
   knop.addEventListener("click", () => onOplossen(keuzes));
   root.appendChild(knop);
+}
+
+/**
+ * Eén rij per reisvariant (FASE-9.md A2) met zijn effectieve status en, als
+ * die niet al "geboekt" is, een knop om hem dat te maken — zet je die, dan
+ * gaat elke andere variant binnen dezelfde reis die nu "geboekt" is
+ * automatisch naar "vervallen" (state/store.js:zetTripStatus).
+ * @param {HTMLElement} root
+ * @param {Record<string, string>} tripStatusOverrides
+ * @param {(variant: string, nieuweStatus: string) => void} onWijzigen
+ */
+export function renderReisstatusPaneel(root, tripStatusOverrides, onWijzigen) {
+  root.className = "reisstatus-paneel";
+  root.textContent = "";
+
+  for (const item of trips.filter((t) => t.type === "vaste-boeking")) {
+    const status = effectieveTripStatus(item, tripStatusOverrides);
+
+    const rij = document.createElement("div");
+    rij.className = "reisstatus-rij";
+
+    const tekst = document.createElement("span");
+    tekst.textContent = `${item.label} (${item.start} → ${item.end}) — ${status}`;
+    rij.appendChild(tekst);
+
+    if (status !== "geboekt") {
+      const knop = document.createElement("button");
+      knop.type = "button";
+      knop.textContent = "Zet op geboekt";
+      knop.addEventListener("click", () => onWijzigen(item.variant, "geboekt"));
+      rij.appendChild(knop);
+    }
+
+    root.appendChild(rij);
+  }
 }
 
 /**

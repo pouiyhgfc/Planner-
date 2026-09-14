@@ -16,7 +16,7 @@ import { rangeDays, diffDays } from "./date.js";
 import { appPeriod, semesterMarkers } from "../data/semester.js";
 import { courses } from "../data/courses.js";
 import { psyDates, agtechDates, rteDates, pythonDates, chineseLessons, rteActionItems } from "../data/coursedates.js";
-import { trips } from "../data/trips.js";
+import { trips, effectieveTripStatus } from "../data/trips.js";
 
 const alleLesItems = [...psyDates, ...agtechDates, ...rteDates, ...pythonDates, ...chineseLessons];
 const AVOND_BEGIN = "18:25";
@@ -46,10 +46,13 @@ function heeftAlleenAvondLes(items) {
 /**
  * @param {string} ymd
  * @param {boolean} [pythonAfgewezen] Python-inschrijving afgewezen (fase 8F) — telt dan niet mee.
+ * @param {Record<string, string>} [tripStatusOverrides] FASE-9.md A2 — alleen een
+ *   reisvariant met effectieve status "geboekt" blokkeert de dag hard;
+ *   "wijziging-aangevraagd" telt niet mee (geen gedragswijziging bij default {}).
  * @returns {{kind: "hard"|"les-only"|"vrij", items: object[]}}
  */
-function classifyDay(ymd, pythonAfgewezen = false) {
-  if (trips.some((t) => valtOpDatum(ymd, t))) return { kind: "hard", items: [] };
+function classifyDay(ymd, pythonAfgewezen = false, tripStatusOverrides = {}) {
+  if (trips.some((t) => valtOpDatum(ymd, t) && effectieveTripStatus(t, tripStatusOverrides) === "geboekt")) return { kind: "hard", items: [] };
   if (semesterMarkers.some((m) => m.type === "semesterstart" && m.date === ymd)) return { kind: "hard", items: [] };
 
   const vakken = alleLesItems.filter((v) => v.date === ymd && !(pythonAfgewezen && v.course === "PY"));
@@ -68,10 +71,11 @@ function classifyDay(ymd, pythonAfgewezen = false) {
 /**
  * @param {string} ymd
  * @param {boolean} [pythonAfgewezen]
+ * @param {Record<string, string>} [tripStatusOverrides]
  * @returns {boolean} geen les, tentamen, deadline-actie of vaste boeking die dag. Feestdag en vakantie tellen als vrij.
  */
-export function isFree(ymd, pythonAfgewezen = false) {
-  return classifyDay(ymd, pythonAfgewezen).kind === "vrij";
+export function isFree(ymd, pythonAfgewezen = false, tripStatusOverrides = {}) {
+  return classifyDay(ymd, pythonAfgewezen, tripStatusOverrides).kind === "vrij";
 }
 
 /**
@@ -85,14 +89,15 @@ function bevatRisicoperiode(start, end) {
 /**
  * Alle maximale aaneengesloten reeksen vrije hele dagen (geen dagdeel-trim).
  * @param {boolean} [pythonAfgewezen]
+ * @param {Record<string, string>} [tripStatusOverrides]
  * @returns {{start: string, end: string, length: number, bevatRisicoperiode: boolean}[]}
  */
-export function freeBlocks(pythonAfgewezen = false) {
+export function freeBlocks(pythonAfgewezen = false, tripStatusOverrides = {}) {
   const dagen = rangeDays(appPeriod.start, appPeriod.end);
   const blokken = [];
   let start = null;
   for (let i = 0; i < dagen.length; i++) {
-    if (isFree(dagen[i], pythonAfgewezen)) {
+    if (isFree(dagen[i], pythonAfgewezen, tripStatusOverrides)) {
       if (start === null) start = dagen[i];
       if (i === dagen.length - 1) blokken.push(maakVrijBlok(start, dagen[i]));
       continue;
@@ -116,18 +121,19 @@ function maakVrijBlok(start, end) {
  * een harde dag wordt geraakt.
  * @param {number} maxMissedClassDays
  * @param {boolean} [pythonAfgewezen]
+ * @param {Record<string, string>} [tripStatusOverrides]
  * @returns {{start: string, end: string, length: number, budgetGebruikt: number, gemisteLessen: object[], bevatRisicoperiode: boolean}[]}
  */
-export function blocksWithCost(maxMissedClassDays, pythonAfgewezen = false) {
+export function blocksWithCost(maxMissedClassDays, pythonAfgewezen = false, tripStatusOverrides = {}) {
   const dagen = rangeDays(appPeriod.start, appPeriod.end);
   const blokken = [];
   let i = 0;
   while (i < dagen.length) {
-    if (!isFree(dagen[i], pythonAfgewezen)) {
+    if (!isFree(dagen[i], pythonAfgewezen, tripStatusOverrides)) {
       i++;
       continue;
     }
-    const blok = verlengVanaf(dagen, i, maxMissedClassDays, pythonAfgewezen);
+    const blok = verlengVanaf(dagen, i, maxMissedClassDays, pythonAfgewezen, tripStatusOverrides);
     blokken.push(blok);
     i = dagen.indexOf(blok.end) + 1;
   }
@@ -139,8 +145,9 @@ export function blocksWithCost(maxMissedClassDays, pythonAfgewezen = false) {
  * @param {number} startIdx
  * @param {number} budget
  * @param {boolean} [pythonAfgewezen]
+ * @param {Record<string, string>} [tripStatusOverrides]
  */
-function verlengVanaf(dagen, startIdx, budget, pythonAfgewezen = false) {
+function verlengVanaf(dagen, startIdx, budget, pythonAfgewezen = false, tripStatusOverrides = {}) {
   const start = dagen[startIdx];
   let end = start;
   let length = 0;
@@ -150,7 +157,7 @@ function verlengVanaf(dagen, startIdx, budget, pythonAfgewezen = false) {
 
   while (idx < dagen.length) {
     const ymd = dagen[idx];
-    const info = classifyDay(ymd, pythonAfgewezen);
+    const info = classifyDay(ymd, pythonAfgewezen, tripStatusOverrides);
 
     if (info.kind === "vrij") {
       end = ymd;

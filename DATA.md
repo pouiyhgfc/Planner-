@@ -460,18 +460,61 @@ donderdag gewoon naar college.
 
 ## 4. Vaste reisboekingen
 
-| Item | Datum | Zekerheid |
-|---|---|---|
-| Vlucht TPE → KIX (Peach Aviation) | 2026-10-30 | ZEKER |
-| Japan: Osaka 2 nachten → Kyoto 3 → Kawaguchiko/Fuji 1 → Tokyo 4 | 2026-10-30 → 11-09 | ZEKER |
-| Vlucht NRT → TPE (Peach Aviation) | 2026-11-09 | ZEKER |
-| Filipijnen-trip: vertrek vrijdagochtend | 2026-09-25 | ZEKER |
-| Filipijnen-trip: terugkomst (± 10:00) | 2026-09-30 | ZEKER |
+| Item | Datum | Status | Zekerheid |
+|---|---|---|---|
+| Vlucht TPE → KIX (Peach Aviation) | 2026-10-30 | geboekt | ZEKER |
+| Japan: Osaka 2 nachten → Kyoto 3 → Kawaguchiko/Fuji 1 → Tokyo 4 | 2026-10-30 → 11-09 | geboekt | ZEKER |
+| Vlucht NRT → TPE (Peach Aviation) | 2026-11-09 | geboekt | ZEKER |
+| Filipijnen-trip: vertrek vrijdagochtend | 2026-09-25 | geboekt | ZEKER |
+| Filipijnen-trip: terugkomst (± 10:00) | 2026-09-30 | geboekt | ZEKER |
 
 Bron: opgave Idries. Let op: 2026-09-25 is ook Moon Festival (feestdag, zie §2) —
 de vaste boeking heeft voorrang in de statusbepaling (zie fase 2-regels). De
 terugkomst is een woensdag; Idries mist daardoor de PSY-les die ochtend
 (09:10–12:10, §3.1). Dit vak neemt geen aanwezigheid op.
+
+### 4.1 Japan — omboeking in behandeling (FASE-9.md A2)
+
+De huidige Japan-boeking (hierboven, status **geboekt**) raakt twee van de
+drie Chinees-midterm-onderdelen (§3.4). Idries heeft wijzigingsrecht op de
+tickets en boekt om. De nieuwe datums liggen nog niet vast — status
+**wijziging-aangevraagd**, bron: opgave Idries, zekerheid TE VERIFIËREN (de
+omboeking zelf, niet de bedoeling erachter):
+
+| Item | Datum | Status |
+|---|---|---|
+| Vlucht TPE → KIX (voorgenomen, na 17:20 — ná RTE) | 2026-11-05 | wijziging-aangevraagd |
+| Japan (voorgenomen omboeking) | 2026-11-05 → 11-16 | wijziging-aangevraagd |
+| Vlucht NRT → TPE (voorgenomen, vóór 18:25 — vóór Chinees) | 2026-11-16 | wijziging-aangevraagd |
+
+Beide varianten blijven in de data staan (geen enkele overschrijft de
+andere). Zodra Idries één van de twee daadwerkelijk boekt, wordt die
+**geboekt** en gaat de andere automatisch naar **vervallen** (blijft in de
+data, verdwijnt uit de kalender). De kostenberekening rekent altijd met de
+status **geboekt** — de kosten van de voorgenomen wijziging hieronder zijn
+een vergelijking, geen vervanging.
+
+**Kostenvergelijking** (bron: opgave Idries; AgTech/RTE-aantallen voor de
+huidige boeking herhalen de al eerder gecorrigeerde 2x-telling van
+FASE-8-1.md — bevestigd door Idries blijft dit 1x, zie §8/FASE-8-1.md):
+
+| | Huidige boeking 30-10 → 09-11 | Voorgenomen 05-11 → 16-11 |
+|---|---|---|
+| Chinees | 3 sessies = 9 uur (3 uur boven vrijstelling) | 2 sessies = 6 uur (precies binnen vrijstelling) |
+| CHI-tentamenonderdelen geraakt | 2 van 3 (02-11 schriftelijk, 04-11 presentatie) | 0 |
+| AgTech | 1 absentie (11-05) | 1 absentie (11-12) |
+| RTE | 1 les (11-05) | 1 les (11-12) + 2e draft PPT due |
+| PSY | 1 les (11-04) | 1 les (11-11) |
+| Python | 1 les (11-04) | 1 les (11-11) |
+
+De voorgenomen kolom telt 11-05 en 11-16 zelf niet mee: vertrek is ná de
+RTE-les die middag, terugkomst is vóór de Chinese les die avond — geen van
+beide lessen wordt op die dagen gemist.
+
+**Harde grens:** de reis moet zijn afgelopen vóór **donderdag 2026-11-19**
+(RTE technical visit + Assignment #7, niet in te halen). Staat als
+deadline-item "Uiterste terugkomst" in de data, los van welke boekingsvariant
+actief is.
 
 ---
 
