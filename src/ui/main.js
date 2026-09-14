@@ -11,6 +11,7 @@ import {
   zetPythonInschrijving,
   zetVakVeld,
   zetOpleveringAfgevinkt,
+  zetKalenderWeergave,
   zetTripStatus,
   voegReisToe,
   verwijderReis,
@@ -132,7 +133,14 @@ function maandWeergeven() {
     tripStatusOverrides: state.tripStatusOverrides,
     eigenReizen: state.eigenReizen,
     vakkenVeldwaarden: state.vakkenVeldwaarden,
+    kalenderWeergave: state.kalenderWeergave,
   });
+}
+
+async function zetKalenderWeergaveEnHerteken(waarde) {
+  state = zetKalenderWeergave(state, waarde);
+  await bewaarState(state);
+  maandWeergeven();
 }
 
 function wekenWeergeven() {
@@ -372,6 +380,7 @@ const maandScherm = initMaandScherm(schermEls.maand, {
   onVeldWijzigen: zetVakVeldEnHerteken,
   onTerugNaarScherm: (naam) => navigatie.naarScherm(naam),
   onNaarVak: naarVak,
+  onKalenderWeergaveWijzigen: zetKalenderWeergaveEnHerteken,
 });
 
 const wekenScherm = initWekenScherm(schermEls.weken, {

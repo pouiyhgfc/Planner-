@@ -45,18 +45,23 @@
  *     src/data/opleveringen.js zijn afgevinkt, per sleutel = het eigen id
  *     van het item (opleveringen hebben, anders dan deadlines/mijlpalen,
  *     altijd een eigen stabiele id — geen samengestelde sleutel nodig).
+ * v11: state kreeg kalenderWeergave (FASE-9.md B5 punt 3): "compact" (alleen
+ *     streepjes plus de zware-momentenregel) of "uitgebreid" (alle
+ *     onderwerpen die dag als tekst) op het scherm Maand. Standaard
+ *     "compact".
  */
 
 import { parseYMD } from "../lib/date.js";
 import { trips, TRIP_STATUSSEN } from "../data/trips.js";
 
-export const CURRENT_SCHEMA_VERSION = 10;
+export const CURRENT_SCHEMA_VERSION = 11;
 
 const STATUS_WAARDEN = ["idee", "vast"];
 export const SCHERMEN = ["maand", "weken", "overzicht", "vakken"];
 const THEMA_WAARDEN = ["systeem", "licht", "donker"];
 export const PERIODES = ["1w", "2w", "4w", "1m", "3m", "alle", "eigen"];
 export const PYTHON_INSCHRIJVING_WAARDEN = ["onbevestigd", "bevestigd", "afgewezen"];
+export const KALENDER_WEERGAVEN = ["compact", "uitgebreid"];
 
 /**
  * @returns {{activeScreen: string, scrollPositions: Record<string, number>, thema: string}}
@@ -94,6 +99,7 @@ export function leegState() {
     tripStatusOverrides: {},
     eigenReizen: [],
     afgevinkteOpleveringen: [],
+    kalenderWeergave: "compact",
   };
 }
 
@@ -237,6 +243,25 @@ export function migrate(state) {
     };
   }
 
+  if (s.schemaVersion === 10) {
+    s = {
+      schemaVersion: 11,
+      laatsteExport: s.laatsteExport ?? null,
+      items: s.items ?? [],
+      ui: geldigeUiState(s.ui),
+      afgevinkteDeadlines: s.afgevinkteDeadlines ?? [],
+      weekWeergave: geldigeWeekWeergave(s.weekWeergave),
+      afgevinkteMijlpalen: s.afgevinkteMijlpalen ?? [],
+      eigenProjecten: s.eigenProjecten ?? [],
+      pythonInschrijving: PYTHON_INSCHRIJVING_WAARDEN.includes(s.pythonInschrijving) ? s.pythonInschrijving : "onbevestigd",
+      vakkenVeldwaarden: s.vakkenVeldwaarden ?? {},
+      tripStatusOverrides: geldigeTripStatusOverrides(s.tripStatusOverrides),
+      eigenReizen: s.eigenReizen ?? [],
+      afgevinkteOpleveringen: s.afgevinkteOpleveringen ?? [],
+      kalenderWeergave: KALENDER_WEERGAVEN.includes(s.kalenderWeergave) ? s.kalenderWeergave : "compact",
+    };
+  }
+
   if (s.schemaVersion === CURRENT_SCHEMA_VERSION) {
     return {
       ...s,
@@ -250,6 +275,7 @@ export function migrate(state) {
       tripStatusOverrides: geldigeTripStatusOverrides(s.tripStatusOverrides),
       eigenReizen: s.eigenReizen ?? [],
       afgevinkteOpleveringen: s.afgevinkteOpleveringen ?? [],
+      kalenderWeergave: KALENDER_WEERGAVEN.includes(s.kalenderWeergave) ? s.kalenderWeergave : "compact",
     };
   }
   throw new Error(`onbekende schemaVersion: ${state.schemaVersion}`);

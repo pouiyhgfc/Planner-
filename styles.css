@@ -445,9 +445,21 @@ select {
   padding: 8px 10px;
 }
 
+.maand-weekbalk {
+  margin: 0 0 8px;
+  color: var(--text-muted);
+  font-size: var(--fs-min);
+}
+
+.maand-weergave-toggle {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
 .maand-dagkoppen {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: 24px repeat(7, 1fr);
   gap: 2px;
   margin-bottom: 2px;
   text-align: center;
@@ -455,10 +467,36 @@ select {
   font-size: var(--fs-min);
 }
 
-.maand-grid {
+.maand-weekrij {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: 24px repeat(7, 1fr);
   gap: 2px;
+  margin-bottom: 2px;
+}
+
+/* FASE-9.md B5 punt 1 — weekgewicht: weeknummer + aantal zware momenten */
+.maand-weekgewicht {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border-radius: var(--radius-day);
+  font-size: var(--fs-min);
+  color: var(--text-muted);
+}
+.maand-weekgewicht-week {
+  font-family: var(--ff-display);
+}
+.maand-weekgewicht-getal {
+  font-weight: 600;
+}
+.maand-weekgewicht.zwaar {
+  border: var(--border-width) solid var(--danger-border);
+  color: var(--danger-text);
+}
+.maand-weekgewicht.zwaar .maand-weekgewicht-getal {
+  color: var(--danger-text);
 }
 
 .dagvak {
@@ -474,6 +512,7 @@ select {
   padding: 4px;
   min-width: 0;
   min-height: 0;
+  overflow: hidden;
 }
 .dagvak.buiten-maand {
   opacity: 0.45;
@@ -515,6 +554,16 @@ select {
   width: 6px;
   height: 6px;
   border-radius: 50%;
+}
+.dagvak-regel {
+  width: 100%;
+  margin-top: 2px;
+  font-size: 9px;
+  line-height: 1.2;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .dagvak-eigen-balk {
   position: absolute;

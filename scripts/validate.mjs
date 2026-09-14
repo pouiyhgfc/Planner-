@@ -29,6 +29,7 @@ import {
   zetPythonInschrijving,
   zetVakVeld,
   zetOpleveringAfgevinkt,
+  zetKalenderWeergave,
   zetTripStatus,
   voegReisToe,
   verwijderReis,
@@ -40,7 +41,8 @@ import {
 import { chinaAftelling, flexWeekStatus, cnyDrukte, resterendeBlokken, absentieTotaal } from "../src/lib/overzicht.js";
 import { seizoensdataLabel } from "../src/data/season.js";
 import { kortDatum, collegeWeek } from "../src/ui/datumlabels.js";
-import { maandWeken, isStipMoment } from "../src/ui/maandGrid.js";
+import { maandWeken, isStipMoment, zwareRegelTekst, onderwerpenTekst } from "../src/ui/maandGrid.js";
+import { zwareMomentenOpDag, weekgewicht } from "../src/lib/weekgewicht.js";
 import { deadlineSleutel } from "../src/ui/dagblad.js";
 import { maandagVan, weekAantal, weekStarts, verschuifVenster, dagdelenMetKleur } from "../src/ui/wekenGrid.js";
 import { projects } from "../src/data/projects.js";
@@ -1873,6 +1875,67 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   check("mijlpaalSleutel: nog steeds bruikbaar na verhuizing naar dagblad.js", mijlpaalSleutel(mijlpaalOp0924[0].project, mijlpaalOp0924[0].mijlpaal).startsWith("RTE_TERMPROJECT::2026-09-24"), true);
 
   check("opleveringen: 8 items met vaste datum (7 RTE-opdrachten + AgTech) — bruikbaar voor het dagblad zonder invulling", opleveringen.filter((o) => o.datum !== null).length, 8);
+}
+
+// FASE-9.md B5: weekgewicht.js — tentamens, presentaties en harde deadlines
+{
+  const dag20261104 = dayStatus("2026-11-04");
+  const z1104 = zwareMomentenOpDag(dag20261104);
+  check("2026-11-04: precies één zwaar moment (CHI-presentatietentamen)", z1104.totaal, 1);
+  check("2026-11-04: zwareRegelTekst is niet-leeg", zwareRegelTekst(dag20261104), "CHI presentatie");
+
+  const dag20261118 = dayStatus("2026-11-18");
+  check("2026-11-18: geen zwaar moment (gewone lesdag)", zwareMomentenOpDag(dag20261118).totaal, 0);
+  check("2026-11-18: zwareRegelTekst is null in compacte stand", zwareRegelTekst(dag20261118), null);
+  check("2026-11-18: drie onderwerpen in uitgebreide stand", onderwerpenTekst(dag20261118)?.split(" · ").length, 3);
+
+  const dag20261028 = dayStatus("2026-10-28");
+  const z1028 = zwareMomentenOpDag(dag20261028);
+  check("2026-10-28: twee tentamens (PSY-midterm + CHI-mondeling)", z1028.tentamens.length, 2);
+  check("2026-10-28: zwareRegelTekst noemt het aantal bij twee of meer", zwareRegelTekst(dag20261028), "2 tentamens");
+
+  const week9 = weekgewicht("2026-11-02");
+  check("weekgewicht: week 9 (maandag 2026-11-02) heeft 3 zware momenten", week9.totaal, 3);
+  check("weekgewicht: week 9 haalt de drempel voor een rand (>= 3)", week9.totaal >= 3, true);
+
+  const week16 = weekgewicht("2026-12-21");
+  check("weekgewicht: week 16 (maandag 2026-12-21) heeft 5 zware momenten", week16.totaal, 5);
+
+  // "harde" academicDeadlines-items (bijv. de 15 dagen lange "Midterm course
+  // survey") tellen bewust niet mee — anders zou elke dag binnen zo'n
+  // venster een eigen "zwaar moment" worden. Zie deadlines.js voor de
+  // toelichting. Dit is precies waarom week 8 (waar die periode grotendeels
+  // in valt) NIET de zwaarste week is, ondanks twee tentamens op 2026-10-28.
+  const week8 = weekgewicht("2026-10-26");
+  check("weekgewicht: 'Midterm course survey' (harde: false) telt niet mee in week 8", week8.totaal, 2);
+
+  // FASE-9.md B5 "Klaar als": december toont week 16 als zwaarste week van
+  // het semester — berekend over alle collegeweken, niet aangenomen.
+  const alleMaandagen = [];
+  const gezienMaandagen = new Set();
+  for (const ymd of rangeDays(appPeriod.start, appPeriod.end)) {
+    const maandag = addDays(ymd, -dayOfWeek(ymd));
+    if (gezienMaandagen.has(maandag)) continue;
+    gezienMaandagen.add(maandag);
+    alleMaandagen.push(maandag);
+  }
+  const alleGewichten = alleMaandagen.map((m) => weekgewicht(m)).filter((g) => g.week !== null);
+  const maxTotaal = Math.max(...alleGewichten.map((g) => g.totaal));
+  const zwaarsteWeken = alleGewichten.filter((g) => g.totaal === maxTotaal).map((g) => g.week);
+  check("weekgewicht: week 16 is de unieke zwaarste collegeweek van het semester", zwaarsteWeken, [16]);
+}
+
+// FASE-9.md B5: schema v10 -> v11 (kalenderWeergave) en store-functie
+{
+  const v10 = { ...leegState(), schemaVersion: 10 };
+  delete v10.kalenderWeergave;
+  const gemigreerd = migrate(v10);
+  check("migrate v10->v11: schemaVersion wordt de actuele versie", gemigreerd.schemaVersion, CURRENT_SCHEMA_VERSION);
+  check("migrate v10->v11: kalenderWeergave default 'compact'", gemigreerd.kalenderWeergave, "compact");
+
+  let state = leegState();
+  state = zetKalenderWeergave(state, "uitgebreid");
+  check("zetKalenderWeergave: waarde wordt overgenomen", state.kalenderWeergave, "uitgebreid");
 }
 
 console.log(`\n${passed} geslaagd, ${failures} mislukt.`);

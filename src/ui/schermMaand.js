@@ -7,7 +7,9 @@
 
 import { parseYMD } from "../lib/date.js";
 import { dayStatus } from "../lib/dayStatus.js";
+import { weekgewicht } from "../lib/weekgewicht.js";
 import { renderMaandScherm as renderMaandGrid } from "./maandGrid.js";
+import { maandagVan } from "./wekenGrid.js";
 import { renderDagblad } from "./dagblad.js";
 
 /**
@@ -21,15 +23,19 @@ import { renderDagblad } from "./dagblad.js";
  *   onVeldWijzigen: (sleutel: string, waarde: string) => void,
  *   onTerugNaarScherm: (naam: string) => void,
  *   onNaarVak: (vakId: string) => void,
+ *   onKalenderWeergaveWijzigen: (waarde: "compact"|"uitgebreid") => void,
  * }} callbacks
- * @returns {{render: (ctx: {vandaag: string, items: object[], afgevinkteDeadlines: string[], afgevinkteOpleveringen: string[], afgevinkteMijlpalen: string[], eigenProjecten: object[], pythonAfgewezen: boolean, tripStatusOverrides: Record<string, string>, eigenReizen: object[], vakkenVeldwaarden: Record<string, string>}) => void}}
+ * @returns {{render: (ctx: {vandaag: string, items: object[], afgevinkteDeadlines: string[], afgevinkteOpleveringen: string[], afgevinkteMijlpalen: string[], eigenProjecten: object[], pythonAfgewezen: boolean, tripStatusOverrides: Record<string, string>, eigenReizen: object[], vakkenVeldwaarden: Record<string, string>, kalenderWeergave: "compact"|"uitgebreid"}) => void}}
  */
 export function initMaandScherm(root, callbacks) {
+  const weekbalkEl = document.createElement("p");
+  weekbalkEl.className = "maand-weekbalk";
   const gridEl = document.createElement("div");
   gridEl.className = "maand-inhoud";
   const dagbladEl = document.createElement("div");
   dagbladEl.className = "dagblad-paneel";
   dagbladEl.hidden = true;
+  root.appendChild(weekbalkEl);
   root.appendChild(gridEl);
   root.appendChild(dagbladEl);
 
@@ -79,9 +85,20 @@ export function initMaandScherm(root, callbacks) {
       tripStatusOverrides = {},
       eigenReizen = [],
       vakkenVeldwaarden = {},
+      kalenderWeergave = "compact",
     } = laatsteCtx;
 
-    renderMaandGrid(gridEl, { jaar, maand, vandaag, geselecteerd, items, pythonAfgewezen, tripStatusOverrides, eigenReizen }, toonDag, toonMaand);
+    // FASE-9.md B5 punt 4: weekbalk boven de kalender voor de week van de
+    // geselecteerde dag, of vandaag als er niets geselecteerd is.
+    renderWeekbalk(weekbalkEl, geselecteerd ?? vandaag, pythonAfgewezen, tripStatusOverrides, eigenReizen);
+
+    renderMaandGrid(
+      gridEl,
+      { jaar, maand, vandaag, geselecteerd, items, pythonAfgewezen, tripStatusOverrides, eigenReizen, kalenderWeergave },
+      toonDag,
+      toonMaand,
+      callbacks.onKalenderWeergaveWijzigen
+    );
 
     dagbladEl.hidden = geselecteerd === null;
     if (geselecteerd !== null) {
@@ -150,4 +167,31 @@ export function initMaandScherm(root, callbacks) {
   }
 
   return { render, openDag };
+}
+
+/**
+ * FASE-9.md B5 punt 4: weeknummer plus de zware momenten van die week als
+ * korte opsomming, onder de topbalk. Geen collegeweek van toepassing
+ * (vakantie, buiten het semester) → balk verbergen.
+ * @param {HTMLElement} el
+ * @param {string} ankerYmd de geselecteerde dag, of vandaag
+ * @param {boolean} pythonAfgewezen
+ * @param {Record<string, string>} tripStatusOverrides
+ * @param {object[]} eigenReizen
+ */
+function renderWeekbalk(el, ankerYmd, pythonAfgewezen, tripStatusOverrides, eigenReizen) {
+  const gewicht = weekgewicht(maandagVan(ankerYmd), pythonAfgewezen, tripStatusOverrides, eigenReizen);
+  if (gewicht.week === null) {
+    el.hidden = true;
+    return;
+  }
+  el.hidden = false;
+
+  const delen = [];
+  if (gewicht.tentamens > 0) delen.push(`${gewicht.tentamens} tentamen${gewicht.tentamens === 1 ? "" : "s"}`);
+  if (gewicht.presentaties > 0) delen.push(`${gewicht.presentaties} presentatie${gewicht.presentaties === 1 ? "" : "s"}`);
+  if (gewicht.deadlines > 0) delen.push(`${gewicht.deadlines} deadline${gewicht.deadlines === 1 ? "" : "s"}`);
+  const opsomming = delen.length > 0 ? delen.join(", ") : "geen zware momenten";
+
+  el.textContent = `Week ${gewicht.week} — ${opsomming}`;
 }

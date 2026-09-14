@@ -109,21 +109,24 @@ export const pythonDates = [
 /**
  * Deadlines/acties uit de "Deadline / actie"-kolom van DATA.md §3.3.
  * Los van rteDates zodat de lesdag-telling (16) hierdoor niet verstoord wordt.
+ * harde: true (FASE-9.md B5) — dit zijn concrete cursusverplichtingen (in
+ * te leveren of in de les), geen algemene NTU-kalenderregel — zie ook de
+ * toelichting bij academicDeadlines in deadlines.js.
  */
 export const rteActionItems = [
-  { date: "2026-09-24", type: "deadline", course: "RTE", label: "Term project topic + groepen (5 pers.)", bron: BRON_RTE, zekerheid: "ZEKER" },
-  { date: "2026-09-24", type: "deadline", course: "RTE", label: "Assignment #1 draft PPT", bron: BRON_RTE, zekerheid: "ZEKER" },
-  { date: "2026-10-01", type: "deadline", course: "RTE", label: "Assignment #2 uitgegeven", bron: BRON_RTE, zekerheid: "ZEKER" },
-  { date: "2026-10-08", type: "deadline", course: "RTE", label: "Assignment #2 due", bron: BRON_RTE, zekerheid: "ZEKER" },
-  { date: "2026-10-08", type: "deadline", course: "RTE", label: "Assignment #3 in-class", bron: BRON_RTE, zekerheid: "ZEKER" },
-  { date: "2026-10-15", type: "deadline", course: "RTE", label: "Term project draft PPT due", bron: BRON_RTE, zekerheid: "ZEKER" },
-  { date: "2026-10-15", type: "deadline", course: "RTE", label: "Assignment #1 due", bron: BRON_RTE, zekerheid: "ZEKER" },
-  { date: "2026-10-15", type: "deadline", course: "RTE", label: "Assignment #4 uitgegeven", bron: BRON_RTE, zekerheid: "ZEKER" },
-  { date: "2026-10-22", type: "deadline", course: "RTE", label: "Assignment #4 due", bron: BRON_RTE, zekerheid: "ZEKER" },
-  { date: "2026-11-05", type: "deadline", course: "RTE", label: "Assignment #5 in-class", bron: BRON_RTE, zekerheid: "ZEKER" },
-  { date: "2026-11-12", type: "deadline", course: "RTE", label: "2e draft PPT due", bron: BRON_RTE, zekerheid: "ZEKER" },
-  { date: "2026-11-19", type: "deadline", course: "RTE", label: "Assignment #7 (visit)", bron: BRON_RTE, zekerheid: "ZEKER" },
-  { date: "2026-12-03", type: "deadline", course: "RTE", label: "Assignment #6 in-class", bron: BRON_RTE, zekerheid: "ZEKER" },
+  { date: "2026-09-24", type: "deadline", course: "RTE", label: "Term project topic + groepen (5 pers.)", harde: true, bron: BRON_RTE, zekerheid: "ZEKER" },
+  { date: "2026-09-24", type: "deadline", course: "RTE", label: "Assignment #1 draft PPT", harde: true, bron: BRON_RTE, zekerheid: "ZEKER" },
+  { date: "2026-10-01", type: "deadline", course: "RTE", label: "Assignment #2 uitgegeven", harde: true, bron: BRON_RTE, zekerheid: "ZEKER" },
+  { date: "2026-10-08", type: "deadline", course: "RTE", label: "Assignment #2 due", harde: true, bron: BRON_RTE, zekerheid: "ZEKER" },
+  { date: "2026-10-08", type: "deadline", course: "RTE", label: "Assignment #3 in-class", harde: true, bron: BRON_RTE, zekerheid: "ZEKER" },
+  { date: "2026-10-15", type: "deadline", course: "RTE", label: "Term project draft PPT due", harde: true, bron: BRON_RTE, zekerheid: "ZEKER" },
+  { date: "2026-10-15", type: "deadline", course: "RTE", label: "Assignment #1 due", harde: true, bron: BRON_RTE, zekerheid: "ZEKER" },
+  { date: "2026-10-15", type: "deadline", course: "RTE", label: "Assignment #4 uitgegeven", harde: true, bron: BRON_RTE, zekerheid: "ZEKER" },
+  { date: "2026-10-22", type: "deadline", course: "RTE", label: "Assignment #4 due", harde: true, bron: BRON_RTE, zekerheid: "ZEKER" },
+  { date: "2026-11-05", type: "deadline", course: "RTE", label: "Assignment #5 in-class", harde: true, bron: BRON_RTE, zekerheid: "ZEKER" },
+  { date: "2026-11-12", type: "deadline", course: "RTE", label: "2e draft PPT due", harde: true, bron: BRON_RTE, zekerheid: "ZEKER" },
+  { date: "2026-11-19", type: "deadline", course: "RTE", label: "Assignment #7 (visit)", harde: true, bron: BRON_RTE, zekerheid: "ZEKER" },
+  { date: "2026-12-03", type: "deadline", course: "RTE", label: "Assignment #6 in-class", harde: true, bron: BRON_RTE, zekerheid: "ZEKER" },
 ];
 
 /**

@@ -162,6 +162,15 @@ export function verwijderReis(state, id) {
 }
 
 /**
+ * @param {{kalenderWeergave: string}} state
+ * @param {"compact"|"uitgebreid"} waarde
+ * @returns {{kalenderWeergave: string}}
+ */
+export function zetKalenderWeergave(state, waarde) {
+  return { ...state, kalenderWeergave: waarde };
+}
+
+/**
  * @param {{pythonInschrijving: string}} state
  * @param {"onbevestigd"|"bevestigd"|"afgewezen"} waarde
  * @returns {{pythonInschrijving: string}}
