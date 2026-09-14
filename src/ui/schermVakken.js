@@ -474,7 +474,7 @@ function renderVakKaart(course, onKlik) {
  *   onDeadlineToggle: (sleutel: string, afgevinkt: boolean) => void,
  *   onOpleveringToggle: (id: string, afgevinkt: boolean) => void,
  * }} callbacks
- * @returns {{render: (ctx: object) => void}}
+ * @returns {{render: (ctx: object) => void, openVak: (vakId: string) => void}}
  */
 export function initVakkenScherm(root, callbacks) {
   const lijstEl = document.createElement("div");
@@ -520,5 +520,5 @@ export function initVakkenScherm(root, callbacks) {
     tekenen();
   }
 
-  return { render };
+  return { render, openVak: toonVak };
 }

@@ -16,10 +16,13 @@ import { renderDagblad } from "./dagblad.js";
  *   onItemToevoegen: (veld: object) => void,
  *   onVerwijderItem: (id: string) => void,
  *   onDeadlineToggle: (sleutel: string, afgevinkt: boolean) => void,
+ *   onOpleveringToggle: (id: string, afgevinkt: boolean) => void,
+ *   onMijlpaalToggle: (sleutel: string, afgevinkt: boolean) => void,
  *   onVeldWijzigen: (sleutel: string, waarde: string) => void,
  *   onTerugNaarScherm: (naam: string) => void,
+ *   onNaarVak: (vakId: string) => void,
  * }} callbacks
- * @returns {{render: (ctx: {vandaag: string, items: object[], afgevinkteDeadlines: string[], pythonAfgewezen: boolean, tripStatusOverrides: Record<string, string>, eigenReizen: object[], vakkenVeldwaarden: Record<string, string>}) => void}}
+ * @returns {{render: (ctx: {vandaag: string, items: object[], afgevinkteDeadlines: string[], afgevinkteOpleveringen: string[], afgevinkteMijlpalen: string[], eigenProjecten: object[], pythonAfgewezen: boolean, tripStatusOverrides: Record<string, string>, eigenReizen: object[], vakkenVeldwaarden: Record<string, string>}) => void}}
  */
 export function initMaandScherm(root, callbacks) {
   const gridEl = document.createElement("div");
@@ -65,7 +68,18 @@ export function initMaandScherm(root, callbacks) {
 
   function tekenen() {
     if (!laatsteCtx) return;
-    const { vandaag, items, afgevinkteDeadlines, pythonAfgewezen, tripStatusOverrides = {}, eigenReizen = [], vakkenVeldwaarden = {} } = laatsteCtx;
+    const {
+      vandaag,
+      items,
+      afgevinkteDeadlines,
+      afgevinkteOpleveringen,
+      afgevinkteMijlpalen,
+      eigenProjecten = [],
+      pythonAfgewezen,
+      tripStatusOverrides = {},
+      eigenReizen = [],
+      vakkenVeldwaarden = {},
+    } = laatsteCtx;
 
     renderMaandGrid(gridEl, { jaar, maand, vandaag, geselecteerd, items, pythonAfgewezen, tripStatusOverrides, eigenReizen }, toonDag, toonMaand);
 
@@ -76,7 +90,18 @@ export function initMaandScherm(root, callbacks) {
       formOpenenBijVolgende = false;
       renderDagblad(
         dagbladEl,
-        { ymd: geselecteerd, dag: dayStatus(geselecteerd, pythonAfgewezen, tripStatusOverrides, eigenReizen), eigenItems, afgevinkteDeadlines, pythonAfgewezen, vakkenVeldwaarden, formOpenen },
+        {
+          ymd: geselecteerd,
+          dag: dayStatus(geselecteerd, pythonAfgewezen, tripStatusOverrides, eigenReizen),
+          eigenItems,
+          afgevinkteDeadlines,
+          afgevinkteOpleveringen,
+          afgevinkteMijlpalen,
+          eigenProjecten,
+          pythonAfgewezen,
+          vakkenVeldwaarden,
+          formOpenen,
+        },
         {
           onSluiten: sluitDagblad,
           onItemToevoegen: callbacks.onItemToevoegen,
@@ -86,7 +111,10 @@ export function initMaandScherm(root, callbacks) {
             callbacks.onItemToevoegen({ naam: "Notitie", start: geselecteerd, end: geselecteerd, status: "idee", notitie: tekst }),
           onVerwijderItem: callbacks.onVerwijderItem,
           onDeadlineToggle: callbacks.onDeadlineToggle,
+          onOpleveringToggle: callbacks.onOpleveringToggle,
+          onMijlpaalToggle: callbacks.onMijlpaalToggle,
           onVeldWijzigen: callbacks.onVeldWijzigen,
+          onNaarVak: callbacks.onNaarVak,
         }
       );
     }

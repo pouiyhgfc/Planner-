@@ -125,6 +125,9 @@ function maandWeergeven() {
     vandaag: huidigeYMD(),
     items: state.items,
     afgevinkteDeadlines: state.afgevinkteDeadlines,
+    afgevinkteOpleveringen: state.afgevinkteOpleveringen,
+    afgevinkteMijlpalen: state.afgevinkteMijlpalen,
+    eigenProjecten: state.eigenProjecten,
     pythonAfgewezen: pythonAfgewezen(),
     tripStatusOverrides: state.tripStatusOverrides,
     eigenReizen: state.eigenReizen,
@@ -151,6 +154,16 @@ async function wijzigWeekWeergave(nieuweWeekWeergave) {
 function openWeekInMaand(ymd) {
   navigatie.naarScherm("maand");
   maandScherm.openDag(ymd);
+}
+
+/**
+ * FASE-9.md B4: het lesblok in het dagblad heeft een tikdoel "Naar vak" dat
+ * rechtstreeks naar de detailpagina van dat vak springt.
+ * @param {string} vakId
+ */
+function naarVak(vakId) {
+  navigatie.naarScherm("vakken");
+  vakkenScherm.openVak(vakId);
 }
 
 /**
@@ -195,6 +208,7 @@ async function zetOpleveringEnHerteken(id, afgevinkt) {
   await bewaarState(state);
   overzichtWeergeven();
   vakkenWeergeven();
+  maandWeergeven();
 }
 
 async function zetVakVeldEnHerteken(sleutel, waarde) {
@@ -258,6 +272,7 @@ async function zetMijlpaalEnHerteken(sleutel, afgevinkt) {
   state = zetMijlpaalAfgevinkt(state, sleutel, afgevinkt);
   await bewaarState(state);
   overzichtWeergeven();
+  maandWeergeven();
 }
 
 async function voegItemEnHerteken(veld) {
@@ -352,8 +367,11 @@ const maandScherm = initMaandScherm(schermEls.maand, {
   onItemToevoegen: voegItemEnHerteken,
   onVerwijderItem: verwijderItemEnHerteken,
   onDeadlineToggle: zetDeadlineEnHerteken,
+  onOpleveringToggle: zetOpleveringEnHerteken,
+  onMijlpaalToggle: zetMijlpaalEnHerteken,
   onVeldWijzigen: zetVakVeldEnHerteken,
   onTerugNaarScherm: (naam) => navigatie.naarScherm(naam),
+  onNaarVak: naarVak,
 });
 
 const wekenScherm = initWekenScherm(schermEls.weken, {

@@ -6,6 +6,8 @@
 
 import { volledigeDatum, collegeWeek } from "./datumlabels.js";
 import { courses } from "../data/courses.js";
+import { opleveringen } from "../data/opleveringen.js";
+import { projects } from "../data/projects.js";
 import { costOfRange } from "../lib/blocks.js";
 import { renderPlannerForm } from "./planner.js";
 
@@ -15,6 +17,15 @@ import { renderPlannerForm } from "./planner.js";
  */
 export function deadlineSleutel(deadline) {
   return `${deadline.date ?? deadline.start}::${deadline.label}`;
+}
+
+/**
+ * @param {{id: string}} project
+ * @param {{datum: string, label: string}} mijlpaal
+ * @returns {string} stabiele sleutel — mijlpalen hebben zelf geen id
+ */
+export function mijlpaalSleutel(project, mijlpaal) {
+  return `${project.id}::${mijlpaal.datum}::${mijlpaal.label}`;
 }
 
 function courseVoor(id) {
@@ -35,6 +46,9 @@ function kopSectie(titel) {
  *   dag: ReturnType<typeof import("../lib/dayStatus.js").dayStatus>,
  *   eigenItems: object[],
  *   afgevinkteDeadlines: string[],
+ *   afgevinkteOpleveringen: string[],
+ *   afgevinkteMijlpalen: string[],
+ *   eigenProjecten: object[],
  *   pythonAfgewezen: boolean,
  *   vakkenVeldwaarden: Record<string, string>,
  *   formOpenen: boolean,
@@ -46,10 +60,17 @@ function kopSectie(titel) {
  *   onNotitieToevoegen: (tekst: string) => void,
  *   onVerwijderItem: (id: string) => void,
  *   onDeadlineToggle: (sleutel: string, afgevinkt: boolean) => void,
+ *   onOpleveringToggle: (id: string, afgevinkt: boolean) => void,
+ *   onMijlpaalToggle: (sleutel: string, afgevinkt: boolean) => void,
  *   onVeldWijzigen: (sleutel: string, waarde: string) => void,
+ *   onNaarVak: (vakId: string) => void,
  * }} acties
  */
-export function renderDagblad(root, { ymd, dag, eigenItems, afgevinkteDeadlines, pythonAfgewezen = false, vakkenVeldwaarden = {}, formOpenen = false }, acties) {
+export function renderDagblad(
+  root,
+  { ymd, dag, eigenItems, afgevinkteDeadlines, afgevinkteOpleveringen, afgevinkteMijlpalen, eigenProjecten = [], pythonAfgewezen = false, vakkenVeldwaarden = {}, formOpenen = false },
+  acties
+) {
   root.textContent = "";
 
   const kop = document.createElement("div");
@@ -90,17 +111,15 @@ export function renderDagblad(root, { ymd, dag, eigenItems, afgevinkteDeadlines,
   const lessen = dag.vakken.filter((v) => v.type === "les");
   const tentamens = dag.vakken.filter((v) => v.type === "tentamen" || /presentat/i.test(v.label));
 
-  // 3. Lessen
+  // 3. Lessen — elke les een blok (FASE-9.md B4), geen platte regel: alleen
+  // velden tonen die er zijn, en wat er die dag voor dat vak in- of
+  // uitgegeven wordt (dag.deadlines gefilterd op vak) er meteen bij, zodat
+  // je bij de les zelf ziet dat je iets mee moet nemen.
   if (lessen.length > 0) {
     root.appendChild(kopSectie("Lessen"));
     const lijst = document.createElement("ul");
     for (const les of lessen) {
-      const course = courseVoor(les.course);
-      const li = document.createElement("li");
-      const zaal = course.room ?? "zaal onbekend";
-      const spreker = les.spreker ? ` (${les.spreker})` : "";
-      li.textContent = `${course.name} — ${course.start}–${course.end} — ${zaal} — ${les.label}${spreker}`;
-      lijst.appendChild(li);
+      lijst.appendChild(renderLesBlok(les, week, dag.deadlines, acties.onNaarVak));
     }
     root.appendChild(lijst);
   }
@@ -124,7 +143,19 @@ export function renderDagblad(root, { ymd, dag, eigenItems, afgevinkteDeadlines,
     root.appendChild(lijst);
   }
 
-  // 5. Deadlines
+  // 5. Opleveringen (fase 9 B3) — items met een vaste of zelf ingevulde
+  // datum die op deze dag valt.
+  const opleveringenVandaag = opleveringen.filter((o) => (o.datum ?? vakkenVeldwaarden[`${o.id}.datum`]) === ymd);
+  if (opleveringenVandaag.length > 0) {
+    root.appendChild(kopSectie("Opleveringen"));
+    const lijst = document.createElement("ul");
+    for (const item of opleveringenVandaag) {
+      lijst.appendChild(renderOpleveringRij(item, afgevinkteOpleveringen, acties.onOpleveringToggle));
+    }
+    root.appendChild(lijst);
+  }
+
+  // 6. Deadlines
   if (dag.deadlines.length > 0) {
     root.appendChild(kopSectie("Deadlines"));
     const lijst = document.createElement("ul");
@@ -146,9 +177,20 @@ export function renderDagblad(root, { ymd, dag, eigenItems, afgevinkteDeadlines,
     root.appendChild(lijst);
   }
 
-  // 6. Projecten — nog geen projectdata (volgt in fase 8E), dus altijd leeg.
+  // 7. Projecten — mijlpalen uit src/data/projects.js plus eigen projecten
+  // uit de state, die op deze dag vallen.
+  const alleProjecten = [...projects, ...eigenProjecten];
+  const projectMijlpalenVandaag = alleProjecten.flatMap((project) => project.mijlpalen.filter((m) => m.datum === ymd).map((mijlpaal) => ({ project, mijlpaal })));
+  if (projectMijlpalenVandaag.length > 0) {
+    root.appendChild(kopSectie("Projecten"));
+    const lijst = document.createElement("ul");
+    for (const { project, mijlpaal } of projectMijlpalenVandaag) {
+      lijst.appendChild(renderProjectMijlpaalRij(project, mijlpaal, afgevinkteMijlpalen, acties.onMijlpaalToggle));
+    }
+    root.appendChild(lijst);
+  }
 
-  // 7. Eigen items
+  // 8. Eigen items
   if (eigenItems.length > 0) {
     root.appendChild(kopSectie("Eigen items"));
     const lijst = document.createElement("ul");
@@ -158,7 +200,7 @@ export function renderDagblad(root, { ymd, dag, eigenItems, afgevinkteDeadlines,
     root.appendChild(lijst);
   }
 
-  // 8. Wat deze dag kost
+  // 9. Wat deze dag kost
   const { perVak } = costOfRange(ymd, ymd, pythonAfgewezen);
   const vakken = Object.entries(perVak);
   if (vakken.length > 0) {
@@ -173,6 +215,133 @@ export function renderDagblad(root, { ymd, dag, eigenItems, afgevinkteDeadlines,
   }
 
   root.appendChild(renderActieknoppen(ymd, acties, formOpenen));
+}
+
+/**
+ * Eén lesblok (FASE-9.md B4): vaknaam, tijd, zaal, weeknummer, onderwerp,
+ * en — alleen als aanwezig — spreker, leesopdracht, lesvorm en wat er die
+ * dag voor dit vak in- of uitgegeven wordt. Elk leeg veld wordt weggelaten,
+ * nooit leeg getoond.
+ * @param {object} les
+ * @param {{week: number, totaal: number}|null} week
+ * @param {object[]} deadlinesVandaag dag.deadlines — hier gefilterd op vak
+ * @param {(vakId: string) => void} onNaarVak
+ */
+function renderLesBlok(les, week, deadlinesVandaag, onNaarVak) {
+  const course = courseVoor(les.course);
+  const li = document.createElement("li");
+  li.className = "lesblok";
+
+  const balkje = document.createElement("span");
+  balkje.className = "lesblok-balkje";
+  balkje.style.background = `var(--vak-${course.id.toLowerCase()}-bg)`;
+  li.appendChild(balkje);
+
+  const inhoud = document.createElement("div");
+  inhoud.className = "lesblok-inhoud";
+
+  const kopRegel = document.createElement("div");
+  kopRegel.className = "lesblok-kop";
+  const naam = document.createElement("span");
+  naam.className = "lesblok-vak";
+  naam.textContent = course.name;
+  const tijd = document.createElement("span");
+  tijd.className = "lesblok-tijd";
+  tijd.textContent = `${course.start}–${course.end}`;
+  kopRegel.appendChild(naam);
+  kopRegel.appendChild(tijd);
+  inhoud.appendChild(kopRegel);
+
+  const zaal = course.room ?? "zaal onbekend";
+  const metaRegel = document.createElement("p");
+  metaRegel.className = "lesblok-meta";
+  metaRegel.textContent = week ? `${zaal} · week ${week.week}` : zaal;
+  inhoud.appendChild(metaRegel);
+
+  const onderwerp = document.createElement("p");
+  onderwerp.className = "lesblok-onderwerp";
+  onderwerp.textContent = les.label;
+  inhoud.appendChild(onderwerp);
+
+  function kleinRegel(tekst) {
+    const p = document.createElement("p");
+    p.className = "dagblad-klein";
+    p.textContent = tekst;
+    inhoud.appendChild(p);
+  }
+
+  if (les.spreker) kleinRegel(`Spreker: ${les.spreker}`);
+  if (les.lezen) kleinRegel(`Lezen: ${les.lezen}`);
+  if (les.vorm) kleinRegel(`Vorm: ${les.vorm}`);
+
+  const vakDeadlines = deadlinesVandaag.filter((d) => d.course === les.course);
+  if (vakDeadlines.length > 0) {
+    const lijst = document.createElement("ul");
+    lijst.className = "lesblok-acties";
+    for (const d of vakDeadlines) {
+      const item = document.createElement("li");
+      item.textContent = d.label;
+      lijst.appendChild(item);
+    }
+    inhoud.appendChild(lijst);
+  }
+
+  const naarVak = document.createElement("button");
+  naarVak.type = "button";
+  naarVak.className = "lesblok-naar-vak";
+  naarVak.textContent = "Naar vak";
+  naarVak.addEventListener("click", () => onNaarVak(course.id));
+  inhoud.appendChild(naarVak);
+
+  li.appendChild(inhoud);
+  return li;
+}
+
+/**
+ * Eén oplevering-rij (fase 9 B3/B4) in het dagblad: naam, weging als bekend,
+ * en een vinkje.
+ * @param {object} item
+ * @param {string[]} afgevinkteOpleveringen
+ * @param {(id: string, afgevinkt: boolean) => void} onToggle
+ */
+function renderOpleveringRij(item, afgevinkteOpleveringen, onToggle) {
+  const course = courseVoor(item.vak);
+  const li = document.createElement("li");
+  const label = document.createElement("label");
+  const vinkje = document.createElement("input");
+  vinkje.type = "checkbox";
+  vinkje.checked = afgevinkteOpleveringen.includes(item.id);
+  vinkje.addEventListener("change", () => onToggle(item.id, vinkje.checked));
+  label.appendChild(vinkje);
+  const tekst = document.createElement("span");
+  const wegingTekst = item.weging !== null ? ` (${item.weging}%)` : "";
+  tekst.textContent = ` ${course.name} — ${item.naam}${wegingTekst}`;
+  label.appendChild(tekst);
+  li.appendChild(label);
+  return li;
+}
+
+/**
+ * Eén projectmijlpaal-rij (fase 9 B4) in het dagblad.
+ * @param {object} project
+ * @param {{datum: string, label: string}} mijlpaal
+ * @param {string[]} afgevinkteMijlpalen
+ * @param {(sleutel: string, afgevinkt: boolean) => void} onToggle
+ */
+function renderProjectMijlpaalRij(project, mijlpaal, afgevinkteMijlpalen, onToggle) {
+  const sleutel = mijlpaalSleutel(project, mijlpaal);
+  const li = document.createElement("li");
+  const label = document.createElement("label");
+  const vinkje = document.createElement("input");
+  vinkje.type = "checkbox";
+  vinkje.checked = afgevinkteMijlpalen.includes(sleutel);
+  vinkje.addEventListener("change", () => onToggle(sleutel, vinkje.checked));
+  label.appendChild(vinkje);
+  const tekst = document.createElement("span");
+  tekst.textContent = ` ${project.vak ? `${project.naam} (${project.vak})` : project.naam}: ${mijlpaal.label}`;
+  label.appendChild(tekst);
+  li.appendChild(label);
+  return li;
 }
 
 /**

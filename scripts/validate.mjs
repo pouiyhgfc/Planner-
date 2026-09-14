@@ -1849,5 +1849,31 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   check("rijenOpleveringen(): presentatie- en verslagfilter zijn te scheiden op soort", metInvoer.filter((r) => r.oplevering.soort === "presentatie").length, 2);
 }
 
+// FASE-9.md B4: dagblad.js's lesblok/opleveringen/projecten-secties leunen
+// op deze onderliggende data — dagblad.js zelf tekent DOM en wordt met
+// Playwright geverifieerd (niet hier), maar de data-laag eronder is hier
+// wel te toetsen tegen de drie "Klaar als"-scenario's.
+{
+  const dag20261104 = dayStatus("2026-11-04");
+  const psyLes = dag20261104.vakken.find((v) => v.course === "PSY" && v.type === "les");
+  check("2026-11-04: PSY-les heeft 'Lezen: hoofdstuk 6' beschikbaar", psyLes?.lezen, "hoofdstuk 6");
+  check("2026-11-04: drie lesdagen (PSY, PY, CHI)", dag20261104.vakken.filter((v) => v.type === "les").length, 3);
+  const chiPresentatie = dag20261104.vakken.find((v) => v.type === "tentamen" && /presentat/i.test(v.label));
+  check("2026-11-04: CHI-presentatieonderdeel zit in dag.vakken (tentamen-type)", chiPresentatie?.course, "CHI");
+
+  const dag20261015 = dayStatus("2026-10-15");
+  const rteDeadlinesOp1015 = dag20261015.deadlines.filter((d) => d.course === "RTE").map((d) => d.label);
+  check("2026-10-15: RTE-deadlines bevatten 'Term project draft PPT due'", rteDeadlinesOp1015.includes("Term project draft PPT due"), true);
+  check("2026-10-15: RTE-deadlines bevatten 'Assignment #1 due'", rteDeadlinesOp1015.includes("Assignment #1 due"), true);
+  check("2026-10-15: RTE-deadlines bevatten 'Assignment #4 uitgegeven'", rteDeadlinesOp1015.includes("Assignment #4 uitgegeven"), true);
+
+  const alleProjecten = [...projects];
+  const mijlpaalOp0924 = alleProjecten.flatMap((p) => p.mijlpalen.filter((m) => m.datum === "2026-09-24").map((m) => ({ project: p, mijlpaal: m })));
+  check("2026-09-24: RTE-termproject heeft een mijlpaal op deze dag", mijlpaalOp0924.some((x) => x.project.id === "RTE_TERMPROJECT"), true);
+  check("mijlpaalSleutel: nog steeds bruikbaar na verhuizing naar dagblad.js", mijlpaalSleutel(mijlpaalOp0924[0].project, mijlpaalOp0924[0].mijlpaal).startsWith("RTE_TERMPROJECT::2026-09-24"), true);
+
+  check("opleveringen: 8 items met vaste datum (7 RTE-opdrachten + AgTech) — bruikbaar voor het dagblad zonder invulling", opleveringen.filter((o) => o.datum !== null).length, 8);
+}
+
 console.log(`\n${passed} geslaagd, ${failures} mislukt.`);
 if (failures > 0) process.exit(1);

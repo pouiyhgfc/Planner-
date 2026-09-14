@@ -16,21 +16,13 @@ import { genereerKalenderDagen } from "../lib/dayStatus.js";
 import { freeBlocks } from "../lib/blocks.js";
 import { alleTripItems, effectieveTripStatus } from "../data/trips.js";
 import { isStipMoment } from "./maandGrid.js";
-import { deadlineSleutel } from "./dagblad.js";
+import { deadlineSleutel, mijlpaalSleutel } from "./dagblad.js";
 
+export { mijlpaalSleutel };
 export const alleDeadlineItems = [...rteActionItems, ...academicDeadlines, chinaVisaFreeDeadline, flexWeekAnnouncementDeadline];
 
 function courseNaam(id) {
   return courses.find((c) => c.id === id)?.name ?? id;
-}
-
-/**
- * @param {{id: string}} project
- * @param {{datum: string, label: string}} mijlpaal
- * @returns {string}
- */
-export function mijlpaalSleutel(project, mijlpaal) {
-  return `${project.id}::${mijlpaal.datum}::${mijlpaal.label}`;
 }
 
 /**
