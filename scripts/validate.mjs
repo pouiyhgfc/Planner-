@@ -2,7 +2,7 @@ import { parseYMD, toYMD, addDays, dayOfWeek, isoWeek, rangeDays, diffDays } fro
 import { appPeriod, timezone, week12, semesterMarkers, calendarNotes } from "../src/data/semester.js";
 import { holidays } from "../src/data/holidays.js";
 import { courses } from "../src/data/courses.js";
-import { psyDates, agtechDates, rteDates, pythonDates, rteActionItems, chineseLessons, chineseMogelijkeTentamens } from "../src/data/coursedates.js";
+import { psyDates, agtechDates, rteDates, pythonDates, rteActionItems, chineseLessons, chineseTentamens } from "../src/data/coursedates.js";
 import { trips } from "../src/data/trips.js";
 import { chinaVisaFreeDeadline, flexWeekAnnouncementDeadline, academicDeadlines } from "../src/data/deadlines.js";
 import { dayStatus, genereerKalenderDagen } from "../src/lib/dayStatus.js";
@@ -278,7 +278,7 @@ for (const d of rteDates) checkItem(`rteDates: ${d.date}`, d);
 for (const d of pythonDates) checkItem(`pythonDates: ${d.date}`, d);
 for (const d of rteActionItems) checkItem(`rteActionItems: ${d.date} ${d.label}`, d);
 for (const d of chineseLessons) checkItem(`chineseLessons: ${d.date}`, d);
-for (const d of chineseMogelijkeTentamens) checkItem(`chineseMogelijkeTentamens: ${d.date}`, d);
+for (const d of chineseTentamens) checkItem(`chineseTentamens: ${d.date} ${d.onderdeel}`, d);
 
 for (const t of trips) checkItem(`trips: ${t.label}`, t);
 
@@ -319,28 +319,70 @@ check("General Chinese: loopt door tot 2026-12-23", chineseLessons.some((l) => l
 check("General Chinese: 2026-09-28 (feestdag) niet in de lijst", chineseLessons.some((l) => l.date === "2026-09-28"), false);
 check("General Chinese: 2026-10-26 (feestdag) niet in de lijst", chineseLessons.some((l) => l.date === "2026-10-26"), false);
 
-// --- mogelijke tentamenmomenten week 9 en week 16: geen keuze gemaakt ---
-check("chineseMogelijkeTentamens: precies 4 kandidaatdagen", chineseMogelijkeTentamens.length, 4);
+// --- FASE-9.md A1: Chinees-tentamens over drie dagen (vervangt "mogelijk tentamenmoment") ---
+check("chineseTentamens: precies 6 onderdelen", chineseTentamens.length, 6);
 check(
-  "chineseMogelijkeTentamens: week 9 = 11-02 en 11-04",
-  chineseMogelijkeTentamens.filter((t) => t.week === 9).map((t) => t.date).sort().join(","),
-  "2026-11-02,2026-11-04"
-);
-check(
-  "chineseMogelijkeTentamens: week 16 = 12-21 en 12-23",
-  chineseMogelijkeTentamens.filter((t) => t.week === 16).map((t) => t.date).sort().join(","),
-  "2026-12-21,2026-12-23"
-);
-check(
-  "chineseMogelijkeTentamens: 11-02 en 11-04 hebben de japanStatus-markering",
-  chineseMogelijkeTentamens.filter((t) => t.date === "2026-11-02" || t.date === "2026-11-04").every((t) => t.japanStatus === "in overleg met docent, uitkomst onbekend"),
+  "chineseTentamens: alle 6 zijn type tentamen, vak CHI",
+  chineseTentamens.every((t) => t.type === "tentamen" && t.course === "CHI"),
   true
 );
+{
+  const verwacht = [
+    ["2026-10-28", "midterm", "mondeling", 8, 20],
+    ["2026-11-02", "midterm", "schriftelijk", 9, 20],
+    ["2026-11-04", "midterm", "presentatie", 9, 20],
+    ["2026-12-16", "final", "mondeling", 15, 25],
+    ["2026-12-21", "final", "schriftelijk", 16, 25],
+    ["2026-12-23", "final", "presentatie", 16, 25],
+  ];
+  for (const [date, tentamen, onderdeel, week, weging] of verwacht) {
+    const item = chineseTentamens.find((t) => t.date === date);
+    check(`chineseTentamens ${date}: bestaat`, Boolean(item), true);
+    check(`chineseTentamens ${date}: tentamen === ${tentamen}`, item?.tentamen, tentamen);
+    check(`chineseTentamens ${date}: onderdeel === ${onderdeel}`, item?.onderdeel, onderdeel);
+    check(`chineseTentamens ${date}: week === ${week}`, item?.week, week);
+    check(`chineseTentamens ${date}: weging === ${weging} (ongedeeld, niet /3)`, item?.weging, weging);
+  }
+}
 check(
-  "chineseMogelijkeTentamens: 11-02 en 11-04 staan óók gewoon als les in chineseLessons",
-  chineseLessons.some((l) => l.date === "2026-11-02") && chineseLessons.some((l) => l.date === "2026-11-04"),
+  "chineseTentamens: de zes datums staan óók gewoon als les in chineseLessons (generator kent geen tentamens)",
+  chineseTentamens.every((t) => chineseLessons.some((l) => l.date === t.date)),
   true
 );
+
+// --- FASE-9.md A1 "Nieuwe controlewaarden": samenloop op specifieke dagen ---
+{
+  const d1028 = dayStatus("2026-10-28");
+  check("2026-10-28: twee tentamenmomenten (PSY-midterm, CHI mondeling)", d1028.vakken.filter((v) => v.type === "tentamen").length, 2);
+  check("2026-10-28: PSY-midterm aanwezig", d1028.vakken.some((v) => v.course === "PSY" && v.type === "tentamen"), true);
+  check("2026-10-28: CHI mondeling aanwezig", d1028.vakken.some((v) => v.course === "CHI" && v.onderdeel === "mondeling"), true);
+
+  const d1223 = dayStatus("2026-12-23");
+  check(
+    "2026-12-23: drie momenten (PSY final, PY projectpresentatie, CHI presentatie)",
+    new Set(d1223.vakken.filter((v) => v.type === "tentamen" || v.label.includes("Project Presentation")).map((v) => v.course)).size,
+    3
+  );
+  check("2026-12-23: PSY final aanwezig", d1223.vakken.some((v) => v.course === "PSY" && v.type === "tentamen"), true);
+  check("2026-12-23: PY Project Presentation aanwezig", d1223.vakken.some((v) => v.course === "PY" && v.label === "Project Presentation"), true);
+  check("2026-12-23: CHI presentatie aanwezig", d1223.vakken.some((v) => v.course === "CHI" && v.onderdeel === "presentatie"), true);
+
+  const d1221 = dayStatus("2026-12-21");
+  check("2026-12-21: CHI schriftelijk aanwezig", d1221.vakken.some((v) => v.course === "CHI" && v.onderdeel === "schriftelijk"), true);
+
+  const d1224 = dayStatus("2026-12-24");
+  check("2026-12-24: RTE comprehensive exam aanwezig (los van CHI)", d1224.vakken.some((v) => v.course === "RTE" && v.type === "tentamen"), true);
+  check("2026-12-24: geen CHI-item", d1224.vakken.some((v) => v.course === "CHI"), false);
+}
+
+// --- FASE-9.md A1 punt 4: quizzes/weektoetsen/huiswerk vanaf week 4 ---
+{
+  const chi = courses.find((c) => c.id === "CHI");
+  check("CHI: weektoetsen.vanafWeek === 4", chi.weektoetsen.vanafWeek, 4);
+  check("CHI: weektoetsen.besteAantalTelt === 15", chi.weektoetsen.besteAantalTelt, 15);
+  check("CHI: weektoetsen.datums is ONBEKEND (niet verzonnen)", chi.weektoetsen.datums, null);
+  checkBronZekerheid("courses: CHI.weektoetsen", chi.weektoetsen);
+}
 
 // --- geen dubbele datum binnen hetzelfde vak ---
 function checkNoDuplicateDates(label, items) {

@@ -111,6 +111,15 @@ export const courses = [
       bron: "syllabus PTCSL7908-23",
       zekerheid: "ZEKER",
     },
+    weektoetsen: {
+      tekst: "Vanaf week 4 worden quizzes, weektoetsen en huiswerk gegeven; de beste 15 resultaten tellen mee. Exacte datums staan op NTU COOL.",
+      vanafWeek: 4,
+      besteAantalTelt: 15,
+      datums: null,
+      onbekendeVelden: ["datums"],
+      bron: "FASE-9.md A1 (opgave Idries, bevestigd bij docent)",
+      zekerheid: "ZEKER",
+    },
     absentieregels: {
       puntenaftrek: {
         tekst: "6 uur vrijstelling per semester (vooraf per e-mail afgemeld). Vanaf het 7e uur: −0,5 punt per uur op aanwezigheid/participatie (15% van het eindcijfer). Eén sessie = 3 uur (periodes A/B/C). >20 min te laat of >20 min te vroeg weg = 1 uur absentie.",

@@ -260,15 +260,15 @@ niet intypen):**
 | 5 | 10-05 | 10-07 | Lesson 1, Lesson 2 |
 | 6 | 10-12 | 10-14 | Lesson 2 |
 | 7 | 10-19 | 10-21 | Lesson 3 |
-| 8 | ~~10-26 feestdag~~ | 10-28 | Lesson 3 |
-| **9** | **11-02** | **11-04** | **★ Midterm Exam (20%)** |
+| 8 | ~~10-26 feestdag~~ | 10-28 | Lesson 3 + ★ Midterm mondeling (20%) |
+| **9** | **11-02 ★ Midterm schriftelijk (20%)** | **11-04 ★ Midterm presentatie (20%)** | — |
 | 10 | 11-09 | 11-11 | Lesson 4 |
 | 11 | 11-16 | 11-18 | Lesson 4 |
 | 12 | 11-23 | 11-25 | Lesson 5 |
 | 13 | 11-30 | 12-02 | Lesson 5, Lesson 6 |
 | 14 | 12-07 | 12-09 | Lesson 6 |
-| 15 | 12-14 | 12-16 | Lesson 6 |
-| **16** | **12-21** | **12-23** | **★ Final Exam (25%)** |
+| 15 | 12-14 | 12-16 | Lesson 6 + ★ Final mondeling (25%) |
+| **16** | **12-21 ★ Final schriftelijk (25%)** | **12-23 ★ Final presentatie (25%)** | — |
 
 → **Controlewaarden: 14 maandagen (16 min 2 feestdagen), 16 woensdagen, 30
 lessessies totaal.** Dit vervangt de oude waarde van 28 (die stopte op
@@ -276,18 +276,35 @@ lessessies totaal.** Dit vervangt de oude waarde van 28 (die stopte op
 van de twee feestdagen (09-28, 10-26) op de lesstof is ONBEKEND — de docent
 kan schuiven; niet compenseren in de datalaag.
 
-**Tentamens — binnen welke dag van week 9 en week 16 is ONBEKEND:**
-op welke van de twee dagen in week 9 (11-02 of 11-04) en week 16 (12-21 of
-12-23) het tentamen precies valt, is niet vastgelegd door de bron. Beide
-dagen van beide weken staan als "mogelijk tentamenmoment" met status
-TE VERIFIËREN — de app kiest er geen. Elke dag telt intussen ook gewoon als
-reguliere les in de gegenereerde lijst (het is onbekend of de andere dag van
-dat weekpaar wél gewoon lesstof behandelt).
+**Tentamens over drie dagen — correctie FASE-9.md A1, bron: opgave Idries,
+bevestigd bij docent 何宣瑩. Zekerheid ZEKER.** Vervangt de eerdere aanname van
+één moment per tentamen met twee "mogelijke" dagen. Midterm (20%) en final
+(25%) bestaan elk uit drie losse onderdelen, op drie verschillende dagen:
 
-**11-02 en 11-04 vallen binnen de Japan-boeking (§4) en dus binnen week 9
-(de midterm-week).** Status: "in overleg met docent, uitkomst onbekend" —
-Idries wil met docent 何宣瑩 afspreken hoe dit wordt opgelost. Dit is een apart
-open punt (zie §9), los van de vraag welke dag exact het tentamen is.
+| Tentamen | Onderdeel | Datum | Dag |
+|---|---|---|---|
+| Midterm (20%) | mondeling | 2026-10-28 | wo, week 8 |
+| Midterm (20%) | schriftelijk | 2026-11-02 | ma, week 9 |
+| Midterm (20%) | presentatie | 2026-11-04 | wo, week 9 |
+| Final (25%) | mondeling | 2026-12-16 | wo, week 15 |
+| Final (25%) | schriftelijk | 2026-12-21 | ma, week 16 |
+| Final (25%) | presentatie | 2026-12-23 | wo, week 16 |
+
+**De weging blijft ongedeeld:** de 20% (midterm) en 25% (final) gelden voor
+het hele tentamen. Hoe die weging over de drie onderdelen verdeeld is, is
+ONBEKEND — de app deelt niet door drie en toont bij elk onderdeel de volle
+tentamenweging met een vermelding dat de onderverdeling niet vastligt.
+
+→ **Controlewaarden:** CHI heeft 30 lessessies (ongewijzigd, de generator
+kent geen tentamens) **plus 6 losse tentamenonderdelen**. 2026-10-28 heeft
+twee tentamenmomenten (PSY-midterm ochtend, CHI mondeling avond). 2026-12-23
+heeft drie momenten (PSY final, PY projectpresentatie, CHI presentatie).
+2026-12-21 heeft CHI schriftelijk; 2026-12-24 heeft (los hiervan) het
+RTE comprehensive exam.
+
+**11-02 en 11-04 vallen binnen de huidige Japan-boeking (§4) en dus binnen
+week 9 (twee van de drie midterm-onderdelen).** Idries is de boeking aan het
+verschuiven — zie het open punt in §9 en (zodra gebouwd) FASE-9.md A2.
 
 #### Absentieregels (§3.4a/b) — twee onafhankelijke, los geteste grenzen
 
@@ -311,6 +328,11 @@ punten.
 **Overige weging** (bron syllabus, ZEKER): aanwezigheid/participatie 15%,
 huiswerk 20%, quizzen/toetsen (dictee, bijna elke les) 20%, midterm 20%,
 final 25%.
+
+**Vanaf week 4 — correctie FASE-9.md A1, bron: opgave Idries, bevestigd bij
+de docent, zekerheid ZEKER:** quizzes, weektoetsen en huiswerk worden gegeven
+vanaf week 4, en de beste 15 resultaten tellen mee. Exacte datums staan op
+NTU COOL en zijn ONBEKEND — de app genereert er geen.
 
 - Huiswerk: te laat = −10 punten, moet binnen een week alsnog, daarna 0
   punten. Handgeschreven verplicht.
@@ -528,14 +550,17 @@ De app maakt hiervoor lege, gemarkeerde velden — géén aannames.
 1. Vakcode en zaalnummer Global AgTech Foresight (de eerder aangenomen code
    bleek bij Python te horen — zie §1-correctie). **Docentnaam is inmiddels
    ZEKER** (VAKKEN.md §5: Chih-Wei Tung) — niet langer een gat.
-1b. General Chinese: exacte tentamendatum binnen week 9 (11-02 of 11-04) en
-    binnen week 16 (12-21 of 12-23). Ook: uitkomst van het gesprek met docent
-    何宣瑩 (HE, SYUAN-YING) over de afwezigheid tijdens week 9 door de
-    Japan-boeking, en of een herkansing zonder medische verklaring mogelijk is.
-    Ook: hoe de 1/3-faaldrempel zich verhoudt tot de 6-uursvrijstelling
-    (VAKKEN.md §8, vraag 11) — worden ze echt nooit verrekend, of is er een
-    volgorde? (Vakcode, docent, zaal, startdatum en absentiebeleid zijn nu
-    ZEKER — zie §1 en §3.4.)
+1b. ~~General Chinese: exacte tentamendatum binnen week 9 en week 16~~ —
+    **opgelost (FASE-9.md A1):** midterm en final bestaan elk uit drie
+    onderdelen op drie vaste datums, zie §3.4. Nog wel open: de verdeling van
+    de 20% (midterm) en 25% (final) over mondeling/schriftelijk/presentatie;
+    de datums van de quizzes/weektoetsen vanaf week 4 (staan op NTU COOL).
+    Ook: uitkomst van het gesprek met docent 何宣瑩 (HE, SYUAN-YING) over de
+    afwezigheid tijdens week 9 door de Japan-boeking, en of een herkansing
+    zonder medische verklaring mogelijk is. Ook: hoe de 1/3-faaldrempel zich
+    verhoudt tot de 6-uursvrijstelling (VAKKEN.md §8, vraag 11) — worden ze
+    echt nooit verrekend, of is er een volgorde? (Vakcode, docent, zaal,
+    startdatum en absentiebeleid zijn nu ZEKER — zie §1 en §3.4.)
 1c. Computer Programming in Python: zaalnummer; uitkomst van de
     inschrijvingsloting (Google Form, deadline verstreken 2026-09-13 09:13);
     groepsgrootte en vormingstermijn van het groepsproject; aantal opdrachten

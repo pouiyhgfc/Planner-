@@ -147,58 +147,23 @@ export function generateChineseLessons() {
 
 export const chineseLessons = generateChineseLessons();
 
-const BRON_CHI_CORRECTIE = "CORRECTIE-CHINEES.md (NTU Course-pagina + syllabus PTCSL7908-23)";
+const BRON_CHI_TENTAMENS = "FASE-9.md A1 (opgave Idries, bevestigd bij docent 何宣瑩)";
+
+const TENTAMEN_WEGING_TOELICHTING = "Weging geldt voor het hele tentamen (midterm 20% / final 25%). Onderverdeling over mondeling/schriftelijk/presentatie is ONBEKEND — niet gedeeld door drie.";
 
 /**
- * Beide dagen van week 9 en week 16 zijn een mogelijk tentamenmoment — welke
- * dag precies is ONBEKEND (DATA.md §3.4), dus de app kiest er geen. Dit zijn
- * PUUR annotaties voor de UI: elke datum hier staat ook gewoon als normale
- * "les" in chineseLessons (de generator weet niets van tentamens) en wordt
- * NIET meegenomen in de les/tentamen-classificatie van dayStatus.js of
- * lib/blocks.js — anders zou een onbevestigd tentamen de blokberekening al
- * blokkeren.
+ * Zes losse tentamenonderdelen (DATA.md §3.4, correctie FASE-9.md A1) —
+ * vervangt de oudere "mogelijk tentamenmoment"-aanname (twee kandidaatdagen
+ * per tentamen, dag onbekend). Elk onderdeel staat op een eigen, bevestigde
+ * datum. Deze items staan LOS van chineseLessons: die generator blijft
+ * gewoon 30 lessessies opleveren (hij kent geen tentamens), dus elke datum
+ * hieronder heeft zowel een gegenereerde "les"- als een "tentamen"-item.
  */
-export const chineseMogelijkeTentamens = [
-  {
-    date: "2026-11-02",
-    week: 9,
-    type: "mogelijk-tentamen",
-    course: "CHI",
-    label: "Mogelijk Chinees midterm-moment (week 9, 20%)",
-    toelichting: "Midterm valt op 11-02 óf 11-04, welke dag is onbekend.",
-    japanStatus: "in overleg met docent, uitkomst onbekend",
-    bron: BRON_CHI_CORRECTIE,
-    zekerheid: "TE VERIFIËREN",
-  },
-  {
-    date: "2026-11-04",
-    week: 9,
-    type: "mogelijk-tentamen",
-    course: "CHI",
-    label: "Mogelijk Chinees midterm-moment (week 9, 20%)",
-    toelichting: "Midterm valt op 11-02 óf 11-04, welke dag is onbekend.",
-    japanStatus: "in overleg met docent, uitkomst onbekend",
-    bron: BRON_CHI_CORRECTIE,
-    zekerheid: "TE VERIFIËREN",
-  },
-  {
-    date: "2026-12-21",
-    week: 16,
-    type: "mogelijk-tentamen",
-    course: "CHI",
-    label: "Mogelijk Chinees eindtentamen-moment (week 16, 25%)",
-    toelichting: "Final valt op 12-21 óf 12-23, welke dag is onbekend.",
-    bron: BRON_CHI_CORRECTIE,
-    zekerheid: "TE VERIFIËREN",
-  },
-  {
-    date: "2026-12-23",
-    week: 16,
-    type: "mogelijk-tentamen",
-    course: "CHI",
-    label: "Mogelijk Chinees eindtentamen-moment (week 16, 25%)",
-    toelichting: "Final valt op 12-21 óf 12-23, welke dag is onbekend.",
-    bron: BRON_CHI_CORRECTIE,
-    zekerheid: "TE VERIFIËREN",
-  },
+export const chineseTentamens = [
+  { date: "2026-10-28", week: 8, type: "tentamen", course: "CHI", tentamen: "midterm", onderdeel: "mondeling", label: "Midterm — mondeling (20%)", weging: 20, wegingToelichting: TENTAMEN_WEGING_TOELICHTING, bron: BRON_CHI_TENTAMENS, zekerheid: "ZEKER" },
+  { date: "2026-11-02", week: 9, type: "tentamen", course: "CHI", tentamen: "midterm", onderdeel: "schriftelijk", label: "Midterm — schriftelijk (20%)", weging: 20, wegingToelichting: TENTAMEN_WEGING_TOELICHTING, bron: BRON_CHI_TENTAMENS, zekerheid: "ZEKER" },
+  { date: "2026-11-04", week: 9, type: "tentamen", course: "CHI", tentamen: "midterm", onderdeel: "presentatie", label: "Midterm — presentatie (20%)", weging: 20, wegingToelichting: TENTAMEN_WEGING_TOELICHTING, bron: BRON_CHI_TENTAMENS, zekerheid: "ZEKER" },
+  { date: "2026-12-16", week: 15, type: "tentamen", course: "CHI", tentamen: "final", onderdeel: "mondeling", label: "Final — mondeling (25%)", weging: 25, wegingToelichting: TENTAMEN_WEGING_TOELICHTING, bron: BRON_CHI_TENTAMENS, zekerheid: "ZEKER" },
+  { date: "2026-12-21", week: 16, type: "tentamen", course: "CHI", tentamen: "final", onderdeel: "schriftelijk", label: "Final — schriftelijk (25%)", weging: 25, wegingToelichting: TENTAMEN_WEGING_TOELICHTING, bron: BRON_CHI_TENTAMENS, zekerheid: "ZEKER" },
+  { date: "2026-12-23", week: 16, type: "tentamen", course: "CHI", tentamen: "final", onderdeel: "presentatie", label: "Final — presentatie (25%)", weging: 25, wegingToelichting: TENTAMEN_WEGING_TOELICHTING, bron: BRON_CHI_TENTAMENS, zekerheid: "ZEKER" },
 ];
