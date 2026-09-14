@@ -109,6 +109,17 @@ export function zetMijlpaalAfgevinkt(state, sleutel, afgevinkt) {
 }
 
 /**
+ * @param {{afgevinkteOpleveringen: string[]}} state
+ * @param {string} id een src/data/opleveringen.js item-id
+ * @param {boolean} afgevinkt
+ * @returns {{afgevinkteOpleveringen: string[]}}
+ */
+export function zetOpleveringAfgevinkt(state, id, afgevinkt) {
+  const zonder = state.afgevinkteOpleveringen.filter((i) => i !== id);
+  return { ...state, afgevinkteOpleveringen: afgevinkt ? [...zonder, id] : zonder };
+}
+
+/**
  * @param {{eigenProjecten: object[]}} state
  * @param {{naam: string, vak: string, mijlpalen: {datum: string, label: string}[]}} veld
  * @returns {{eigenProjecten: object[]}}

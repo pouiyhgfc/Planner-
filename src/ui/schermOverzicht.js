@@ -7,6 +7,7 @@ import { resterendeBlokken, chinaAftelling } from "../lib/overzicht.js";
 import { deadlineSleutel } from "./dagblad.js";
 import { kortDatum } from "./datumlabels.js";
 import { projects } from "../data/projects.js";
+import { courses } from "../data/courses.js";
 import {
   volgendeTentamenOfPresentatie,
   aantalOpenstaandeDeadlines,
@@ -19,6 +20,7 @@ import {
   rijenEigenItems,
   rijenVrijeBlokken,
   rijenReizen,
+  rijenOpleveringen,
 } from "./overzichtData.js";
 
 const FILTERS = [
@@ -27,11 +29,17 @@ const FILTERS = [
   { id: "deadlines", label: "Deadlines" },
   { id: "projecten", label: "Projecten" },
   { id: "reizen", label: "Reizen" },
+  { id: "presentaties", label: "Presentaties" },
+  { id: "verslagen", label: "Verslagen" },
   { id: "feestdagen", label: "Feestdagen" },
   { id: "eigenItems", label: "Eigen items" },
   { id: "vrijeBlokken", label: "Vrije blokken" },
 ];
 const STANDAARD_AAN = ["tentamens", "deadlines", "vrijeBlokken", "reizen"];
+const WEERGAVEN = [
+  { id: "datum", label: "Op datum" },
+  { id: "vak", label: "Per vak" },
+];
 
 /**
  * @param {HTMLElement} root
@@ -40,6 +48,7 @@ const STANDAARD_AAN = ["tentamens", "deadlines", "vrijeBlokken", "reizen"];
  *   onMijlpaalToggle: (sleutel: string, afgevinkt: boolean) => void,
  *   onProjectToevoegen: (veld: object) => void,
  *   onProjectVerwijderen: (id: string) => void,
+ *   onOpleveringToggle: (id: string, afgevinkt: boolean) => void,
  * }} callbacks
  * @returns {{render: (ctx: object) => void}}
  */
@@ -55,10 +64,16 @@ export function initOverzichtScherm(root, callbacks) {
   root.appendChild(lijstEl);
 
   let actieveFilters = new Set(STANDAARD_AAN);
+  let weergave = "datum";
   let laatsteCtx = null;
 
   function zetFilters(nieuw) {
     actieveFilters = nieuw;
+    tekenenFiltersEnLijst();
+  }
+
+  function zetWeergave(nieuw) {
+    weergave = nieuw;
     tekenenFiltersEnLijst();
   }
 
@@ -222,7 +237,7 @@ export function initOverzichtScherm(root, callbacks) {
   }
 
   function bouwRijen() {
-    const { items, eigenProjecten, pythonAfgewezen, tripStatusOverrides = {}, eigenReizen = [] } = laatsteCtx;
+    const { items, eigenProjecten, pythonAfgewezen, tripStatusOverrides = {}, eigenReizen = [], vakkenVeldwaarden = {} } = laatsteCtx;
     let rijen = [];
     if (actieveFilters.has("schooldagen")) rijen.push(...rijenSchooldagen(pythonAfgewezen, tripStatusOverrides, eigenReizen).map((r) => ({ ...r, categorie: "schooldagen" })));
     if (actieveFilters.has("tentamens")) rijen.push(...rijenTentamens(pythonAfgewezen).map((r) => ({ ...r, categorie: "tentamens" })));
@@ -231,11 +246,17 @@ export function initOverzichtScherm(root, callbacks) {
       rijen.push(...rijenProjecten().map((r) => ({ ...r, categorie: "projecten" })));
       for (const project of eigenProjecten) {
         for (const mijlpaal of project.mijlpalen) {
-          rijen.push({ datum: mijlpaal.datum, inhoud: `${project.naam}: ${mijlpaal.label}`, project, mijlpaal, categorie: "projecten" });
+          rijen.push({ datum: mijlpaal.datum, inhoud: `${project.naam}: ${mijlpaal.label}`, project, mijlpaal, vak: project.vak ?? null, categorie: "projecten" });
         }
       }
     }
     if (actieveFilters.has("reizen")) rijen.push(...rijenReizen(tripStatusOverrides, eigenReizen).map((r) => ({ ...r, categorie: "reizen" })));
+    if (actieveFilters.has("presentaties")) {
+      rijen.push(...rijenOpleveringen(vakkenVeldwaarden).filter((r) => r.oplevering.soort === "presentatie").map((r) => ({ ...r, categorie: "presentaties" })));
+    }
+    if (actieveFilters.has("verslagen")) {
+      rijen.push(...rijenOpleveringen(vakkenVeldwaarden).filter((r) => r.oplevering.soort === "verslag").map((r) => ({ ...r, categorie: "verslagen" })));
+    }
     if (actieveFilters.has("feestdagen")) rijen.push(...rijenFeestdagen().map((r) => ({ ...r, categorie: "feestdagen" })));
     if (actieveFilters.has("eigenItems")) rijen.push(...rijenEigenItems(items).map((r) => ({ ...r, categorie: "eigenItems" })));
     if (actieveFilters.has("vrijeBlokken")) rijen.push(...rijenVrijeBlokken(pythonAfgewezen, tripStatusOverrides, eigenReizen).map((r) => ({ ...r, categorie: "vrijeBlokken" })));
@@ -271,6 +292,13 @@ export function initOverzichtScherm(root, callbacks) {
       vinkje.addEventListener("change", () => callbacks.onMijlpaalToggle(sleutel, vinkje.checked));
       rechts.appendChild(vinkje);
     }
+    if ((rij.categorie === "presentaties" || rij.categorie === "verslagen") && rij.oplevering) {
+      const vinkje = document.createElement("input");
+      vinkje.type = "checkbox";
+      vinkje.checked = laatsteCtx.afgevinkteOpleveringen.includes(rij.oplevering.id);
+      vinkje.addEventListener("change", () => callbacks.onOpleveringToggle(rij.oplevering.id, vinkje.checked));
+      rechts.appendChild(vinkje);
+    }
 
     const tekst = document.createElement("span");
     tekst.textContent = rij.inhoud;
@@ -280,9 +308,59 @@ export function initOverzichtScherm(root, callbacks) {
     return li;
   }
 
+  function renderWeergaveToggle() {
+    const rij = document.createElement("div");
+    rij.className = "overzicht-weergave-toggle";
+    for (const w of WEERGAVEN) {
+      const knop = document.createElement("button");
+      knop.type = "button";
+      knop.className = "tap-target weergave-knop";
+      knop.textContent = w.label;
+      knop.setAttribute("aria-current", weergave === w.id ? "true" : "false");
+      knop.addEventListener("click", () => zetWeergave(w.id));
+      rij.appendChild(knop);
+    }
+    return rij;
+  }
+
+  /**
+   * FASE-9.md B3: "per vak" groepeert dezelfde gefilterde, op datum
+   * gesorteerde rijen als de normale lijst — alleen ingedeeld per vak
+   * (volgorde uit courses.js) in plaats van chronologisch door elkaar.
+   * Rijen zonder vak (reizen, feestdagen, vrije blokken, eigen items,
+   * schooldagen met meerdere vakken) komen in een "Overig"-groep, altijd
+   * laatst.
+   * @param {object[]} rijen
+   * @returns {HTMLElement}
+   */
+  function renderRijenPerVak(rijen) {
+    const groepen = new Map();
+    for (const rij of rijen) {
+      const sleutel = rij.vak ?? "__overig__";
+      if (!groepen.has(sleutel)) groepen.set(sleutel, []);
+      groepen.get(sleutel).push(rij);
+    }
+    const volgorde = [...courses.map((c) => c.id), "__overig__"];
+    const container = document.createElement("div");
+    for (const vakId of volgorde) {
+      const groep = groepen.get(vakId);
+      if (!groep || groep.length === 0) continue;
+      const kop = document.createElement("h3");
+      kop.className = "overzicht-vak-kop";
+      kop.textContent = vakId === "__overig__" ? "Overig" : courses.find((c) => c.id === vakId).name;
+      container.appendChild(kop);
+      const lijst = document.createElement("ul");
+      lijst.className = "overzicht-lijst";
+      for (const rij of groep) lijst.appendChild(renderRij(rij));
+      container.appendChild(lijst);
+    }
+    return container;
+  }
+
   function tekenenFiltersEnLijst() {
     filtersEl.textContent = "";
     filtersEl.className = "overzicht-filters";
+    filtersEl.appendChild(renderWeergaveToggle());
     for (const filter of FILTERS) {
       const knop = document.createElement("button");
       knop.type = "button";
@@ -305,6 +383,10 @@ export function initOverzichtScherm(root, callbacks) {
       leeg.className = "overzicht-leeg";
       leeg.textContent = "Geen items voor deze filterkeuze.";
       lijstEl.appendChild(leeg);
+      return;
+    }
+    if (weergave === "vak") {
+      lijstEl.appendChild(renderRijenPerVak(rijen));
       return;
     }
     const lijst = document.createElement("ul");

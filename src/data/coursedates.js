@@ -175,3 +175,12 @@ export const chineseTentamens = [
   { date: "2026-12-21", week: 16, type: "tentamen", course: "CHI", tentamen: "final", onderdeel: "schriftelijk", label: "Final — schriftelijk (25%)", weging: 25, wegingToelichting: TENTAMEN_WEGING_TOELICHTING, bron: BRON_CHI_TENTAMENS, zekerheid: "ZEKER" },
   { date: "2026-12-23", week: 16, type: "tentamen", course: "CHI", tentamen: "final", onderdeel: "presentatie", label: "Final — presentatie (25%)", weging: 25, wegingToelichting: TENTAMEN_WEGING_TOELICHTING, bron: BRON_CHI_TENTAMENS, zekerheid: "ZEKER" },
 ];
+
+/**
+ * Eén canonieme lijst van alle vakitems (lessen + tentamens), gebruikt door
+ * zowel lib/dayStatus.js als ui/overzichtData.js — voorheen hield elk zijn
+ * eigen kopie bij en miste overzichtData.js chineseTentamens, waardoor de
+ * Chinese tentamens niet meetelden in het scherm "Overzicht" (FASE-9.md B3,
+ * gevonden bij het bouwen van de Tentamens-sectie op het scherm "Vakken").
+ */
+export const alleVakItems = [...psyDates, ...agtechDates, ...rteDates, ...pythonDates, ...chineseLessons, ...chineseTentamens];

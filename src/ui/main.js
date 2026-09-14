@@ -10,6 +10,7 @@ import {
   verwijderProject,
   zetPythonInschrijving,
   zetVakVeld,
+  zetOpleveringAfgevinkt,
   zetTripStatus,
   voegReisToe,
   verwijderReis,
@@ -170,10 +171,12 @@ function overzichtWeergeven() {
     items: state.items,
     afgevinkteDeadlines: state.afgevinkteDeadlines,
     afgevinkteMijlpalen: state.afgevinkteMijlpalen,
+    afgevinkteOpleveringen: state.afgevinkteOpleveringen,
     eigenProjecten: state.eigenProjecten,
     pythonAfgewezen: pythonAfgewezen(),
     tripStatusOverrides: state.tripStatusOverrides,
     eigenReizen: state.eigenReizen,
+    vakkenVeldwaarden: state.vakkenVeldwaarden,
   });
 }
 
@@ -181,9 +184,17 @@ function vakkenWeergeven() {
   vakkenScherm.render({
     items: state.items,
     afgevinkteDeadlines: state.afgevinkteDeadlines,
+    afgevinkteOpleveringen: state.afgevinkteOpleveringen,
     pythonInschrijving: state.pythonInschrijving,
     vakkenVeldwaarden: state.vakkenVeldwaarden,
   });
+}
+
+async function zetOpleveringEnHerteken(id, afgevinkt) {
+  state = zetOpleveringAfgevinkt(state, id, afgevinkt);
+  await bewaarState(state);
+  overzichtWeergeven();
+  vakkenWeergeven();
 }
 
 async function zetVakVeldEnHerteken(sleutel, waarde) {
@@ -191,6 +202,7 @@ async function zetVakVeldEnHerteken(sleutel, waarde) {
   await bewaarState(state);
   vakkenWeergeven();
   maandWeergeven();
+  overzichtWeergeven();
 }
 
 async function zetTripStatusEnHerteken(variant, nieuweStatus) {
@@ -355,12 +367,14 @@ const overzichtScherm = initOverzichtScherm(schermEls.overzicht, {
   onMijlpaalToggle: zetMijlpaalEnHerteken,
   onProjectToevoegen: voegProjectEnHerteken,
   onProjectVerwijderen: verwijderProjectEnHerteken,
+  onOpleveringToggle: zetOpleveringEnHerteken,
 });
 
 const vakkenScherm = initVakkenScherm(schermEls.vakken, {
   onVeldWijzigen: zetVakVeldEnHerteken,
   onInschrijvingWijzigen: zetPythonInschrijvingEnHerteken,
   onDeadlineToggle: zetDeadlineEnHerteken,
+  onOpleveringToggle: zetOpleveringEnHerteken,
 });
 
 topbarWeergeven();

@@ -41,12 +41,16 @@
  *     src/data/trips.js. dayStatus.js en blocks.js kregen hiervoor een
  *     optionele eigenReizen-parameter, default [], dus geen
  *     gedragswijziging voor bestaande aanroepen.
+ * v10: state kreeg afgevinkteOpleveringen (FASE-9.md B3): welke items uit
+ *     src/data/opleveringen.js zijn afgevinkt, per sleutel = het eigen id
+ *     van het item (opleveringen hebben, anders dan deadlines/mijlpalen,
+ *     altijd een eigen stabiele id — geen samengestelde sleutel nodig).
  */
 
 import { parseYMD } from "../lib/date.js";
 import { trips, TRIP_STATUSSEN } from "../data/trips.js";
 
-export const CURRENT_SCHEMA_VERSION = 9;
+export const CURRENT_SCHEMA_VERSION = 10;
 
 const STATUS_WAARDEN = ["idee", "vast"];
 export const SCHERMEN = ["maand", "weken", "overzicht", "vakken"];
@@ -89,6 +93,7 @@ export function leegState() {
     vakkenVeldwaarden: {},
     tripStatusOverrides: {},
     eigenReizen: [],
+    afgevinkteOpleveringen: [],
   };
 }
 
@@ -214,6 +219,24 @@ export function migrate(state) {
     };
   }
 
+  if (s.schemaVersion === 9) {
+    s = {
+      schemaVersion: 10,
+      laatsteExport: s.laatsteExport ?? null,
+      items: s.items ?? [],
+      ui: geldigeUiState(s.ui),
+      afgevinkteDeadlines: s.afgevinkteDeadlines ?? [],
+      weekWeergave: geldigeWeekWeergave(s.weekWeergave),
+      afgevinkteMijlpalen: s.afgevinkteMijlpalen ?? [],
+      eigenProjecten: s.eigenProjecten ?? [],
+      pythonInschrijving: PYTHON_INSCHRIJVING_WAARDEN.includes(s.pythonInschrijving) ? s.pythonInschrijving : "onbevestigd",
+      vakkenVeldwaarden: s.vakkenVeldwaarden ?? {},
+      tripStatusOverrides: geldigeTripStatusOverrides(s.tripStatusOverrides),
+      eigenReizen: s.eigenReizen ?? [],
+      afgevinkteOpleveringen: s.afgevinkteOpleveringen ?? [],
+    };
+  }
+
   if (s.schemaVersion === CURRENT_SCHEMA_VERSION) {
     return {
       ...s,
@@ -226,6 +249,7 @@ export function migrate(state) {
       vakkenVeldwaarden: s.vakkenVeldwaarden ?? {},
       tripStatusOverrides: geldigeTripStatusOverrides(s.tripStatusOverrides),
       eigenReizen: s.eigenReizen ?? [],
+      afgevinkteOpleveringen: s.afgevinkteOpleveringen ?? [],
     };
   }
   throw new Error(`onbekende schemaVersion: ${state.schemaVersion}`);

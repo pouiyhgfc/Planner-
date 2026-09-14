@@ -5,6 +5,8 @@
  */
 
 import { courses } from "../data/courses.js";
+import { alleVakItems } from "../data/coursedates.js";
+import { opleveringen } from "../data/opleveringen.js";
 import { WEEKDAGEN, kortDatum } from "./datumlabels.js";
 import { lesoverzicht, gemisteSessies, chineseAbsentieStand } from "./vakkenData.js";
 import { alleDeadlineItems } from "./overzichtData.js";
@@ -209,12 +211,116 @@ function renderAbsentieSectie(course, items, pythonAfgewezen) {
   return wrap;
 }
 
-function renderDeadlinesSectie(vakId, afgevinkteDeadlines, onToggle) {
-  const relevant = alleDeadlineItems.filter((d) => d.course === vakId);
+/**
+ * FASE-9.md B3: tentamens apart van lesdagen, per vak — dezelfde items als
+ * elders (coursedates.js alleVakItems, incl. chineseTentamens), hier alleen
+ * gefilterd en zonder de lesdagen ertussen.
+ * @param {string} vakId
+ * @returns {HTMLElement|null}
+ */
+function renderTentamensSectie(vakId) {
+  const relevant = alleVakItems.filter((v) => v.course === vakId && v.type === "tentamen");
   if (relevant.length === 0) return null;
 
   const wrap = document.createElement("div");
-  wrap.appendChild(sectieKop("Deadlines"));
+  wrap.appendChild(sectieKop("Tentamens"));
+  const lijst = document.createElement("ul");
+  for (const tentamen of [...relevant].sort((a, b) => a.date.localeCompare(b.date))) {
+    const li = document.createElement("li");
+    li.textContent = `${kortDatum(tentamen.date)} — ${tentamen.label}`;
+    lijst.appendChild(li);
+  }
+  wrap.appendChild(lijst);
+  return wrap;
+}
+
+/**
+ * FASE-9.md B3: opleveringen (presentaties, verslagen, opdrachten die
+ * meetellen) apart van tentamens en lesdagen, met — waar bekend — hun
+ * weging. Een item zonder vaste datum (mogelijkeData of volledig ONBEKEND)
+ * krijgt een invulveld via vakkenVeldwaarden, net als de andere
+ * onbekend-velden op dit scherm.
+ * @param {string} vakId
+ * @param {string[]} afgevinkteOpleveringen
+ * @param {Record<string, string>} veldwaarden
+ * @param {(sleutel: string, waarde: string) => void} onVeldWijzigen
+ * @param {(id: string, afgevinkt: boolean) => void} onOpleveringToggle
+ * @returns {HTMLElement|null}
+ */
+function renderOpleveringenSectie(vakId, afgevinkteOpleveringen, veldwaarden, onVeldWijzigen, onOpleveringToggle) {
+  const relevant = opleveringen.filter((o) => o.vak === vakId);
+  if (relevant.length === 0) return null;
+
+  const wrap = document.createElement("div");
+  wrap.appendChild(sectieKop("Opleveringen"));
+  const lijst = document.createElement("ul");
+  for (const item of relevant) {
+    const li = document.createElement("li");
+    const label = document.createElement("label");
+    const vinkje = document.createElement("input");
+    vinkje.type = "checkbox";
+    vinkje.checked = afgevinkteOpleveringen.includes(item.id);
+    vinkje.addEventListener("change", () => onOpleveringToggle(item.id, vinkje.checked));
+    label.appendChild(vinkje);
+
+    const tekst = document.createElement("span");
+    const wegingTekst = item.weging !== null ? ` (${item.weging}%)` : "";
+    tekst.textContent = ` ${item.naam}${wegingTekst}`;
+    label.appendChild(tekst);
+    li.appendChild(label);
+
+    const datumSleutel = `${item.id}.datum`;
+    if (item.datum) {
+      const datumEl = document.createElement("span");
+      datumEl.className = "vak-detail-klein";
+      datumEl.textContent = ` — ${kortDatum(item.datum)}`;
+      li.appendChild(datumEl);
+    } else {
+      const veldWrap = document.createElement("span");
+      veldWrap.className = "onbekend-veld";
+      const veldLabel = document.createElement("span");
+      veldLabel.className = "onbekend-label";
+      veldLabel.textContent = item.mogelijkeData
+        ? ` datum onbekend (mogelijk: ${item.mogelijkeData.map(kortDatum).join(" of ")}) — `
+        : " datum onbekend — ";
+      const input = document.createElement("input");
+      input.type = "date";
+      input.value = veldwaarden[datumSleutel] ?? "";
+      input.addEventListener("change", () => onVeldWijzigen(datumSleutel, input.value));
+      veldWrap.appendChild(veldLabel);
+      veldWrap.appendChild(input);
+      li.appendChild(veldWrap);
+    }
+
+    if (item.opmerking) {
+      const opmerking = document.createElement("p");
+      opmerking.className = "vak-detail-klein";
+      opmerking.textContent = item.opmerking;
+      li.appendChild(opmerking);
+    }
+
+    lijst.appendChild(li);
+  }
+  wrap.appendChild(lijst);
+  return wrap;
+}
+
+/**
+ * FASE-9.md B3: hernoemd van "Deadlines" naar "Opdrachten en deadlines", en
+ * gefilterd op items die al als een eigen regel in Opleveringen staan (via
+ * dedupLabel) — hetzelfde onderdeel hoort maar één keer op dit scherm.
+ * @param {string} vakId
+ * @param {string[]} afgevinkteDeadlines
+ * @param {(sleutel: string, afgevinkt: boolean) => void} onToggle
+ * @returns {HTMLElement|null}
+ */
+function renderOpdrachtenEnDeadlinesSectie(vakId, afgevinkteDeadlines, onToggle) {
+  const dedupLabels = new Set(opleveringen.filter((o) => o.vak === vakId && o.dedupLabel).map((o) => o.dedupLabel));
+  const relevant = alleDeadlineItems.filter((d) => d.course === vakId && !dedupLabels.has(d.label));
+  if (relevant.length === 0) return null;
+
+  const wrap = document.createElement("div");
+  wrap.appendChild(sectieKop("Opdrachten en deadlines"));
   const lijst = document.createElement("ul");
   for (const deadline of [...relevant].sort((a, b) => (a.date ?? a.start).localeCompare(b.date ?? b.start))) {
     const sleutel = deadlineSleutel(deadline);
@@ -331,8 +437,18 @@ function renderDetail(root, course, ctx, callbacks) {
   root.appendChild(renderWegingSectie(course));
   const restrictiesSectie = renderCursusrestrictiesSectie(course);
   if (restrictiesSectie) root.appendChild(restrictiesSectie);
+  const tentamensSectie = renderTentamensSectie(course.id);
+  if (tentamensSectie) root.appendChild(tentamensSectie);
   root.appendChild(renderAbsentieSectie(course, ctx.items, pythonAfgewezen));
-  const deadlinesSectie = renderDeadlinesSectie(course.id, ctx.afgevinkteDeadlines, callbacks.onDeadlineToggle);
+  const opleveringenSectie = renderOpleveringenSectie(
+    course.id,
+    ctx.afgevinkteOpleveringen,
+    ctx.vakkenVeldwaarden,
+    callbacks.onVeldWijzigen,
+    callbacks.onOpleveringToggle
+  );
+  if (opleveringenSectie) root.appendChild(opleveringenSectie);
+  const deadlinesSectie = renderOpdrachtenEnDeadlinesSectie(course.id, ctx.afgevinkteDeadlines, callbacks.onDeadlineToggle);
   if (deadlinesSectie) root.appendChild(deadlinesSectie);
   const tellersSectie = renderTellersSectie(course, ctx.vakkenVeldwaarden, callbacks.onVeldWijzigen);
   if (tellersSectie) root.appendChild(tellersSectie);
@@ -356,6 +472,7 @@ function renderVakKaart(course, onKlik) {
  *   onVeldWijzigen: (sleutel: string, waarde: string) => void,
  *   onInschrijvingWijzigen: (waarde: string) => void,
  *   onDeadlineToggle: (sleutel: string, afgevinkt: boolean) => void,
+ *   onOpleveringToggle: (id: string, afgevinkt: boolean) => void,
  * }} callbacks
  * @returns {{render: (ctx: object) => void}}
  */
@@ -393,6 +510,7 @@ export function initVakkenScherm(root, callbacks) {
         onVeldWijzigen: callbacks.onVeldWijzigen,
         onInschrijvingWijzigen: callbacks.onInschrijvingWijzigen,
         onDeadlineToggle: callbacks.onDeadlineToggle,
+        onOpleveringToggle: callbacks.onOpleveringToggle,
       });
     }
   }

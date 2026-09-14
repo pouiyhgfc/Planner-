@@ -2,7 +2,8 @@ import { parseYMD, toYMD, addDays, dayOfWeek, isoWeek, rangeDays, diffDays } fro
 import { appPeriod, timezone, week12, semesterMarkers, calendarNotes } from "../src/data/semester.js";
 import { holidays } from "../src/data/holidays.js";
 import { courses } from "../src/data/courses.js";
-import { psyDates, agtechDates, rteDates, pythonDates, rteActionItems, chineseLessons, chineseTentamens } from "../src/data/coursedates.js";
+import { psyDates, agtechDates, rteDates, pythonDates, rteActionItems, chineseLessons, chineseTentamens, alleVakItems } from "../src/data/coursedates.js";
+import { opleveringen } from "../src/data/opleveringen.js";
 import { trips, effectieveTripStatus, TRIP_STATUSSEN, eigenReisItems, alleTripItems } from "../src/data/trips.js";
 import { chinaVisaFreeDeadline, flexWeekAnnouncementDeadline, academicDeadlines, japanUitersteTerugkomstDeadline } from "../src/data/deadlines.js";
 import { dayStatus, genereerKalenderDagen } from "../src/lib/dayStatus.js";
@@ -27,6 +28,7 @@ import {
   verwijderProject,
   zetPythonInschrijving,
   zetVakVeld,
+  zetOpleveringAfgevinkt,
   zetTripStatus,
   voegReisToe,
   verwijderReis,
@@ -55,6 +57,7 @@ import {
   rijenEigenItems,
   rijenVrijeBlokken,
   rijenReizen,
+  rijenOpleveringen,
 } from "../src/ui/overzichtData.js";
 import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -1223,13 +1226,30 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
     ["rijenFeestdagen", rijenFeestdagen()],
     ["rijenEigenItems", rijenEigenItems([{ naam: "Test", start: "2026-10-01", end: "2026-10-01", status: "idee", notitie: "" }])],
     ["rijenVrijeBlokken", rijenVrijeBlokken()],
+    ["rijenOpleveringen", rijenOpleveringen()],
   ]) {
     check(`${naam}: levert rijen`, rijen.length > 0, true);
     check(`${naam}: elke rij heeft een geldige datum`, rijen.every((r) => YMD_PATTERN.test(r.datum)), true);
     check(`${naam}: elke rij heeft inhoud`, rijen.every((r) => typeof r.inhoud === "string" && r.inhoud.length > 0), true);
   }
   check("rijenProjecten: bevat zowel RTE als Python", new Set(rijenProjecten().map((r) => r.project.id)).size, 2);
-  check("rijenTentamens: bevat geen presentaties (alleen type tentamen)", rijenTentamens().every((r) => !/presentat/i.test(r.inhoud)) , true);
+  // FASE-9.md B3: overzichtData.js gebruikt nu de canonieke alleVakItems uit
+  // coursedates.js (incl. chineseTentamens) — voorheen miste deze lijst de
+  // Chinese tentamens, dus telde rijenTentamens() er 6 te weinig. CHI's
+  // tentamenonderdelen heten zelf o.a. "presentatie" (mondeling/schriftelijk/
+  // presentatie horen alle drie bij het tentamen, niet bij een aparte
+  // opleveringen-presentatie), dus de oude blanket "geen presentaties"-check
+  // klopte niet meer met correcte data en is vervangen door een gerichte
+  // check op RTE/PY (waar "presentatie" wél een aparte, niet-tentamen
+  // oplevering is, nooit een rijenTentamens-item).
+  check("rijenTentamens: bevat de 6 Chinese tentamenonderdelen (voorheen ontbrekend)", rijenTentamens().filter((r) => r.vak === "CHI").length, 6);
+  check(
+    "rijenTentamens: RTE/PY-rijen zijn nooit een presentatie (alleen CHI heeft 'presentatie' als tentamenonderdeel)",
+    rijenTentamens()
+      .filter((r) => r.vak === "RTE" || r.vak === "PY")
+      .every((r) => !/presentat/i.test(r.inhoud)),
+    true
+  );
 }
 
 // sw.js: de fase 8E-bestanden zitten in de app-shell
@@ -1768,6 +1788,65 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   const reis = dag.vasteBoekingen.find((v) => v.type === "vaste-boeking");
   check("2026-09-30: is de laatste dag van de Filipijnen-trip", reis?.end, "2026-09-30");
   check("2026-09-30: drie lessen staan nog gewoon in dag.vakken (status verbergt ze niet)", dag.vakken.filter((v) => v.type === "les").length, 3);
+}
+
+// FASE-9.md B3: src/data/opleveringen.js — vorm en dataconsistentie
+{
+  check("opleveringen: 15 items (2 RTE termproject + 7 RTE opdrachten + 1 AgTech + 1 PY + 4 PSY)", opleveringen.length, 15);
+  check("opleveringen: elk id is uniek", new Set(opleveringen.map((o) => o.id)).size, opleveringen.length);
+  const geldigeVakken = new Set(courses.map((c) => c.id));
+  check("opleveringen: elk item hoort bij een bestaand vak", opleveringen.every((o) => geldigeVakken.has(o.vak)), true);
+  check("opleveringen: elk item heeft een geldige soort", opleveringen.every((o) => ["presentatie", "verslag", "opdracht"].includes(o.soort)), true);
+  check("opleveringen: geen Chinees item (presentatie-onderdelen zijn al tentamenitems, FASE-9.md A1)", opleveringen.some((o) => o.vak === "CHI"), false);
+  check("opleveringen: weging is een percentage of expliciet null, nooit ongedefinieerd", opleveringen.every((o) => o.weging === null || typeof o.weging === "number"), true);
+  check("opleveringen: datum is een geldige YYYY-MM-DD-string of expliciet null", opleveringen.every((o) => o.datum === null || YMD_PATTERN.test(o.datum)), true);
+  check("opleveringen: mogelijkeData is null of een array van geldige datums", opleveringen.every((o) => o.mogelijkeData === null || o.mogelijkeData.every((d) => YMD_PATTERN.test(d))), true);
+
+  // elk dedupLabel moet letterlijk voorkomen in rteActionItems, anders werkt de
+  // duplicaatfilter in schermVakken.js niet meer als een label ooit verandert.
+  const rteActionLabels = new Set(rteActionItems.map((d) => d.label));
+  const dedupLabels = opleveringen.map((o) => o.dedupLabel).filter((l) => l !== null);
+  check("opleveringen: elk dedupLabel bestaat letterlijk in rteActionItems", dedupLabels.every((l) => rteActionLabels.has(l)), true);
+  check("opleveringen: 7 RTE-opdrachten hebben elk een dedupLabel (koppeling met rteActionItems)", dedupLabels.length, 7);
+
+  const rteTermproject = opleveringen.filter((o) => o.vak === "RTE" && (o.soort === "presentatie" || o.soort === "verslag"));
+  check("opleveringen (Klaar als): RTE termproject-presentatie is 15%", rteTermproject.find((o) => o.soort === "presentatie")?.weging, 15);
+  check("opleveringen (Klaar als): RTE termproject-verslag is 10%", rteTermproject.find((o) => o.soort === "verslag")?.weging, 10);
+
+  const psyOpdrachten = opleveringen.filter((o) => o.vak === "PSY");
+  check("opleveringen (Klaar als): PSY heeft vier opdrachten", psyOpdrachten.length, 4);
+  check("opleveringen (Klaar als): PSY-opdrachten hebben allemaal status onbekend (datum null)", psyOpdrachten.every((o) => o.datum === null && o.onbekendeVelden.includes("datum")), true);
+  check("opleveringen: PSY-opdrachten hebben geen (verzonnen) individuele weging", psyOpdrachten.every((o) => o.weging === null), true);
+
+  check("opleveringen: AgTech-presentatie heeft geen (verzonnen) losse weging — onderdeel van de 40%-combinatie", opleveringen.find((o) => o.id === "AGTECH-PRESENTATIE")?.weging, null);
+  check("opleveringen: Python-projectpresentatie is 25% (Groepsproject)", opleveringen.find((o) => o.id === "PY-PROJECTPRESENTATIE")?.weging, 25);
+}
+
+// FASE-9.md B3: schema v9 -> v10 (afgevinkteOpleveringen) en store-functie
+{
+  const v9 = { ...leegState(), schemaVersion: 9 };
+  delete v9.afgevinkteOpleveringen;
+  const gemigreerd = migrate(v9);
+  check("migrate v9->v10: schemaVersion wordt de actuele versie", gemigreerd.schemaVersion, CURRENT_SCHEMA_VERSION);
+  check("migrate v9->v10: afgevinkteOpleveringen default lege array", gemigreerd.afgevinkteOpleveringen.length, 0);
+
+  let state = leegState();
+  state = zetOpleveringAfgevinkt(state, "AGTECH-PRESENTATIE", true);
+  check("zetOpleveringAfgevinkt: id staat na afvinken in de lijst", state.afgevinkteOpleveringen.includes("AGTECH-PRESENTATIE"), true);
+  state = zetOpleveringAfgevinkt(state, "AGTECH-PRESENTATIE", false);
+  check("zetOpleveringAfgevinkt: id verdwijnt weer na uitvinken", state.afgevinkteOpleveringen.includes("AGTECH-PRESENTATIE"), false);
+}
+
+// FASE-9.md B3: rijenOpleveringen() — alleen items met een (al dan niet
+// zelf ingevulde) datum horen in een chronologische lijst
+{
+  const zonderInvoer = rijenOpleveringen();
+  check("rijenOpleveringen(): zonder invoer alleen items met vaste datum (7 RTE-opdrachten + AgTech)", zonderInvoer.length, 8);
+  check("rijenOpleveringen(): geen enkel RTE-termproject/PSY/PY-item zonder invoer (allemaal datum: null)", zonderInvoer.some((r) => r.oplevering.id.startsWith("PSY-") || r.oplevering.id.startsWith("RTE-TERMPROJECT") || r.oplevering.id === "PY-PROJECTPRESENTATIE"), false);
+
+  const metInvoer = rijenOpleveringen({ "RTE-TERMPROJECT-PRESENTATIE.datum": "2026-12-10", "PSY-OPDRACHT-1.datum": "2026-10-01" });
+  check("rijenOpleveringen(): een zelf ingevulde datum telt mee (8 + 2)", metInvoer.length, 10);
+  check("rijenOpleveringen(): presentatie- en verslagfilter zijn te scheiden op soort", metInvoer.filter((r) => r.oplevering.soort === "presentatie").length, 2);
 }
 
 console.log(`\n${passed} geslaagd, ${failures} mislukt.`);

@@ -850,6 +850,23 @@ select {
   margin: 12px 0 20px;
 }
 
+.overzicht-weergave-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+  margin-bottom: 6px;
+}
+.weergave-knop {
+  font-size: var(--fs-min);
+  padding: 6px 10px;
+}
+.weergave-knop[aria-current="true"] {
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+  color: var(--accent-text);
+}
+
 .overzicht-filters {
   display: flex;
   flex-wrap: wrap;
@@ -864,6 +881,15 @@ select {
   background: var(--accent-bg);
   border-color: var(--accent-border);
   color: var(--accent-text);
+}
+
+.overzicht-vak-kop {
+  font-family: var(--ff-head);
+  font-size: 15px;
+  margin: 16px 0 8px;
+}
+.overzicht-vak-kop:first-child {
+  margin-top: 0;
 }
 
 .overzicht-lijst {
