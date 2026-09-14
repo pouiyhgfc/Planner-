@@ -673,10 +673,6 @@ select {
   margin-bottom: 12px;
 }
 
-.weken-invoeg:not(:empty) {
-  margin-bottom: 12px;
-}
-
 .weekkaart {
   padding: 12px;
   margin-bottom: 12px;
@@ -722,6 +718,17 @@ select {
   text-align: center;
   color: var(--text-muted);
   font-size: var(--fs-min);
+  background: none;
+  border: none;
+  border-radius: var(--radius-control);
+  padding: 2px 0;
+  font-family: inherit;
+  cursor: pointer;
+}
+.weekkaart-dagkop:hover,
+.weekkaart-dagkop:focus-visible {
+  background: var(--card2);
+  color: var(--text);
 }
 .weekkaart-dagdeelkop {
   color: var(--text-muted);
@@ -767,6 +774,16 @@ select {
   display: flex;
   gap: 8px;
   margin-top: 10px;
+}
+.weekkaart-dagkiezer {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-top: 8px;
+}
+.weekkaart-dagkiezer button {
+  font-size: var(--fs-min);
+  padding: 6px 2px;
 }
 
 /* fase 8E — scherm "Overzicht" */

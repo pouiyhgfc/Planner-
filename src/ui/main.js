@@ -152,6 +152,18 @@ function openWeekInMaand(ymd) {
   maandScherm.openDag(ymd);
 }
 
+/**
+ * FASE-9.md B2: "Item erbij" (met het invoerformulier al open) en de
+ * tikbare dagcellen in de weekstrip openen allebei het dagblad van de
+ * gekozen dag op Maand, en keren bij sluiten terug naar Weken.
+ * @param {string} ymd
+ * @param {{formOpenen: boolean}} opties
+ */
+function dagKiezenVanuitWeken(ymd, opties) {
+  navigatie.naarScherm("maand");
+  maandScherm.openDag(ymd, { formOpenen: opties.formOpenen, terugNaarScherm: "weken" });
+}
+
 function overzichtWeergeven() {
   overzichtScherm.render({
     vandaag: huidigeYMD(),
@@ -329,12 +341,13 @@ const maandScherm = initMaandScherm(schermEls.maand, {
   onVerwijderItem: verwijderItemEnHerteken,
   onDeadlineToggle: zetDeadlineEnHerteken,
   onVeldWijzigen: zetVakVeldEnHerteken,
+  onTerugNaarScherm: (naam) => navigatie.naarScherm(naam),
 });
 
 const wekenScherm = initWekenScherm(schermEls.weken, {
   onWeekWeergaveWijzigen: wijzigWeekWeergave,
   onOpenWeek: openWeekInMaand,
-  onItemToevoegen: voegItemEnHerteken,
+  onDagKiezen: dagKiezenVanuitWeken,
 });
 
 const overzichtScherm = initOverzichtScherm(schermEls.overzicht, {

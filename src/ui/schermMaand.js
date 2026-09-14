@@ -17,6 +17,7 @@ import { renderDagblad } from "./dagblad.js";
  *   onVerwijderItem: (id: string) => void,
  *   onDeadlineToggle: (sleutel: string, afgevinkt: boolean) => void,
  *   onVeldWijzigen: (sleutel: string, waarde: string) => void,
+ *   onTerugNaarScherm: (naam: string) => void,
  * }} callbacks
  * @returns {{render: (ctx: {vandaag: string, items: object[], afgevinkteDeadlines: string[], pythonAfgewezen: boolean, tripStatusOverrides: Record<string, string>, eigenReizen: object[], vakkenVeldwaarden: Record<string, string>}) => void}}
  */
@@ -33,6 +34,8 @@ export function initMaandScherm(root, callbacks) {
   let maand = null;
   let geselecteerd = null;
   let laatsteCtx = null;
+  let formOpenenBijVolgende = false;
+  let terugNaarScherm = null;
 
   function toonMaand(j, m) {
     jaar = j;
@@ -47,6 +50,16 @@ export function initMaandScherm(root, callbacks) {
 
   function sluitDagblad() {
     geselecteerd = null;
+    // FASE-9.md B2 punt 4: kwam je via een sprong vanuit een ander scherm
+    // (bijv. Weken), dan kom je bij het sluiten daar weer terug — met
+    // behouden scrollpositie via nav.js's eigen scrollPositions-logica.
+    if (terugNaarScherm) {
+      const scherm = terugNaarScherm;
+      terugNaarScherm = null;
+      tekenen();
+      callbacks.onTerugNaarScherm(scherm);
+      return;
+    }
     tekenen();
   }
 
@@ -59,9 +72,11 @@ export function initMaandScherm(root, callbacks) {
     dagbladEl.hidden = geselecteerd === null;
     if (geselecteerd !== null) {
       const eigenItems = items.filter((item) => item.start <= geselecteerd && geselecteerd <= item.end);
+      const formOpenen = formOpenenBijVolgende;
+      formOpenenBijVolgende = false;
       renderDagblad(
         dagbladEl,
-        { ymd: geselecteerd, dag: dayStatus(geselecteerd, pythonAfgewezen, tripStatusOverrides, eigenReizen), eigenItems, afgevinkteDeadlines, pythonAfgewezen, vakkenVeldwaarden },
+        { ymd: geselecteerd, dag: dayStatus(geselecteerd, pythonAfgewezen, tripStatusOverrides, eigenReizen), eigenItems, afgevinkteDeadlines, pythonAfgewezen, vakkenVeldwaarden, formOpenen },
         {
           onSluiten: sluitDagblad,
           onItemToevoegen: callbacks.onItemToevoegen,
@@ -89,14 +104,20 @@ export function initMaandScherm(root, callbacks) {
 
   /**
    * Springt naar de maand van ymd en opent meteen het dagblad van die dag —
-   * gebruikt door "Open week" op het scherm Weken (fase 8D).
+   * gebruikt door "Open week" en (fase 9 B2) "Item erbij"/dagcel-tik op het
+   * scherm Weken.
    * @param {string} ymd
+   * @param {{formOpenen?: boolean, terugNaarScherm?: string|null}} [opties]
+   *   formOpenen: opent het invoerformulier meteen (B2 punt 1).
+   *   terugNaarScherm: bij sluiten van het dagblad terug naar dit scherm (B2 punt 4).
    */
-  function openDag(ymd) {
+  function openDag(ymd, opties = {}) {
     const { y, m } = parseYMD(ymd);
     jaar = y;
     maand = m;
     geselecteerd = ymd;
+    formOpenenBijVolgende = Boolean(opties.formOpenen);
+    terugNaarScherm = opties.terugNaarScherm ?? null;
     tekenen();
   }
 

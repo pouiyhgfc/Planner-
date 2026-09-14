@@ -150,9 +150,10 @@ function uitzonderingen(weekDagen) {
  * @param {Record<string, string>} tripStatusOverrides
  * @param {object[]} eigenReizen
  * @param {(ymd: string) => void} onOpenWeek
- * @param {(weekMaandag: string) => void} onItemErbij
+ * @param {(ymd: string) => void} onItemErbij
+ * @param {(ymd: string) => void} onDagKlik
  */
-function renderWeekkaart(root, weekMaandag, pythonAfgewezen, tripStatusOverrides, eigenReizen, onOpenWeek, onItemErbij) {
+function renderWeekkaart(root, weekMaandag, pythonAfgewezen, tripStatusOverrides, eigenReizen, onOpenWeek, onItemErbij, onDagKlik) {
   const dagen = [];
   for (let i = 0; i < 7; i++) dagen.push(dayStatus(addDays(weekMaandag, i), pythonAfgewezen, tripStatusOverrides, eigenReizen));
 
@@ -191,11 +192,17 @@ function renderWeekkaart(root, weekMaandag, pythonAfgewezen, tripStatusOverrides
 
   const legeHoek = document.createElement("span");
   grid.appendChild(legeHoek);
-  for (const naam of WEEKDAGEN) {
-    const el = document.createElement("span");
-    el.className = "weekkaart-dagkop";
-    el.textContent = naam;
-    grid.appendChild(el);
+  // FASE-9.md B2 punt 3: elke dagcel is zelf tikbaar en opent het dagblad van
+  // die dag — de kortste route, zonder eerst "Item erbij" te hoeven kiezen.
+  for (const [i, naam] of WEEKDAGEN.entries()) {
+    const ymd = dagen[i].date;
+    const { d } = parseYMD(ymd);
+    const knop = document.createElement("button");
+    knop.type = "button";
+    knop.className = "tap-target weekkaart-dagkop";
+    knop.textContent = `${naam} ${d}`;
+    knop.addEventListener("click", () => onDagKlik(ymd));
+    grid.appendChild(knop);
   }
 
   for (const dagdeelNaam of DAGDEEL_NAMEN) {
@@ -252,14 +259,34 @@ function renderWeekkaart(root, weekMaandag, pythonAfgewezen, tripStatusOverrides
   openKnop.className = "tap-target";
   openKnop.textContent = "Open week";
   openKnop.addEventListener("click", () => onOpenWeek(weekMaandag));
+
+  // FASE-9.md B2 punt 1: "Item erbij" gaf altijd de maandag door, ook als je
+  // een andere dag bedoelde. Eerst een dagkiezer met alle zeven dagen van
+  // déze week; de gekozen dag opent het dagblad met het formulier al open.
+  const dagkiezerEl = document.createElement("div");
+  dagkiezerEl.className = "weekkaart-dagkiezer";
+  dagkiezerEl.hidden = true;
+  for (const dag of dagen) {
+    const { d } = parseYMD(dag.date);
+    const dagKnop = document.createElement("button");
+    dagKnop.type = "button";
+    dagKnop.className = "tap-target";
+    dagKnop.textContent = `${WEEKDAGEN[dag.weekday]} ${d}`;
+    dagKnop.addEventListener("click", () => onItemErbij(dag.date));
+    dagkiezerEl.appendChild(dagKnop);
+  }
+
   const erbijKnop = document.createElement("button");
   erbijKnop.type = "button";
   erbijKnop.className = "tap-target";
   erbijKnop.textContent = "Item erbij";
-  erbijKnop.addEventListener("click", () => onItemErbij(weekMaandag));
+  erbijKnop.addEventListener("click", () => {
+    dagkiezerEl.hidden = !dagkiezerEl.hidden;
+  });
   knoppen.appendChild(openKnop);
   knoppen.appendChild(erbijKnop);
   kaart.appendChild(knoppen);
+  kaart.appendChild(dagkiezerEl);
 
   root.appendChild(kaart);
 }
@@ -268,11 +295,12 @@ function renderWeekkaart(root, weekMaandag, pythonAfgewezen, tripStatusOverrides
  * @param {HTMLElement} root
  * @param {{startWeeks: string[], pythonAfgewezen: boolean, tripStatusOverrides: Record<string, string>, eigenReizen: object[]}} data
  * @param {(ymd: string) => void} onOpenWeek
- * @param {(weekMaandag: string) => void} onItemErbij
+ * @param {(ymd: string) => void} onItemErbij
+ * @param {(ymd: string) => void} onDagKlik
  */
-export function renderWeekstrips(root, { startWeeks, pythonAfgewezen, tripStatusOverrides = {}, eigenReizen = [] }, onOpenWeek, onItemErbij) {
+export function renderWeekstrips(root, { startWeeks, pythonAfgewezen, tripStatusOverrides = {}, eigenReizen = [] }, onOpenWeek, onItemErbij, onDagKlik) {
   root.textContent = "";
   for (const weekMaandag of startWeeks) {
-    renderWeekkaart(root, weekMaandag, pythonAfgewezen, tripStatusOverrides, eigenReizen, onOpenWeek, onItemErbij);
+    renderWeekkaart(root, weekMaandag, pythonAfgewezen, tripStatusOverrides, eigenReizen, onOpenWeek, onItemErbij, onDagKlik);
   }
 }

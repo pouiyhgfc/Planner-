@@ -8,26 +8,22 @@ import { addDays } from "../lib/date.js";
 import { appPeriod } from "../data/semester.js";
 import { PERIODES } from "../state/schema.js";
 import { maandagVan, weekStarts, verschuifVenster, PERIODE_LABELS, renderWeekstrips } from "./wekenGrid.js";
-import { renderPlannerForm } from "./planner.js";
 
 /**
  * @param {HTMLElement} root
- * @param {{onWeekWeergaveWijzigen: (w: object) => void, onOpenWeek: (ymd: string) => void, onItemToevoegen: (veld: object) => void}} callbacks
+ * @param {{
+ *   onWeekWeergaveWijzigen: (w: object) => void,
+ *   onOpenWeek: (ymd: string) => void,
+ *   onDagKiezen: (ymd: string, opties: {formOpenen: boolean}) => void,
+ * }} callbacks FASE-9.md B2: item-erbij en dagcel-tik gaan via onDagKiezen
+ *   naar het dagblad op het scherm Maand (met terugkeer naar Weken bij sluiten)
+ *   in plaats van een inline formulier hier.
  * @returns {{render: (ctx: {weekWeergave: object, vandaag: string, pythonAfgewezen: boolean, tripStatusOverrides: Record<string, string>}) => void}}
  */
 export function initWekenScherm(root, callbacks) {
   const koppenEl = document.createElement("div");
-  // Stabiele wrapper: renderPlannerForm zet zelf root.className = "planner-form"
-  // op wat je 'm geeft, dus de "weken-invoeg"-klasse hoort op een omhullend
-  // element te staan, niet op het element dat aan renderPlannerForm wordt
-  // doorgegeven (anders verdwijnt de klasse zodra het formulier opent).
-  const invoegWrapEl = document.createElement("div");
-  invoegWrapEl.className = "weken-invoeg";
-  const invoegEl = document.createElement("div");
-  invoegWrapEl.appendChild(invoegEl);
   const stripsEl = document.createElement("div");
   root.appendChild(koppenEl);
-  root.appendChild(invoegWrapEl);
   root.appendChild(stripsEl);
 
   let laatsteCtx = null;
@@ -48,24 +44,13 @@ export function initWekenScherm(root, callbacks) {
     koppenEl.appendChild(renderPeriodekiezer(w));
     koppenEl.appendChild(renderNavigatie(w));
 
-    invoegEl.textContent = "";
-
     const starts = weekStarts(w.startWeek, w.periode, w.eigenStart, w.eigenEind);
     renderWeekstrips(
       stripsEl,
       { startWeeks: starts, pythonAfgewezen: laatsteCtx.pythonAfgewezen, tripStatusOverrides: laatsteCtx.tripStatusOverrides, eigenReizen: laatsteCtx.eigenReizen },
       callbacks.onOpenWeek,
-      (weekMaandag) => {
-        invoegEl.textContent = "";
-        renderPlannerForm(
-          invoegEl,
-          (veld) => {
-            callbacks.onItemToevoegen(veld);
-            invoegEl.textContent = "";
-          },
-          { start: weekMaandag, end: addDays(weekMaandag, 6) }
-        );
-      }
+      (ymd) => callbacks.onDagKiezen(ymd, { formOpenen: true }),
+      (ymd) => callbacks.onDagKiezen(ymd, { formOpenen: false })
     );
   }
 

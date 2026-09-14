@@ -37,6 +37,7 @@ function kopSectie(titel) {
  *   afgevinkteDeadlines: string[],
  *   pythonAfgewezen: boolean,
  *   vakkenVeldwaarden: Record<string, string>,
+ *   formOpenen: boolean,
  * }} data
  * @param {{
  *   onSluiten: () => void,
@@ -48,7 +49,7 @@ function kopSectie(titel) {
  *   onVeldWijzigen: (sleutel: string, waarde: string) => void,
  * }} acties
  */
-export function renderDagblad(root, { ymd, dag, eigenItems, afgevinkteDeadlines, pythonAfgewezen = false, vakkenVeldwaarden = {} }, acties) {
+export function renderDagblad(root, { ymd, dag, eigenItems, afgevinkteDeadlines, pythonAfgewezen = false, vakkenVeldwaarden = {}, formOpenen = false }, acties) {
   root.textContent = "";
 
   const kop = document.createElement("div");
@@ -171,7 +172,7 @@ export function renderDagblad(root, { ymd, dag, eigenItems, afgevinkteDeadlines,
     root.appendChild(lijst);
   }
 
-  root.appendChild(renderActieknoppen(ymd, acties));
+  root.appendChild(renderActieknoppen(ymd, acties, formOpenen));
 }
 
 /**
@@ -255,7 +256,7 @@ function renderEigenItemRij(item, onVerwijderen) {
   return li;
 }
 
-function renderActieknoppen(ymd, acties) {
+function renderActieknoppen(ymd, acties, formOpenen) {
   const wrap = document.createElement("div");
   wrap.className = "dagblad-acties";
 
@@ -282,7 +283,7 @@ function renderActieknoppen(ymd, acties) {
   const invoegPlek = document.createElement("div");
   wrap.appendChild(invoegPlek);
 
-  toevoegKnop.addEventListener("click", () => {
+  function openToevoegForm() {
     invoegPlek.textContent = "";
     renderPlannerForm(
       invoegPlek,
@@ -292,7 +293,12 @@ function renderActieknoppen(ymd, acties) {
       },
       { start: ymd, end: ymd }
     );
-  });
+  }
+
+  toevoegKnop.addEventListener("click", openToevoegForm);
+  // FASE-9.md B2 punt 1: "Item erbij" vanuit Weken opent het dagblad met dit
+  // formulier al open, zodat het kiezen van een dag ook meteen de invoer opent.
+  if (formOpenen) openToevoegForm();
 
   notitieKnop.addEventListener("click", () => {
     invoegPlek.textContent = "";

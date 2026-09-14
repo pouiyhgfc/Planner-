@@ -25,7 +25,10 @@ const SCROLL_BEWAAR_VERTRAGING_MS = 400;
 export function initNavigatie(opts) {
   const { schermEls, navKnopEls, instellingenKnopEl, instellingenPaneelEl, instellingenSluitEl, onUiWijzigen } = opts;
   let ui = opts.ui;
-  let scrollTimer = null;
+  // Eén timer per scherm, niet gedeeld — anders annuleert het scroll-event van
+  // het ene scherm de nog-niet-opgeslagen positie van een ander scherm dat
+  // vlak daarvoor (bijv. door tonScherm()) ook een scroll-event vuurde.
+  const scrollTimers = {};
 
   function toonScherm(naam) {
     for (const s of SCHERMEN) schermEls[s].hidden = s !== naam;
@@ -46,9 +49,14 @@ export function initNavigatie(opts) {
 
   for (const naam of SCHERMEN) {
     schermEls[naam].addEventListener("scroll", () => {
-      clearTimeout(scrollTimer);
+      // Een scherm verbergen (hidden = true) reset scrollTop naar 0 en kan dat
+      // zelf als scroll-event laten vuren — geen echte gebruikersactie, dus
+      // niet plannen om op te slaan (zou de bewaarde positie overschrijven).
+      if (schermEls[naam].hidden) return;
+      clearTimeout(scrollTimers[naam]);
       const positie = schermEls[naam].scrollTop;
-      scrollTimer = setTimeout(() => {
+      scrollTimers[naam] = setTimeout(() => {
+        if (schermEls[naam].hidden) return;
         ui = { ...ui, scrollPositions: { ...ui.scrollPositions, [naam]: positie } };
         onUiWijzigen(ui);
       }, SCROLL_BEWAAR_VERTRAGING_MS);
