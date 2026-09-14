@@ -57,26 +57,28 @@ export const agtechDates = [
 ];
 
 // vorm (FASE-9.md A3): "in de les" of "discussietijd", conform de kolom
-// "Lecture Style" in de RTE-syllabus. Die kolom staat niet in DATA.md en is
-// niet aangeleverd (zie open punt §9) — dus vorm: null (ONBEKEND) op alle
-// 15 lesdagen, niet alleen week 9 en 11 zoals FASE-9.md veronderstelde.
+// "Lecture Style" in 2026-NTU_RTE_Syllabus_ver_1.docx (door Idries
+// aangeleverd, correctie op de eerdere "ONBEKEND overal"-aanname toen die
+// syllabus nog niet beschikbaar was — zie DATA.md §9-1h). "In-Class" ->
+// "in de les", "Schedule Discussion Time" -> "discussietijd". Weken 9 en 11
+// staan leeg in de syllabus zelf: vorm: null (ONBEKEND), niet gegokt.
 export const rteDates = [
-  { date: "2026-09-10", week: 1, type: "les", course: "RTE", label: "Syllabus", vorm: null, bron: BRON_RTE, zekerheid: "ZEKER" },
-  { date: "2026-09-17", week: 2, type: "les", course: "RTE", label: "Quiz 1 + Intro to Rail Transportation", vorm: null, bron: BRON_RTE, zekerheid: "ZEKER" },
-  { date: "2026-09-24", week: 3, type: "les", course: "RTE", label: "Infrastructure – Elements I", vorm: null, bron: BRON_RTE, zekerheid: "ZEKER" },
-  { date: "2026-10-01", week: 4, type: "les", course: "RTE", label: "Infrastructure – Elements II", vorm: null, bron: BRON_RTE, zekerheid: "ZEKER" },
-  { date: "2026-10-08", week: 5, type: "les", course: "RTE", label: "Special Track Work & WCML", vorm: null, bron: BRON_RTE, zekerheid: "ZEKER" },
-  { date: "2026-10-15", week: 6, type: "les", course: "RTE", label: "Station and Yard", vorm: null, bron: BRON_RTE, zekerheid: "ZEKER" },
-  { date: "2026-10-22", week: 7, type: "les", course: "RTE", label: "Rolling Stock – Car Types & Coupler", vorm: null, bron: BRON_RTE, zekerheid: "ZEKER" },
-  { date: "2026-10-29", week: 8, type: "les", course: "RTE", label: "Term Project Discussion I", vorm: null, bron: BRON_RTE, zekerheid: "ZEKER" },
+  { date: "2026-09-10", week: 1, type: "les", course: "RTE", label: "Syllabus", vorm: "in de les", bron: BRON_RTE, zekerheid: "ZEKER" },
+  { date: "2026-09-17", week: 2, type: "les", course: "RTE", label: "Quiz 1 + Intro to Rail Transportation", vorm: "in de les", bron: BRON_RTE, zekerheid: "ZEKER" },
+  { date: "2026-09-24", week: 3, type: "les", course: "RTE", label: "Infrastructure – Elements I", vorm: "in de les", bron: BRON_RTE, zekerheid: "ZEKER" },
+  { date: "2026-10-01", week: 4, type: "les", course: "RTE", label: "Infrastructure – Elements II", vorm: "in de les", bron: BRON_RTE, zekerheid: "ZEKER" },
+  { date: "2026-10-08", week: 5, type: "les", course: "RTE", label: "Special Track Work & WCML", vorm: "in de les", bron: BRON_RTE, zekerheid: "ZEKER" },
+  { date: "2026-10-15", week: 6, type: "les", course: "RTE", label: "Station and Yard", vorm: "discussietijd", bron: BRON_RTE, zekerheid: "ZEKER" },
+  { date: "2026-10-22", week: 7, type: "les", course: "RTE", label: "Rolling Stock – Car Types & Coupler", vorm: "in de les", bron: BRON_RTE, zekerheid: "ZEKER" },
+  { date: "2026-10-29", week: 8, type: "les", course: "RTE", label: "Term Project Discussion I", vorm: "discussietijd", bron: BRON_RTE, zekerheid: "ZEKER" },
   { date: "2026-11-05", week: 9, type: "les", course: "RTE", label: "Rolling Stock – Bogie & Brake", vorm: null, bron: BRON_RTE, zekerheid: "ZEKER" },
-  { date: "2026-11-12", week: 10, type: "les", course: "RTE", label: "Signal & Train Control", vorm: null, bron: BRON_RTE, zekerheid: "ZEKER" },
+  { date: "2026-11-12", week: 10, type: "les", course: "RTE", label: "Signal & Train Control", vorm: "in de les", bron: BRON_RTE, zekerheid: "ZEKER" },
   { date: "2026-11-19", week: 11, type: "les", course: "RTE", label: "Technical Visit", vorm: null, bron: BRON_RTE, zekerheid: "ZEKER" },
-  { date: "2026-11-26", week: 12, type: "les", course: "RTE", label: "Term Project Discussion II", vorm: null, bron: BRON_RTE, zekerheid: "ZEKER" },
-  { date: "2026-12-03", week: 13, type: "les", course: "RTE", label: "Quiz 2 + Brakeless or Unstoppable", vorm: null, bron: BRON_RTE, zekerheid: "ZEKER" },
-  { date: "2026-12-10", week: 14, type: "les", course: "RTE", label: "Term Project Presentations", vorm: null, bron: BRON_RTE, zekerheid: "ZEKER" },
-  { date: "2026-12-17", week: 15, type: "les", course: "RTE", label: "Term Project Presentations", vorm: null, bron: BRON_RTE, zekerheid: "ZEKER" },
-  { date: "2026-12-24", week: 16, type: "tentamen", course: "RTE", label: "Comprehensive Exam (25%)", bron: BRON_RTE, zekerheid: "ZEKER" },
+  { date: "2026-11-26", week: 12, type: "les", course: "RTE", label: "Term Project Discussion II", vorm: "discussietijd", bron: BRON_RTE, zekerheid: "ZEKER" },
+  { date: "2026-12-03", week: 13, type: "les", course: "RTE", label: "Quiz 2 + Brakeless or Unstoppable", vorm: "in de les", bron: BRON_RTE, zekerheid: "ZEKER" },
+  { date: "2026-12-10", week: 14, type: "les", course: "RTE", label: "Term Project Presentations", vorm: "in de les", bron: BRON_RTE, zekerheid: "ZEKER" },
+  { date: "2026-12-17", week: 15, type: "les", course: "RTE", label: "Term Project Presentations", vorm: "in de les", bron: BRON_RTE, zekerheid: "ZEKER" },
+  { date: "2026-12-24", week: 16, type: "tentamen", course: "RTE", label: "Comprehensive Exam (25%)", vorm: "in de les", bron: BRON_RTE, zekerheid: "ZEKER" },
 ];
 
 /**

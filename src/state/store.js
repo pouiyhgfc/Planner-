@@ -153,7 +153,7 @@ export function zetVakVeld(state, sleutel, waarde) {
  * op dat moment "geboekt" is automatisch naar "vervallen" — er kan maar één
  * variant tegelijk de actieve, geboekte reis zijn.
  * @param {{tripStatusOverrides: Record<string, string>}} state
- * @param {string} variant een trips.js variant-id, bijv. "japan-voorgenomen"
+ * @param {string} variant een trips.js variant-id, bijv. "japan-omboeking"
  * @param {string} nieuweStatus
  * @returns {{tripStatusOverrides: Record<string, string>}}
  */

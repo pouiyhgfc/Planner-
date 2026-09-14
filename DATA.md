@@ -208,24 +208,32 @@ onderwerp. Ook was er nog geen sprekerkolom.
 ### 3.3 Railroad Transportation Engineering (donderdag 14:20–17:20)
 Bron: `2026-NTU_RTE_Syllabus_ver_1.docx`. Docent Yung-Cheng (Rex) Lai. Zekerheid: **ZEKER**.
 
-| Datum | Week | Onderwerp | Deadline / actie |
-|---|---|---|---|
-| 2026-09-10 | 1 | Syllabus | — |
-| 2026-09-17 | 2 | **Quiz 1** + Intro to Rail Transportation | — |
-| 2026-09-24 | 3 | Infrastructure – Elements I | **Term project topic + groepen (5 pers.)**; Assignment #1 draft PPT |
-| 2026-10-01 | 4 | Infrastructure – Elements II | Assignment #2 uitgegeven |
-| 2026-10-08 | 5 | Special Track Work & WCML | **Assignment #2 due**; #3 in-class |
-| 2026-10-15 | 6 | Station and Yard | **Term project draft PPT due**; **Assignment #1 due**; #4 uitgegeven |
-| 2026-10-22 | 7 | Rolling Stock – Car Types & Coupler | **Assignment #4 due** |
-| 2026-10-29 | 8 | Term Project Discussion I | — |
-| 2026-11-05 | 9 | Rolling Stock – Bogie & Brake | **Assignment #5 in-class** |
-| 2026-11-12 | 10 | Signal & Train Control | **2e draft PPT due** |
-| 2026-11-19 | 11 | **Technical Visit** | Assignment #7 (visit) |
-| 2026-11-26 | 12 | Term Project Discussion II | — |
-| 2026-12-03 | 13 | **Quiz 2** + Brakeless or Unstoppable | Assignment #6 in-class |
-| 2026-12-10 | 14 | Term Project Presentations | — |
-| 2026-12-17 | 15 | Term Project Presentations | — |
-| **2026-12-24** | 16 | **Comprehensive Exam (25%)** | — |
+| Datum | Week | Onderwerp | Deadline / actie | Lesvorm |
+|---|---|---|---|---|
+| 2026-09-10 | 1 | Syllabus | — | in de les |
+| 2026-09-17 | 2 | **Quiz 1** + Intro to Rail Transportation | — | in de les |
+| 2026-09-24 | 3 | Infrastructure – Elements I | **Term project topic + groepen (5 pers.)**; Assignment #1 draft PPT | in de les |
+| 2026-10-01 | 4 | Infrastructure – Elements II | Assignment #2 uitgegeven | in de les |
+| 2026-10-08 | 5 | Special Track Work & WCML | **Assignment #2 due**; #3 in-class | in de les |
+| 2026-10-15 | 6 | Station and Yard | **Term project draft PPT due**; **Assignment #1 due**; #4 uitgegeven | discussietijd |
+| 2026-10-22 | 7 | Rolling Stock – Car Types & Coupler | **Assignment #4 due** | in de les |
+| 2026-10-29 | 8 | Term Project Discussion I | — | discussietijd |
+| 2026-11-05 | 9 | Rolling Stock – Bogie & Brake | **Assignment #5 in-class** | ONBEKEND |
+| 2026-11-12 | 10 | Signal & Train Control | **2e draft PPT due** | in de les |
+| 2026-11-19 | 11 | **Technical Visit** | Assignment #7 (visit) | ONBEKEND |
+| 2026-11-26 | 12 | Term Project Discussion II | — | discussietijd |
+| 2026-12-03 | 13 | **Quiz 2** + Brakeless or Unstoppable | Assignment #6 in-class | in de les |
+| 2026-12-10 | 14 | Term Project Presentations | — | in de les |
+| 2026-12-17 | 15 | Term Project Presentations | — | in de les |
+| **2026-12-24** | 16 | **Comprehensive Exam (25%)** | — | in de les |
+
+**Lesvorm — correctie op de FASE-9.md A3-aanname, bron:
+`2026-NTU_RTE_Syllabus_ver_1.docx` (door Idries aangeleverd), zekerheid
+ZEKER.** Kolom "Lecture Style" uit de syllabus: "In-Class" → in de les,
+"Schedule Discussion Time" → discussietijd. Weken 9 en 11 staan leeg in de
+syllabus zelf — dat is ONBEKEND, niet ingevuld. (Eerdere versie van dit
+document zette alle 15 lesdagen op ONBEKEND omdat de syllabus toen nog niet
+beschikbaar was — zie open punt §9-1h, nu opgelost.)
 
 Beoordeling: huiswerk 30% (beste 5 van 7, geen uitstel), term project 25%,
 2 quizzes 20%, comprehensive exam 25%, participatie 5%. (Telt op tot 105%,
@@ -238,12 +246,6 @@ Klasregels: geen laat huiswerk, geen telefoon, geen eten.
 in het spoor, groepen van 5 personen. 20 minuten Engelse presentatie (5
 minuten per persoon) plus een Engels termverslag. Verdeling binnen de 25%:
 presentatie 15%, verslag 10%.
-
-**Lesvorm (FASE-9.md A3) — ONBEKEND op alle 15 lesdagen.** De syllabus heeft
-een kolom "Lecture Style" (in de les / discussietijd) die niet is
-overgenomen in deze tabel en nergens anders in de repo staat — zie open punt
-§9-1h. Niet verzonnen; elke lesdag heeft een `vorm`-veld met waarde null tot
-de kolom wordt aangeleverd.
 
 ### 3.4 General Chinese (maandag + woensdag 18:25–21:05)
 Bron: NTU Course-pagina + syllabus PTCSL7908-23 (CORRECTIE-CHINEES.md,
@@ -473,9 +475,9 @@ donderdag gewoon naar college.
 
 | Item | Datum | Status | Zekerheid |
 |---|---|---|---|
-| Vlucht TPE → KIX (Peach Aviation) | 2026-10-30 | geboekt | ZEKER |
-| Japan: Osaka 2 nachten → Kyoto 3 → Kawaguchiko/Fuji 1 → Tokyo 4 | 2026-10-30 → 11-09 | geboekt | ZEKER |
-| Vlucht NRT → TPE (Peach Aviation) | 2026-11-09 | geboekt | ZEKER |
+| Vlucht TPE → KIX (Peach Aviation, omboeking, 13:05) | 2026-11-06 | geboekt | ZEKER |
+| Japan (omboeking): Osaka/Kyoto/Kawaguchiko/Tokyo | 2026-11-06 → 11-16 | geboekt | ZEKER |
+| Vlucht NRT → TPE (Peach Aviation, omboeking, 12:25) | 2026-11-16 | geboekt | ZEKER |
 | Filipijnen-trip: vertrek vrijdagochtend | 2026-09-25 | geboekt | ZEKER |
 | Filipijnen-trip: terugkomst (± 10:00) | 2026-09-30 | geboekt | ZEKER |
 
@@ -484,46 +486,50 @@ de vaste boeking heeft voorrang in de statusbepaling (zie fase 2-regels). De
 terugkomst is een woensdag; Idries mist daardoor de PSY-les die ochtend
 (09:10–12:10, §3.1). Dit vak neemt geen aanwezigheid op.
 
-### 4.1 Japan — omboeking in behandeling (FASE-9.md A2)
+### 4.1 Japan — omboeking (afgerond)
 
-De huidige Japan-boeking (hierboven, status **geboekt**) raakt twee van de
-drie Chinees-midterm-onderdelen (§3.4). Idries heeft wijzigingsrecht op de
-tickets en boekt om. De nieuwe datums liggen nog niet vast — status
-**wijziging-aangevraagd**, bron: opgave Idries, zekerheid TE VERIFIËREN (de
-omboeking zelf, niet de bedoeling erachter):
+**Bevestigd door Idries:** de oorspronkelijke boeking (30-10 → 09-11,
+hieronder) is omgeboekt naar **vertrek 2026-11-06 om 13:05, terug 2026-11-16
+om 12:25**. Status van de oorspronkelijke boeking is nu **vervallen** (blijft
+in de data staan, niet meer zichtbaar in de kalender); de omboeking is
+**geboekt**.
 
 | Item | Datum | Status |
 |---|---|---|
-| Vlucht TPE → KIX (voorgenomen, na 17:20 — ná RTE) | 2026-11-05 | wijziging-aangevraagd |
-| Japan (voorgenomen omboeking) | 2026-11-05 → 11-16 | wijziging-aangevraagd |
-| Vlucht NRT → TPE (voorgenomen, vóór 18:25 — vóór Chinees) | 2026-11-16 | wijziging-aangevraagd |
+| Vlucht TPE → KIX (Peach Aviation) | 2026-10-30 | vervallen |
+| Japan: Osaka 2 nachten → Kyoto 3 → Kawaguchiko/Fuji 1 → Tokyo 4 | 2026-10-30 → 11-09 | vervallen |
+| Vlucht NRT → TPE (Peach Aviation) | 2026-11-09 | vervallen |
 
-Beide varianten blijven in de data staan (geen enkele overschrijft de
-andere). Zodra Idries één van de twee daadwerkelijk boekt, wordt die
-**geboekt** en gaat de andere automatisch naar **vervallen** (blijft in de
-data, verdwijnt uit de kalender). De kostenberekening rekent altijd met de
-status **geboekt** — de kosten van de voorgenomen wijziging hieronder zijn
-een vergelijking, geen vervanging.
+**Waarom omgeboekt:** de oorspronkelijke boeking raakte twee van de drie
+Chinees-midterm-onderdelen (§3.4: 02-11 schriftelijk, 04-11 presentatie). De
+omboeking (06-11 → 16-11) raakt geen enkel tentamenonderdeel — dat was het
+doel en is gehaald.
 
 **Kostenvergelijking** (bron: opgave Idries; AgTech/RTE-aantallen voor de
-huidige boeking herhalen de al eerder gecorrigeerde 2x-telling van
+oorspronkelijke boeking herhalen de al eerder gecorrigeerde 2x-telling van
 FASE-8-1.md — bevestigd door Idries blijft dit 1x, zie §8/FASE-8-1.md):
 
-| | Huidige boeking 30-10 → 09-11 | Voorgenomen 05-11 → 16-11 |
+| | Oorspronkelijk 30-10 → 09-11 (vervallen) | Omboeking 06-11 → 16-11 (geboekt) |
 |---|---|---|
-| Chinees | 3 sessies = 9 uur (3 uur boven vrijstelling) | 2 sessies = 6 uur (precies binnen vrijstelling) |
+| Chinees | 3 sessies = 9 uur (3 uur boven vrijstelling) | 3 sessies (11-09, 11-11, 11-16) = 9 uur |
 | CHI-tentamenonderdelen geraakt | 2 van 3 (02-11 schriftelijk, 04-11 presentatie) | 0 |
 | AgTech | 1 absentie (11-05) | 1 absentie (11-12) |
 | RTE | 1 les (11-05) | 1 les (11-12) + 2e draft PPT due |
 | PSY | 1 les (11-04) | 1 les (11-11) |
 | Python | 1 les (11-04) | 1 les (11-11) |
 
-De voorgenomen kolom telt 11-05 en 11-16 zelf niet mee: vertrek is ná de
-RTE-les die middag, terugkomst is vóór de Chinese les die avond — geen van
-beide lessen wordt op die dagen gemist.
+**Let op — de app telt de omboeking als 3x Chinees, niet 2x.** De app rekent
+per hele kalenderdag (zoals ook bij de Filipijnen-terugkomst, §4), en heeft
+geen tijdstip-precisie. De terugvlucht op 2026-11-16 landt om 12:25, ruim
+vóór de Chinese les om 18:25 — die les wordt in werkelijkheid dus niet
+gemist. Maar zolang de vaste-boekingsperiode t/m 2026-11-16 loopt, telt de
+motor die avond automatisch mee als bezet. Dit is een bekende beperking
+(hele-dag-granulariteit), geen fout in de omboeking zelf — het aantal
+geraakte tentamenonderdelen (0) is en blijft het belangrijkste resultaat.
 
-**Harde grens:** de reis moet zijn afgelopen vóór **donderdag 2026-11-19**
-(RTE technical visit + Assignment #7, niet in te halen). Staat als
+**Harde grens (nog steeds relevant):** de reis moet zijn afgelopen vóór
+**donderdag 2026-11-19** (RTE technical visit + Assignment #7, niet in te
+halen). De omboeking eindigt 2026-11-16, dus ruim op tijd. Staat als
 deadline-item "Uiterste terugkomst" in de data, los van welke boekingsvariant
 actief is.
 
@@ -632,12 +638,11 @@ De app maakt hiervoor lege, gemarkeerde velden — géén aannames.
     technical visit op 2026-11-19 (week 11).
 1g. Studiepunten voor General Psychology, Global AgTech Foresight en Railroad
     Transportation Engineering — VAKKEN.md §1 geeft ze niet.
-1h. Railroad Transportation Engineering: de kolom "Lecture Style" (in de les
-    / discussietijd) per week uit `2026-NTU_RTE_Syllabus_ver_1.docx` —
-    FASE-9.md A3 veronderstelde dat dit al bekend was op 13 van de 15
-    lesdagen (alleen week 9 en 11 ONBEKEND), maar deze kolom staat nergens in
-    DATA.md of elders in de repo. Staat daarom op alle 15 lesdagen ONBEKEND
-    (`vorm: null`) totdat de syllabus-kolom is aangeleverd.
+1h. ~~Railroad Transportation Engineering: de kolom "Lecture Style" per
+    week~~ — **opgelost:** Idries leverde `2026-NTU_RTE_Syllabus_ver_1.docx`
+    aan. Zie §3.3 — 14 van de 16 lesdagen hebben nu een vorm ("in de les" of
+    "discussietijd"); week 9 en 11 staan ook in de syllabus zelf leeg en
+    blijven dus ONBEKEND.
 2. Of de docenten inhaallessen plannen in de flexibele week 2026-12-28 → 12-31.
    Aankondiging uiterlijk 2026-11-28 volgens de kalender.
 3. Datum en duur van de afstudeeropdracht in Nederland (februari 2027) — bepaalt
