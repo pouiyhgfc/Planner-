@@ -1,0 +1,314 @@
+/**
+ * Scherm "Overzicht" — fase 8E. Vier telkaarten, een projectensectie en één
+ * chronologische lijst met schakelbare filterchips.
+ */
+
+import { resterendeBlokken, chinaAftelling } from "../lib/overzicht.js";
+import { deadlineSleutel } from "./dagblad.js";
+import { kortDatum } from "./datumlabels.js";
+import { projects } from "../data/projects.js";
+import {
+  volgendeTentamenOfPresentatie,
+  aantalOpenstaandeDeadlines,
+  mijlpaalSleutel,
+  rijenSchooldagen,
+  rijenTentamens,
+  rijenDeadlines,
+  rijenProjecten,
+  rijenFeestdagen,
+  rijenEigenItems,
+  rijenVrijeBlokken,
+} from "./overzichtData.js";
+
+const FILTERS = [
+  { id: "schooldagen", label: "Schooldagen" },
+  { id: "tentamens", label: "Tentamens" },
+  { id: "deadlines", label: "Deadlines" },
+  { id: "projecten", label: "Projecten" },
+  { id: "feestdagen", label: "Feestdagen" },
+  { id: "eigenItems", label: "Eigen items" },
+  { id: "vrijeBlokken", label: "Vrije blokken" },
+];
+const STANDAARD_AAN = ["tentamens", "deadlines", "vrijeBlokken"];
+
+/**
+ * @param {HTMLElement} root
+ * @param {{
+ *   onDeadlineToggle: (sleutel: string, afgevinkt: boolean) => void,
+ *   onMijlpaalToggle: (sleutel: string, afgevinkt: boolean) => void,
+ *   onProjectToevoegen: (veld: object) => void,
+ *   onProjectVerwijderen: (id: string) => void,
+ * }} callbacks
+ * @returns {{render: (ctx: object) => void}}
+ */
+export function initOverzichtScherm(root, callbacks) {
+  const telkaartenEl = document.createElement("div");
+  telkaartenEl.className = "telkaarten";
+  const projectenEl = document.createElement("div");
+  const filtersEl = document.createElement("div");
+  const lijstEl = document.createElement("div");
+  root.appendChild(telkaartenEl);
+  root.appendChild(projectenEl);
+  root.appendChild(filtersEl);
+  root.appendChild(lijstEl);
+
+  let actieveFilters = new Set(STANDAARD_AAN);
+  let laatsteCtx = null;
+
+  function zetFilters(nieuw) {
+    actieveFilters = nieuw;
+    tekenenFiltersEnLijst();
+  }
+
+  function telkaart(getal, tekst, onKlik) {
+    const kaart = document.createElement("button");
+    kaart.type = "button";
+    kaart.className = "tap-target telkaart";
+    const getalEl = document.createElement("span");
+    getalEl.className = "telkaart-getal";
+    getalEl.textContent = getal;
+    const tekstEl = document.createElement("span");
+    tekstEl.className = "telkaart-tekst";
+    tekstEl.textContent = tekst;
+    kaart.appendChild(getalEl);
+    kaart.appendChild(tekstEl);
+    kaart.addEventListener("click", onKlik);
+    return kaart;
+  }
+
+  function tekenenTelkaarten() {
+    const { vandaag, afgevinkteDeadlines } = laatsteCtx;
+    telkaartenEl.textContent = "";
+
+    const volgende = volgendeTentamenOfPresentatie(vandaag);
+    telkaartenEl.appendChild(
+      telkaart(
+        volgende ? String(volgende.dagenResterend) : "—",
+        volgende ? `dagen tot ${volgende.inhoud}` : "geen tentamen of presentatie meer",
+        () => zetFilters(new Set(["tentamens", "projecten"]))
+      )
+    );
+
+    const openstaand = aantalOpenstaandeDeadlines(vandaag, afgevinkteDeadlines);
+    telkaartenEl.appendChild(telkaart(String(openstaand), "openstaande deadlines", () => zetFilters(new Set(["deadlines"]))));
+
+    const blokken = resterendeBlokken(vandaag);
+    telkaartenEl.appendChild(
+      telkaart(String(blokken.vijfMetEenAbsentie), "vrije blokken van 5 dagen die nog komen", () => zetFilters(new Set(["vrijeBlokken"])))
+    );
+
+    const china = chinaAftelling(vandaag);
+    telkaartenEl.appendChild(
+      telkaart(
+        china.dagenResterend >= 0 ? String(china.dagenResterend) : "0",
+        `dagen tot: ${china.label} (${china.zekerheid})`,
+        () => zetFilters(new Set(["deadlines"]))
+      )
+    );
+  }
+
+  function renderMijlpaalRij(project, mijlpaal, afgevinkteMijlpalen) {
+    const sleutel = mijlpaalSleutel(project, mijlpaal);
+    const li = document.createElement("li");
+    const label = document.createElement("label");
+    const vinkje = document.createElement("input");
+    vinkje.type = "checkbox";
+    vinkje.checked = afgevinkteMijlpalen.includes(sleutel);
+    vinkje.addEventListener("change", () => callbacks.onMijlpaalToggle(sleutel, vinkje.checked));
+    label.appendChild(vinkje);
+    const tekst = document.createElement("span");
+    tekst.textContent = ` ${mijlpaal.datum} — ${mijlpaal.label}`;
+    label.appendChild(tekst);
+    li.appendChild(label);
+    return li;
+  }
+
+  function renderProjectKaart(project, afgevinkteMijlpalen, isVast) {
+    const kaart = document.createElement("div");
+    kaart.className = "card project-kaart";
+
+    const kop = document.createElement("div");
+    kop.className = "project-kaart-kop";
+    const titel = document.createElement("span");
+    titel.textContent = project.vak ? `${project.naam} — ${project.vak}` : project.naam;
+    kop.appendChild(titel);
+    if (!isVast) {
+      const verwijder = document.createElement("button");
+      verwijder.type = "button";
+      verwijder.textContent = "Verwijderen";
+      verwijder.addEventListener("click", () => callbacks.onProjectVerwijderen(project.id));
+      kop.appendChild(verwijder);
+    }
+    kaart.appendChild(kop);
+
+    if (project.waarschuwing) {
+      const waarschuwing = document.createElement("p");
+      waarschuwing.className = "project-waarschuwing";
+      waarschuwing.textContent = project.waarschuwing;
+      kaart.appendChild(waarschuwing);
+    }
+
+    const lijst = document.createElement("ul");
+    for (const mijlpaal of project.mijlpalen) lijst.appendChild(renderMijlpaalRij(project, mijlpaal, afgevinkteMijlpalen));
+    kaart.appendChild(lijst);
+
+    return kaart;
+  }
+
+  function renderEigenProjectForm() {
+    const form = document.createElement("form");
+    form.className = "eigen-project-form";
+
+    const naam = document.createElement("input");
+    naam.type = "text";
+    naam.placeholder = "Projectnaam";
+
+    const vak = document.createElement("input");
+    vak.type = "text";
+    vak.placeholder = "Vak (optioneel)";
+
+    const mijlpaalDatum = document.createElement("input");
+    mijlpaalDatum.type = "date";
+
+    const mijlpaalLabel = document.createElement("input");
+    mijlpaalLabel.type = "text";
+    mijlpaalLabel.placeholder = "Eerste mijlpaal";
+
+    const knop = document.createElement("button");
+    knop.type = "submit";
+    knop.textContent = "Eigen project toevoegen";
+
+    form.appendChild(naam);
+    form.appendChild(vak);
+    form.appendChild(mijlpaalDatum);
+    form.appendChild(mijlpaalLabel);
+    form.appendChild(knop);
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (!naam.value || !mijlpaalDatum.value || !mijlpaalLabel.value) return;
+      callbacks.onProjectToevoegen({
+        naam: naam.value,
+        vak: vak.value || null,
+        mijlpalen: [{ datum: mijlpaalDatum.value, label: mijlpaalLabel.value }],
+      });
+      form.reset();
+    });
+
+    return form;
+  }
+
+  function tekenenProjecten() {
+    const { afgevinkteMijlpalen, eigenProjecten } = laatsteCtx;
+    projectenEl.textContent = "";
+
+    const kop = document.createElement("h2");
+    kop.className = "scherm-kop";
+    kop.textContent = "Projecten";
+    projectenEl.appendChild(kop);
+
+    for (const project of projects) projectenEl.appendChild(renderProjectKaart(project, afgevinkteMijlpalen, true));
+    for (const project of eigenProjecten) projectenEl.appendChild(renderProjectKaart(project, afgevinkteMijlpalen, false));
+    projectenEl.appendChild(renderEigenProjectForm());
+  }
+
+  function bouwRijen() {
+    const { items, eigenProjecten } = laatsteCtx;
+    let rijen = [];
+    if (actieveFilters.has("schooldagen")) rijen.push(...rijenSchooldagen().map((r) => ({ ...r, categorie: "schooldagen" })));
+    if (actieveFilters.has("tentamens")) rijen.push(...rijenTentamens().map((r) => ({ ...r, categorie: "tentamens" })));
+    if (actieveFilters.has("deadlines")) rijen.push(...rijenDeadlines().map((r) => ({ ...r, categorie: "deadlines" })));
+    if (actieveFilters.has("projecten")) {
+      rijen.push(...rijenProjecten().map((r) => ({ ...r, categorie: "projecten" })));
+      for (const project of eigenProjecten) {
+        for (const mijlpaal of project.mijlpalen) {
+          rijen.push({ datum: mijlpaal.datum, inhoud: `${project.naam}: ${mijlpaal.label}`, project, mijlpaal, categorie: "projecten" });
+        }
+      }
+    }
+    if (actieveFilters.has("feestdagen")) rijen.push(...rijenFeestdagen().map((r) => ({ ...r, categorie: "feestdagen" })));
+    if (actieveFilters.has("eigenItems")) rijen.push(...rijenEigenItems(items).map((r) => ({ ...r, categorie: "eigenItems" })));
+    if (actieveFilters.has("vrijeBlokken")) rijen.push(...rijenVrijeBlokken().map((r) => ({ ...r, categorie: "vrijeBlokken" })));
+    rijen.sort((a, b) => a.datum.localeCompare(b.datum));
+    return rijen;
+  }
+
+  function renderRij(rij) {
+    const li = document.createElement("li");
+    li.className = "overzicht-rij";
+
+    const datumEl = document.createElement("span");
+    datumEl.className = "overzicht-rij-datum";
+    datumEl.textContent = kortDatum(rij.datum);
+    li.appendChild(datumEl);
+
+    const rechts = document.createElement("span");
+    rechts.className = "overzicht-rij-inhoud";
+
+    if (rij.categorie === "deadlines") {
+      const sleutel = deadlineSleutel(rij.deadline);
+      const vinkje = document.createElement("input");
+      vinkje.type = "checkbox";
+      vinkje.checked = laatsteCtx.afgevinkteDeadlines.includes(sleutel);
+      vinkje.addEventListener("change", () => callbacks.onDeadlineToggle(sleutel, vinkje.checked));
+      rechts.appendChild(vinkje);
+    }
+    if (rij.categorie === "projecten" && rij.project && rij.mijlpaal) {
+      const sleutel = mijlpaalSleutel(rij.project, rij.mijlpaal);
+      const vinkje = document.createElement("input");
+      vinkje.type = "checkbox";
+      vinkje.checked = laatsteCtx.afgevinkteMijlpalen.includes(sleutel);
+      vinkje.addEventListener("change", () => callbacks.onMijlpaalToggle(sleutel, vinkje.checked));
+      rechts.appendChild(vinkje);
+    }
+
+    const tekst = document.createElement("span");
+    tekst.textContent = rij.inhoud;
+    rechts.appendChild(tekst);
+    li.appendChild(rechts);
+
+    return li;
+  }
+
+  function tekenenFiltersEnLijst() {
+    filtersEl.textContent = "";
+    filtersEl.className = "overzicht-filters";
+    for (const filter of FILTERS) {
+      const knop = document.createElement("button");
+      knop.type = "button";
+      knop.className = "tap-target filter-chip";
+      knop.textContent = filter.label;
+      knop.setAttribute("aria-current", actieveFilters.has(filter.id) ? "true" : "false");
+      knop.addEventListener("click", () => {
+        const nieuw = new Set(actieveFilters);
+        if (nieuw.has(filter.id)) nieuw.delete(filter.id);
+        else nieuw.add(filter.id);
+        zetFilters(nieuw);
+      });
+      filtersEl.appendChild(knop);
+    }
+
+    lijstEl.textContent = "";
+    const rijen = bouwRijen();
+    if (rijen.length === 0) {
+      const leeg = document.createElement("p");
+      leeg.className = "overzicht-leeg";
+      leeg.textContent = "Geen items voor deze filterkeuze.";
+      lijstEl.appendChild(leeg);
+      return;
+    }
+    const lijst = document.createElement("ul");
+    lijst.className = "overzicht-lijst";
+    for (const rij of rijen) lijst.appendChild(renderRij(rij));
+    lijstEl.appendChild(lijst);
+  }
+
+  function render(ctx) {
+    laatsteCtx = ctx;
+    tekenenTelkaarten();
+    tekenenProjecten();
+    tekenenFiltersEnLijst();
+  }
+
+  return { render };
+}

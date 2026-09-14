@@ -15,11 +15,16 @@
  * v5: state kreeg weekWeergave (fase 8D, scherm "Weken"): de gekozen
  *     periodelengte en het huidige vensterbegin (een maandag), zodat de
  *     periodekeuze bewaard blijft — zie FASE-8.md 8D.
+ * v6: state kreeg afgevinkteMijlpalen (fase 8E, scherm "Overzicht"): welke
+ *     projectmijlpalen zijn afgevinkt, per sleutel "projectId::datum::label"
+ *     — mijlpalen in src/data/projects.js hebben zelf geen id. Ook
+ *     eigenProjecten: door de gebruiker zelf toegevoegde projecten, met
+ *     dezelfde vorm (naam, vak, mijlpalen) als src/data/projects.js.
  */
 
 import { parseYMD } from "../lib/date.js";
 
-export const CURRENT_SCHEMA_VERSION = 5;
+export const CURRENT_SCHEMA_VERSION = 6;
 
 const STATUS_WAARDEN = ["idee", "vast"];
 export const SCHERMEN = ["maand", "weken", "overzicht", "vakken"];
@@ -55,6 +60,8 @@ export function leegState() {
     ui: legeUiState(),
     afgevinkteDeadlines: [],
     weekWeergave: legeWeekWeergave(),
+    afgevinkteMijlpalen: [],
+    eigenProjecten: [],
   };
 }
 
@@ -119,12 +126,27 @@ export function migrate(state) {
     };
   }
 
+  if (s.schemaVersion === 5) {
+    s = {
+      schemaVersion: 6,
+      laatsteExport: s.laatsteExport ?? null,
+      items: s.items ?? [],
+      ui: geldigeUiState(s.ui),
+      afgevinkteDeadlines: s.afgevinkteDeadlines ?? [],
+      weekWeergave: geldigeWeekWeergave(s.weekWeergave),
+      afgevinkteMijlpalen: s.afgevinkteMijlpalen ?? [],
+      eigenProjecten: s.eigenProjecten ?? [],
+    };
+  }
+
   if (s.schemaVersion === CURRENT_SCHEMA_VERSION) {
     return {
       ...s,
       ui: geldigeUiState(s.ui),
       afgevinkteDeadlines: s.afgevinkteDeadlines ?? [],
       weekWeergave: geldigeWeekWeergave(s.weekWeergave),
+      afgevinkteMijlpalen: s.afgevinkteMijlpalen ?? [],
+      eigenProjecten: s.eigenProjecten ?? [],
     };
   }
   throw new Error(`onbekende schemaVersion: ${state.schemaVersion}`);
@@ -173,4 +195,18 @@ export function valideerItem(item) {
   parseYMD(item.end);
   if (item.start > item.end) throw new Error(`start (${item.start}) ligt na end (${item.end})`);
   if (!STATUS_WAARDEN.includes(item.status)) throw new Error(`ongeldige status: ${item.status}`);
+}
+
+/**
+ * @param {object} project
+ * @throws {Error} als het project ongeldig is
+ */
+export function valideerProject(project) {
+  if (!project.id) throw new Error("project mist id");
+  if (!project.naam) throw new Error("project mist naam");
+  if (!project.mijlpalen || project.mijlpalen.length === 0) throw new Error("project heeft geen mijlpalen");
+  for (const mijlpaal of project.mijlpalen) {
+    parseYMD(mijlpaal.datum);
+    if (!mijlpaal.label) throw new Error("mijlpaal mist label");
+  }
 }

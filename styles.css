@@ -676,3 +676,115 @@ select {
   gap: 8px;
   margin-top: 10px;
 }
+
+/* fase 8E — scherm "Overzicht" */
+
+.telkaarten {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.telkaart {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 12px;
+  text-align: left;
+}
+.telkaart-getal {
+  font-family: var(--ff-display);
+  font-size: 28px;
+  line-height: 1;
+}
+.telkaart-tekst {
+  font-size: var(--fs-min);
+  color: var(--text-muted);
+}
+
+.project-kaart {
+  padding: 12px;
+  margin-bottom: 8px;
+}
+.project-kaart-kop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-family: var(--ff-head);
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+.project-kaart ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--fs-min);
+}
+.project-waarschuwing {
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  border-radius: var(--radius-control);
+  padding: 8px 10px;
+  font-size: var(--fs-min);
+  margin: 0 0 8px;
+}
+
+.eigen-project-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0 20px;
+}
+
+.overzicht-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.filter-chip {
+  font-size: var(--fs-min);
+  padding: 6px 10px;
+}
+.filter-chip[aria-current="true"] {
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+  color: var(--accent-text);
+}
+
+.overzicht-lijst {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.overzicht-rij {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding-bottom: 8px;
+  border-bottom: var(--border-width) solid var(--border-soft);
+  font-size: var(--fs-min);
+}
+.overzicht-rij-datum {
+  flex-shrink: 0;
+  width: 56px;
+  color: var(--text-muted);
+  font-family: var(--ff-display);
+}
+.overzicht-rij-inhoud {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.overzicht-leeg {
+  color: var(--text-muted);
+  font-size: var(--fs-min);
+}

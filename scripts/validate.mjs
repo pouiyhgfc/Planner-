@@ -7,14 +7,38 @@ import { trips } from "../src/data/trips.js";
 import { chinaVisaFreeDeadline, flexWeekAnnouncementDeadline, academicDeadlines } from "../src/data/deadlines.js";
 import { dayStatus, genereerKalenderDagen } from "../src/lib/dayStatus.js";
 import { isFree, freeBlocks, blocksWithCost, costOfRange } from "../src/lib/blocks.js";
-import { leegState, migrate, valideerItem, CURRENT_SCHEMA_VERSION, SCHERMEN, PERIODES } from "../src/state/schema.js";
-import { voegItemToe, verwijderItem, zetDeadlineAfgevinkt, huidigeYMD, bereidExportVoor, bereidSamenvoegingVoor, pasConflictKeuzesToe } from "../src/state/store.js";
+import { leegState, migrate, valideerItem, valideerProject, CURRENT_SCHEMA_VERSION, SCHERMEN, PERIODES } from "../src/state/schema.js";
+import {
+  voegItemToe,
+  verwijderItem,
+  zetDeadlineAfgevinkt,
+  zetMijlpaalAfgevinkt,
+  voegProjectToe,
+  verwijderProject,
+  huidigeYMD,
+  bereidExportVoor,
+  bereidSamenvoegingVoor,
+  pasConflictKeuzesToe,
+} from "../src/state/store.js";
 import { chinaAftelling, flexWeekStatus, cnyDrukte, resterendeBlokken, absentieTotaal } from "../src/lib/overzicht.js";
 import { seizoensdataLabel } from "../src/data/season.js";
 import { kortDatum, collegeWeek } from "../src/ui/datumlabels.js";
 import { maandWeken, isStipMoment } from "../src/ui/maandGrid.js";
 import { deadlineSleutel } from "../src/ui/dagblad.js";
 import { maandagVan, weekAantal, weekStarts, verschuifVenster, dagdelenMetKleur } from "../src/ui/wekenGrid.js";
+import { projects } from "../src/data/projects.js";
+import {
+  volgendeTentamenOfPresentatie,
+  aantalOpenstaandeDeadlines,
+  mijlpaalSleutel,
+  rijenSchooldagen,
+  rijenTentamens,
+  rijenDeadlines,
+  rijenProjecten,
+  rijenFeestdagen,
+  rijenEigenItems,
+  rijenVrijeBlokken,
+} from "../src/ui/overzichtData.js";
 import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -1003,6 +1027,135 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
 // Geen title-attributen in de fase 8D-bestanden
 {
   for (const bestand of ["src/ui/wekenGrid.js", "src/ui/schermWeken.js"]) {
+    const bron = readFileSync(join(PROJECT_ROOT, bestand), "utf8");
+    check(`${bestand}: geen title-attributen`, /\.title\s*=|setAttribute\(\s*["']title["']/.test(bron), false);
+  }
+}
+
+// =====================================================================
+// Fase 8E — scherm "Overzicht"
+// =====================================================================
+
+// projects.js: beide projecten uit FASE-8.md 8E staan erin, met geldige bron/zekerheid
+{
+  check("projects.js: precies twee projecten (RTE + Python)", projects.length, 2);
+  const rte = projects.find((p) => p.id === "RTE_TERMPROJECT");
+  const py = projects.find((p) => p.id === "PY_GROEPSPROJECT");
+  check("projects.js: RTE termproject aanwezig", Boolean(rte), true);
+  check("projects.js: Python groepsproject aanwezig", Boolean(py), true);
+  check("projects.js: RTE heeft 5 mijlpalen (§3.3)", rte?.mijlpalen.length, 5);
+  check("projects.js: Python heeft 3 mijlpalen (weken 14-16)", py?.mijlpalen.length, 3);
+  check("projects.js: Python-mijlpalen matchen pythonDates-presentatiedata", py?.mijlpalen.map((m) => m.datum), ["2026-12-09", "2026-12-16", "2026-12-23"]);
+  check("projects.js: Python groepsproject heeft een waarschuwing", Boolean(py?.waarschuwing), true);
+  check("projects.js: Python groepsgrootte staat op null (ONBEKEND)", py?.groepsgrootte, null);
+
+  for (const project of projects) {
+    checkBronZekerheid(`projects.js: ${project.id}`, project);
+    for (const mijlpaal of project.mijlpalen) {
+      check(`projects.js: ${project.id} mijlpaal "${mijlpaal.label}" heeft geldige datum`, YMD_PATTERN.test(mijlpaal.datum), true);
+    }
+  }
+}
+
+// valideerProject() / voegProjectToe() / verwijderProject(): pure state-transformaties
+{
+  let state = leegState();
+  state = voegProjectToe(state, { naam: "Eigen project", vak: null, mijlpalen: [{ datum: "2026-10-01", label: "Start" }] });
+  check("voegProjectToe: project toegevoegd", state.eigenProjecten.length, 1);
+  check("voegProjectToe: project heeft een id", typeof state.eigenProjecten[0].id === "string" && state.eigenProjecten[0].id.length > 0, true);
+
+  let wierpFout = false;
+  try {
+    valideerProject({ id: "x", naam: "Zonder mijlpalen", mijlpalen: [] });
+  } catch {
+    wierpFout = true;
+  }
+  check("valideerProject: project zonder mijlpalen werpt een fout", wierpFout, true);
+
+  const id = state.eigenProjecten[0].id;
+  state = verwijderProject(state, id);
+  check("verwijderProject: project weer weg", state.eigenProjecten.length, 0);
+}
+
+// zetMijlpaalAfgevinkt(): pure state-transformatie, geen duplicaten
+{
+  let state = leegState();
+  state = zetMijlpaalAfgevinkt(state, "sleutel-a", true);
+  check("zetMijlpaalAfgevinkt: toevoegen", state.afgevinkteMijlpalen, ["sleutel-a"]);
+  state = zetMijlpaalAfgevinkt(state, "sleutel-a", false);
+  check("zetMijlpaalAfgevinkt: uitvinken", state.afgevinkteMijlpalen, []);
+}
+
+// migrate(): schemaVersion 5 -> 6 voegt afgevinkteMijlpalen/eigenProjecten toe
+{
+  const v5 = { ...leegState(), schemaVersion: 5 };
+  delete v5.afgevinkteMijlpalen;
+  delete v5.eigenProjecten;
+  const gemigreerd = migrate(v5);
+  check("migrate v5->v6: schemaVersion wordt de actuele versie", gemigreerd.schemaVersion, CURRENT_SCHEMA_VERSION);
+  check("migrate v5->v6: afgevinkteMijlpalen default leeg", gemigreerd.afgevinkteMijlpalen.length, 0);
+  check("migrate v5->v6: eigenProjecten default leeg", gemigreerd.eigenProjecten.length, 0);
+}
+
+// mijlpaalSleutel(): stabiel per project+mijlpaal
+{
+  const project = { id: "P1" };
+  const mijlpaal = { datum: "2026-10-01", label: "X" };
+  check("mijlpaalSleutel: verwachte vorm", mijlpaalSleutel(project, mijlpaal), "P1::2026-10-01::X");
+}
+
+// volgendeTentamenOfPresentatie(): vindt tentamens én presentatie-labels,
+// op een gesimuleerde datum — geen systeemklok nodig om dit te testen.
+{
+  const vlakVoorMidterm = volgendeTentamenOfPresentatie("2026-10-20");
+  check("volgendeTentamenOfPresentatie(2026-10-20): vindt het eerstvolgende tentamen", vlakVoorMidterm?.datum, "2026-10-28");
+
+  const vlakVoorPresentaties = volgendeTentamenOfPresentatie("2026-12-01");
+  check("volgendeTentamenOfPresentatie(2026-12-01): vindt de eerstvolgende presentatie (Python, 12-09, vóór RTE's 12-10)", vlakVoorPresentaties?.datum, "2026-12-09");
+
+  const naAlles = volgendeTentamenOfPresentatie("2027-01-01");
+  check("volgendeTentamenOfPresentatie(2027-01-01): niets meer over, dus null", naAlles, null);
+}
+
+// aantalOpenstaandeDeadlines(): telt alleen nog-niet-afgevinkte, nog-niet-verstreken deadlines
+{
+  const alleOpen = aantalOpenstaandeDeadlines("2026-09-01", []);
+  const eenAfgevinkt = aantalOpenstaandeDeadlines("2026-09-01", [deadlineSleutel({ date: "2026-09-19", label: "Laatste dag online vakken laten vallen" })]);
+  check("aantalOpenstaandeDeadlines: afvinken vermindert de telling met 1", eenAfgevinkt, alleOpen - 1);
+  check("aantalOpenstaandeDeadlines: na de app-periode is alles verstreken", aantalOpenstaandeDeadlines("2027-03-01", []), 0);
+}
+
+// rijen*(): elke bouwer levert alleen rijen met een geldige YYYY-MM-DD-datum
+{
+  for (const [naam, rijen] of [
+    ["rijenSchooldagen", rijenSchooldagen()],
+    ["rijenTentamens", rijenTentamens()],
+    ["rijenDeadlines", rijenDeadlines()],
+    ["rijenProjecten", rijenProjecten()],
+    ["rijenFeestdagen", rijenFeestdagen()],
+    ["rijenEigenItems", rijenEigenItems([{ naam: "Test", start: "2026-10-01", end: "2026-10-01", status: "idee", notitie: "" }])],
+    ["rijenVrijeBlokken", rijenVrijeBlokken()],
+  ]) {
+    check(`${naam}: levert rijen`, rijen.length > 0, true);
+    check(`${naam}: elke rij heeft een geldige datum`, rijen.every((r) => YMD_PATTERN.test(r.datum)), true);
+    check(`${naam}: elke rij heeft inhoud`, rijen.every((r) => typeof r.inhoud === "string" && r.inhoud.length > 0), true);
+  }
+  check("rijenProjecten: bevat zowel RTE als Python", new Set(rijenProjecten().map((r) => r.project.id)).size, 2);
+  check("rijenTentamens: bevat geen presentaties (alleen type tentamen)", rijenTentamens().every((r) => !/presentat/i.test(r.inhoud)) , true);
+}
+
+// sw.js: de fase 8E-bestanden zitten in de app-shell
+{
+  const swBron = readFileSync(join(PROJECT_ROOT, "sw.js"), "utf8");
+  for (const bestand of ["schermOverzicht.js", "overzichtData.js"]) {
+    check(`sw.js: APP_SHELL bevat ui/${bestand}`, swBron.includes(`ui/${bestand}`), true);
+  }
+  check("sw.js: APP_SHELL bevat data/projects.js", swBron.includes("data/projects.js"), true);
+}
+
+// Geen title-attributen in de fase 8E-bestanden
+{
+  for (const bestand of ["src/ui/schermOverzicht.js", "src/ui/overzichtData.js", "src/data/projects.js"]) {
     const bron = readFileSync(join(PROJECT_ROOT, bestand), "utf8");
     check(`${bestand}: geen title-attributen`, /\.title\s*=|setAttribute\(\s*["']title["']/.test(bron), false);
   }

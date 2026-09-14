@@ -5,6 +5,9 @@ import {
   voegItemToe,
   verwijderItem,
   zetDeadlineAfgevinkt,
+  zetMijlpaalAfgevinkt,
+  voegProjectToe,
+  verwijderProject,
   vraagPersistentOpslagAan,
   bereidExportVoor,
   bereidSamenvoegingVoor,
@@ -15,7 +18,8 @@ import { absentieTotaal } from "../lib/overzicht.js";
 import { initNavigatie, renderTopbar } from "./nav.js";
 import { initMaandScherm } from "./schermMaand.js";
 import { initWekenScherm } from "./schermWeken.js";
-import { renderOverzichtScherm, renderVakkenScherm } from "./schermen.js";
+import { initOverzichtScherm } from "./schermOverzicht.js";
+import { renderVakkenScherm } from "./schermen.js";
 import {
   renderThemaRegel,
   renderPersistRegel,
@@ -116,6 +120,34 @@ function openWeekInMaand(ymd) {
   maandScherm.openDag(ymd);
 }
 
+function overzichtWeergeven() {
+  overzichtScherm.render({
+    vandaag: huidigeYMD(),
+    items: state.items,
+    afgevinkteDeadlines: state.afgevinkteDeadlines,
+    afgevinkteMijlpalen: state.afgevinkteMijlpalen,
+    eigenProjecten: state.eigenProjecten,
+  });
+}
+
+async function voegProjectEnHerteken(veld) {
+  state = voegProjectToe(state, veld);
+  await bewaarState(state);
+  overzichtWeergeven();
+}
+
+async function verwijderProjectEnHerteken(id) {
+  state = verwijderProject(state, id);
+  await bewaarState(state);
+  overzichtWeergeven();
+}
+
+async function zetMijlpaalEnHerteken(sleutel, afgevinkt) {
+  state = zetMijlpaalAfgevinkt(state, sleutel, afgevinkt);
+  await bewaarState(state);
+  overzichtWeergeven();
+}
+
 async function voegItemEnHerteken(veld) {
   state = voegItemToe(state, veld);
   await bewaarState(state);
@@ -123,6 +155,7 @@ async function voegItemEnHerteken(veld) {
   topbarWeergeven();
   maandWeergeven();
   wekenWeergeven();
+  overzichtWeergeven();
 }
 
 async function verwijderItemEnHerteken(id) {
@@ -132,12 +165,14 @@ async function verwijderItemEnHerteken(id) {
   topbarWeergeven();
   maandWeergeven();
   wekenWeergeven();
+  overzichtWeergeven();
 }
 
 async function zetDeadlineEnHerteken(sleutel, afgevinkt) {
   state = zetDeadlineAfgevinkt(state, sleutel, afgevinkt);
   await bewaarState(state);
   maandWeergeven();
+  overzichtWeergeven();
 }
 
 function downloadBestand(bestandsnaam, inhoud) {
@@ -169,6 +204,7 @@ async function importeerBestand(bestand) {
   topbarWeergeven();
   maandWeergeven();
   wekenWeergeven();
+  overzichtWeergeven();
 }
 exportEl.addEventListener("import-bestand", (e) => importeerBestand(e.detail));
 
@@ -180,6 +216,7 @@ async function pasConflictenToe(keuzes) {
   topbarWeergeven();
   maandWeergeven();
   wekenWeergeven();
+  overzichtWeergeven();
 }
 
 pasThemaToe(state.ui.thema);
@@ -206,13 +243,20 @@ const wekenScherm = initWekenScherm(schermEls.weken, {
   onItemToevoegen: voegItemEnHerteken,
 });
 
-renderOverzichtScherm(schermEls.overzicht);
+const overzichtScherm = initOverzichtScherm(schermEls.overzicht, {
+  onDeadlineToggle: zetDeadlineEnHerteken,
+  onMijlpaalToggle: zetMijlpaalEnHerteken,
+  onProjectToevoegen: voegProjectEnHerteken,
+  onProjectVerwijderen: verwijderProjectEnHerteken,
+});
+
 renderVakkenScherm(schermEls.vakken);
 
 topbarWeergeven();
 instellingenWeergeven();
 maandWeergeven();
 wekenWeergeven();
+overzichtWeergeven();
 
 vraagPersistentOpslagAan().then((toegekend) => {
   persistToegekend = toegekend;

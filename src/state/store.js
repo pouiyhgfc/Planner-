@@ -3,7 +3,7 @@
  * localStorage — zie CLAUDE.md §4.
  */
 
-import { leegState, migrate, valideerItem, CURRENT_SCHEMA_VERSION } from "./schema.js";
+import { leegState, migrate, valideerItem, valideerProject, CURRENT_SCHEMA_VERSION } from "./schema.js";
 
 const DB_NAAM = "planner";
 const DB_VERSIE = 1;
@@ -94,6 +94,37 @@ export function verwijderItem(state, id) {
 export function zetDeadlineAfgevinkt(state, sleutel, afgevinkt) {
   const zonder = state.afgevinkteDeadlines.filter((s) => s !== sleutel);
   return { ...state, afgevinkteDeadlines: afgevinkt ? [...zonder, sleutel] : zonder };
+}
+
+/**
+ * @param {{afgevinkteMijlpalen: string[]}} state
+ * @param {string} sleutel
+ * @param {boolean} afgevinkt
+ * @returns {{afgevinkteMijlpalen: string[]}}
+ */
+export function zetMijlpaalAfgevinkt(state, sleutel, afgevinkt) {
+  const zonder = state.afgevinkteMijlpalen.filter((s) => s !== sleutel);
+  return { ...state, afgevinkteMijlpalen: afgevinkt ? [...zonder, sleutel] : zonder };
+}
+
+/**
+ * @param {{eigenProjecten: object[]}} state
+ * @param {{naam: string, vak: string, mijlpalen: {datum: string, label: string}[]}} veld
+ * @returns {{eigenProjecten: object[]}}
+ */
+export function voegProjectToe(state, veld) {
+  const project = { id: crypto.randomUUID(), ...veld };
+  valideerProject(project);
+  return { ...state, eigenProjecten: [...state.eigenProjecten, project] };
+}
+
+/**
+ * @param {{eigenProjecten: object[]}} state
+ * @param {string} id
+ * @returns {{eigenProjecten: object[]}}
+ */
+export function verwijderProject(state, id) {
+  return { ...state, eigenProjecten: state.eigenProjecten.filter((p) => p.id !== id) };
 }
 
 /**
