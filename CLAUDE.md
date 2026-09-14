@@ -23,8 +23,11 @@ Draait op Chrome Android en desktop. Wordt gedeployed op Vercel als statische si
 - **Geen framework.** Geen React, Vue, Svelte, Alpine, jQuery.
 - **Geen build-stap.** Geen bundler, geen transpiler, geen PostCSS, geen Tailwind.
 - **Geen runtime-dependencies.** `package.json` bestaat alleen voor dev-scripts
-  (validatie/tests). De app in de browser laadt nul externe bestanden — geen CDN,
-  geen webfont, geen icon-library.
+  (validatie/tests). De app in de browser laadt geen CDN en geen icon-library.
+  **Uitzondering (sinds fase 8):** zelf-gehoste `.woff2`-fontbestanden in
+  `/fonts/`, gecommit in de repo en geladen met `@font-face` uit `styles.css`.
+  Geen `fonts.googleapis.com`-link of ander extern lettertype-CDN — dat breekt
+  offline gebruik en is zelf een CDN.
 - Vanilla JS met native ES modules (`<script type="module">`).
 - Plain CSS in één bestand. CSS custom properties voor kleuren.
 - Geen TypeScript. JSDoc-annotaties mogen wel.

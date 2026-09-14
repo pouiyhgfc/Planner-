@@ -7,14 +7,14 @@ import { rangeDays, dayOfWeek, isoWeek } from "./date.js";
 import { appPeriod, semesterMarkers } from "../data/semester.js";
 import { holidays } from "../data/holidays.js";
 import { courses } from "../data/courses.js";
-import { psyDates, agtechDates, rteDates, chineseLessons, chineseMogelijkeTentamens, rteActionItems } from "../data/coursedates.js";
+import { psyDates, agtechDates, rteDates, pythonDates, chineseLessons, chineseMogelijkeTentamens, rteActionItems } from "../data/coursedates.js";
 import { trips } from "../data/trips.js";
 import { chinaVisaFreeDeadline, flexWeekAnnouncementDeadline, academicDeadlines } from "../data/deadlines.js";
 
-const alleVakItems = [...psyDates, ...agtechDates, ...rteDates, ...chineseLessons];
+const alleVakItems = [...psyDates, ...agtechDates, ...rteDates, ...pythonDates, ...chineseLessons];
 const alleDeadlineItems = [...rteActionItems, ...academicDeadlines, chinaVisaFreeDeadline, flexWeekAnnouncementDeadline];
 
-const DAGDEEL_NAMEN = ["ochtend", "middag", "avond"];
+export const DAGDEEL_NAMEN = ["ochtend", "middag", "avond"];
 const OCHTEND_EINDE = "12:10";
 const MIDDAG_EINDE = "18:25";
 
@@ -33,7 +33,7 @@ function valtOpDatum(ymd, item) {
  * @param {string} hhmm
  * @returns {"ochtend"|"middag"|"avond"}
  */
-function dagdeelVoorTijd(hhmm) {
+export function dagdeelVoorTijd(hhmm) {
   if (hhmm < OCHTEND_EINDE) return "ochtend";
   if (hhmm < MIDDAG_EINDE) return "middag";
   return "avond";
@@ -47,14 +47,17 @@ function legeDagdelen() {
 
 /**
  * @param {string} ymd
+ * @param {boolean} [pythonAfgewezen] Python-inschrijving afgewezen op het scherm "Vakken"
+ *   (fase 8F) — het vak telt dan niet meer mee. Standaard false: geen gedragswijziging
+ *   voor bestaande aanroepen.
  * @returns {object} status van één dag
  */
-export function dayStatus(ymd) {
+export function dayStatus(ymd, pythonAfgewezen = false) {
   const weekday = dayOfWeek(ymd);
   const { isoYear, week } = isoWeek(ymd);
 
   const vasteBoekingen = trips.filter((t) => valtOpDatum(ymd, t));
-  const vakken = alleVakItems.filter((v) => valtOpDatum(ymd, v));
+  const vakken = alleVakItems.filter((v) => valtOpDatum(ymd, v) && !(pythonAfgewezen && v.course === "PY"));
   const deadlines = alleDeadlineItems.filter((d) => valtOpDatum(ymd, d));
   const feestdagen = holidays.filter((h) => valtOpDatum(ymd, h));
   const mogelijkeTentamens = chineseMogelijkeTentamens.filter((t) => valtOpDatum(ymd, t));
@@ -112,8 +115,9 @@ export function dayStatus(ymd) {
 }
 
 /**
+ * @param {boolean} [pythonAfgewezen]
  * @returns {ReturnType<typeof dayStatus>[]} status van alle 181 dagen in de app-periode
  */
-export function genereerKalenderDagen() {
-  return rangeDays(appPeriod.start, appPeriod.end).map(dayStatus);
+export function genereerKalenderDagen(pythonAfgewezen = false) {
+  return rangeDays(appPeriod.start, appPeriod.end).map((ymd) => dayStatus(ymd, pythonAfgewezen));
 }

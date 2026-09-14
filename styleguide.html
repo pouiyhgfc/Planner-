@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stijlgids</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .sg-sectie { padding: 20px; border-bottom: var(--border-width) solid var(--border); }
+  .sg-kop { font-family: var(--ff-display); font-size: 28px; margin: 0 0 4px; }
+  .sg-sub { font-family: var(--ff-head); font-size: 18px; margin: 0 0 12px; }
+  .sg-rij { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; }
+  .sg-swatch { width: 120px; }
+  .sg-swatch-vlak { height: 60px; border-radius: var(--radius-control); border: var(--border-width) solid var(--border); }
+  .sg-swatch-naam { font-size: var(--fs-min); color: var(--text-muted); margin-top: 4px; }
+  .sg-vak-chip { display: inline-flex; align-items: center; padding: 6px 12px; border-radius: var(--radius-control); font-weight: 600; font-size: var(--fs-min); }
+  .sg-font-demo { font-size: 32px; margin: 4px 0; }
+  .sg-toggle { padding: 8px 16px; border-radius: var(--radius-control); border: var(--border-width) solid var(--border); background: var(--card); color: var(--text); font-family: var(--ff-body); cursor: pointer; }
+  .sg-dag { width: 44px; height: 44px; border-radius: var(--radius-day); border: var(--border-width) solid var(--border); display: flex; align-items: center; justify-content: center; font-size: var(--fs-min); }
+  .sg-vandaag { border: 2px solid var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="sg-sectie">
+  <h1 class="sg-kop">Stijlgids — fase 8A</h1>
+  <p style="color:var(--text-muted); font-size:var(--fs-min)">Alle design-tokens uit FASE-8.md §8A, op deze pagina zichtbaar.</p>
+  <button class="sg-toggle tap-target" id="theme-toggle" type="button">Wissel licht/donker</button>
+</div>
+
+<div class="sg-sectie">
+  <h2 class="sg-sub">Fonts</h2>
+  <div class="sg-font-demo" style="font-family:var(--ff-display)">Schibsted Grotesk — 2026-11-04</div>
+  <div class="sg-font-demo" style="font-family:var(--ff-head); font-size:22px">Outfit — Schermtitel</div>
+  <div class="sg-font-demo" style="font-family:var(--ff-body); font-size:var(--fs-base)">DM Sans — lichaamstekst op 15px, de basisgrootte.</div>
+  <div style="font-family:var(--ff-body); font-size:var(--fs-min)">DM Sans op 12px — kleinste toegestane maat.</div>
+</div>
+
+<div class="sg-sectie">
+  <h2 class="sg-sub">Kleuren — neutraal en accent</h2>
+  <div class="sg-rij" id="kleur-swatches"></div>
+</div>
+
+<div class="sg-sectie">
+  <h2 class="sg-sub">Vakkleuren — vijf vakken, elk met eigen licht- en donkerwaarde</h2>
+  <div class="sg-rij">
+    <span class="sg-vak-chip" style="background:var(--vak-psy-bg); color:var(--vak-psy-text)">PSY — woensdagochtend</span>
+    <span class="sg-vak-chip" style="background:var(--vak-py-bg); color:var(--vak-py-text)">PY — woensdagmiddag</span>
+    <span class="sg-vak-chip" style="background:var(--vak-agtech-bg); color:var(--vak-agtech-text)">AgTech — donderdagochtend</span>
+    <span class="sg-vak-chip" style="background:var(--vak-rte-bg); color:var(--vak-rte-text)">RTE — donderdagmiddag</span>
+    <span class="sg-vak-chip" style="background:var(--vak-chi-bg); color:var(--vak-chi-text)">Chinees — ma + wo avond</span>
+  </div>
+</div>
+
+<div class="sg-sectie">
+  <h2 class="sg-sub">Vorm en kaarten</h2>
+  <div class="sg-rij">
+    <div class="card" style="padding:16px; width:200px;">
+      <div style="font-family:var(--ff-head); font-size:16px;">Kaart</div>
+      <div style="font-size:var(--fs-min); color:var(--text-muted);">border-radius 14px, rand 1px, één zachte schaduw.</div>
+    </div>
+    <div style="width:200px; padding:10px; border-radius:var(--radius-control); border:var(--border-width) solid var(--border); background:var(--card);">
+      <div style="font-size:var(--fs-min);">Bedieningselement — 10px</div>
+    </div>
+  </div>
+</div>
+
+<div class="sg-sectie">
+  <h2 class="sg-sub">Dagvakjes en tikdoelen (44×44px)</h2>
+  <div class="sg-rij">
+    <div class="sg-dag" style="background:var(--card)">4</div>
+    <div class="sg-dag sg-vandaag" style="background:var(--card)">5</div>
+    <div class="sg-dag" style="background:var(--sel-bg)">6</div>
+    <div class="sg-dag" style="background:var(--card2); color:var(--text-faint)">7</div>
+  </div>
+  <p style="font-size:var(--fs-min); color:var(--text-muted)">Van links: normale dag · vandaag (2px accentrand) · geselecteerd · feestdag/geen-lesdag.</p>
+</div>
+
+<script>
+  const kleuren = [
+    "bg","card","card2","text","text-muted","text-faint","border","border-soft",
+    "input-bg","accent","accent-strong","accent-contrast","accent-bg","accent-border",
+    "accent-text","sel-bg","danger-bg","danger-border","danger-text",
+    "purple-bg","purple-border","purple-text",
+  ];
+  const root = document.getElementById("kleur-swatches");
+  for (const naam of kleuren) {
+    const wrap = document.createElement("div");
+    wrap.className = "sg-swatch";
+    const vlak = document.createElement("div");
+    vlak.className = "sg-swatch-vlak";
+    vlak.style.background = `var(--${naam})`;
+    const label = document.createElement("div");
+    label.className = "sg-swatch-naam";
+    label.textContent = `--${naam}`;
+    wrap.appendChild(vlak);
+    wrap.appendChild(label);
+    root.appendChild(wrap);
+  }
+
+  const knop = document.getElementById("theme-toggle");
+  knop.addEventListener("click", () => {
+    const huidige = document.documentElement.getAttribute("data-theme");
+    document.documentElement.setAttribute("data-theme", huidige === "dark" ? "light" : "dark");
+  });
+</script>
+</body>
+</html>

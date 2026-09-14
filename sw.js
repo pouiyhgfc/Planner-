@@ -5,7 +5,7 @@
  * en correct voor alles.
  */
 
-const CACHE_NAAM = "planner-v1";
+const CACHE_NAAM = "planner-v7";
 
 const APP_SHELL = [
   "./",
@@ -15,10 +15,22 @@ const APP_SHELL = [
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./icons/icon-512-maskable.png",
+  "./fonts/DMSans-Variable.woff2",
+  "./fonts/Outfit-Variable.woff2",
+  "./fonts/SchibstedGrotesk-Variable.woff2",
   "./src/ui/main.js",
-  "./src/ui/render.js",
+  "./src/ui/nav.js",
+  "./src/ui/schermMaand.js",
+  "./src/ui/maandGrid.js",
+  "./src/ui/dagblad.js",
+  "./src/ui/schermWeken.js",
+  "./src/ui/wekenGrid.js",
+  "./src/ui/schermOverzicht.js",
+  "./src/ui/overzichtData.js",
+  "./src/ui/schermVakken.js",
+  "./src/ui/vakkenData.js",
+  "./src/ui/datumlabels.js",
   "./src/ui/planner.js",
-  "./src/ui/overzicht.js",
   "./src/lib/date.js",
   "./src/lib/dayStatus.js",
   "./src/lib/blocks.js",
@@ -30,6 +42,7 @@ const APP_SHELL = [
   "./src/data/trips.js",
   "./src/data/deadlines.js",
   "./src/data/season.js",
+  "./src/data/projects.js",
   "./src/state/schema.js",
   "./src/state/store.js",
 ];

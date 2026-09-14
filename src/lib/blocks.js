@@ -15,10 +15,10 @@
 import { rangeDays, diffDays } from "./date.js";
 import { appPeriod, semesterMarkers } from "../data/semester.js";
 import { courses } from "../data/courses.js";
-import { psyDates, agtechDates, rteDates, chineseLessons, rteActionItems } from "../data/coursedates.js";
+import { psyDates, agtechDates, rteDates, pythonDates, chineseLessons, rteActionItems } from "../data/coursedates.js";
 import { trips } from "../data/trips.js";
 
-const alleLesItems = [...psyDates, ...agtechDates, ...rteDates, ...chineseLessons];
+const alleLesItems = [...psyDates, ...agtechDates, ...rteDates, ...pythonDates, ...chineseLessons];
 const AVOND_BEGIN = "18:25";
 
 function courseVoor(id) {
@@ -45,13 +45,14 @@ function heeftAlleenAvondLes(items) {
 
 /**
  * @param {string} ymd
+ * @param {boolean} [pythonAfgewezen] Python-inschrijving afgewezen (fase 8F) — telt dan niet mee.
  * @returns {{kind: "hard"|"les-only"|"vrij", items: object[]}}
  */
-function classifyDay(ymd) {
+function classifyDay(ymd, pythonAfgewezen = false) {
   if (trips.some((t) => valtOpDatum(ymd, t))) return { kind: "hard", items: [] };
   if (semesterMarkers.some((m) => m.type === "semesterstart" && m.date === ymd)) return { kind: "hard", items: [] };
 
-  const vakken = alleLesItems.filter((v) => v.date === ymd);
+  const vakken = alleLesItems.filter((v) => v.date === ymd && !(pythonAfgewezen && v.course === "PY"));
   const tentamens = vakken.filter((v) => v.type === "tentamen");
   if (tentamens.length > 0) return { kind: "hard", items: tentamens };
 
@@ -66,10 +67,11 @@ function classifyDay(ymd) {
 
 /**
  * @param {string} ymd
+ * @param {boolean} [pythonAfgewezen]
  * @returns {boolean} geen les, tentamen, deadline-actie of vaste boeking die dag. Feestdag en vakantie tellen als vrij.
  */
-export function isFree(ymd) {
-  return classifyDay(ymd).kind === "vrij";
+export function isFree(ymd, pythonAfgewezen = false) {
+  return classifyDay(ymd, pythonAfgewezen).kind === "vrij";
 }
 
 /**
@@ -82,14 +84,15 @@ function bevatRisicoperiode(start, end) {
 
 /**
  * Alle maximale aaneengesloten reeksen vrije hele dagen (geen dagdeel-trim).
+ * @param {boolean} [pythonAfgewezen]
  * @returns {{start: string, end: string, length: number, bevatRisicoperiode: boolean}[]}
  */
-export function freeBlocks() {
+export function freeBlocks(pythonAfgewezen = false) {
   const dagen = rangeDays(appPeriod.start, appPeriod.end);
   const blokken = [];
   let start = null;
   for (let i = 0; i < dagen.length; i++) {
-    if (isFree(dagen[i])) {
+    if (isFree(dagen[i], pythonAfgewezen)) {
       if (start === null) start = dagen[i];
       if (i === dagen.length - 1) blokken.push(maakVrijBlok(start, dagen[i]));
       continue;
@@ -112,18 +115,19 @@ function maakVrijBlok(start, end) {
  * voren verlengd door les-only dagen "op te kopen", tot het budget op is of
  * een harde dag wordt geraakt.
  * @param {number} maxMissedClassDays
+ * @param {boolean} [pythonAfgewezen]
  * @returns {{start: string, end: string, length: number, budgetGebruikt: number, gemisteLessen: object[], bevatRisicoperiode: boolean}[]}
  */
-export function blocksWithCost(maxMissedClassDays) {
+export function blocksWithCost(maxMissedClassDays, pythonAfgewezen = false) {
   const dagen = rangeDays(appPeriod.start, appPeriod.end);
   const blokken = [];
   let i = 0;
   while (i < dagen.length) {
-    if (!isFree(dagen[i])) {
+    if (!isFree(dagen[i], pythonAfgewezen)) {
       i++;
       continue;
     }
-    const blok = verlengVanaf(dagen, i, maxMissedClassDays);
+    const blok = verlengVanaf(dagen, i, maxMissedClassDays, pythonAfgewezen);
     blokken.push(blok);
     i = dagen.indexOf(blok.end) + 1;
   }
@@ -134,8 +138,9 @@ export function blocksWithCost(maxMissedClassDays) {
  * @param {string[]} dagen
  * @param {number} startIdx
  * @param {number} budget
+ * @param {boolean} [pythonAfgewezen]
  */
-function verlengVanaf(dagen, startIdx, budget) {
+function verlengVanaf(dagen, startIdx, budget, pythonAfgewezen = false) {
   const start = dagen[startIdx];
   let end = start;
   let length = 0;
@@ -145,7 +150,7 @@ function verlengVanaf(dagen, startIdx, budget) {
 
   while (idx < dagen.length) {
     const ymd = dagen[idx];
-    const info = classifyDay(ymd);
+    const info = classifyDay(ymd, pythonAfgewezen);
 
     if (info.kind === "vrij") {
       end = ymd;
@@ -181,11 +186,12 @@ function verlengVanaf(dagen, startIdx, budget) {
  * lesmomenten (les én tentamen) vallen erbinnen, en hoeveel per vak.
  * @param {string} start
  * @param {string} end
+ * @param {boolean} [pythonAfgewezen]
  * @returns {{items: object[], perVak: Record<string, number>}}
  */
-export function costOfRange(start, end) {
+export function costOfRange(start, end, pythonAfgewezen = false) {
   const dagenInRange = new Set(rangeDays(start, end));
-  const items = alleLesItems.filter((v) => dagenInRange.has(v.date));
+  const items = alleLesItems.filter((v) => dagenInRange.has(v.date) && !(pythonAfgewezen && v.course === "PY"));
   const perVak = {};
   for (const v of items) perVak[v.course] = (perVak[v.course] || 0) + 1;
   return { items, perVak };

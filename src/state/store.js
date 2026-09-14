@@ -3,7 +3,7 @@
  * localStorage — zie CLAUDE.md §4.
  */
 
-import { leegState, migrate, valideerItem, CURRENT_SCHEMA_VERSION } from "./schema.js";
+import { leegState, migrate, valideerItem, valideerProject, CURRENT_SCHEMA_VERSION } from "./schema.js";
 
 const DB_NAAM = "planner";
 const DB_VERSIE = 1;
@@ -83,6 +83,67 @@ export function voegItemToe(state, veld) {
  */
 export function verwijderItem(state, id) {
   return { ...state, items: state.items.filter((item) => item.id !== id) };
+}
+
+/**
+ * @param {{afgevinkteDeadlines: string[]}} state
+ * @param {string} sleutel
+ * @param {boolean} afgevinkt
+ * @returns {{afgevinkteDeadlines: string[]}}
+ */
+export function zetDeadlineAfgevinkt(state, sleutel, afgevinkt) {
+  const zonder = state.afgevinkteDeadlines.filter((s) => s !== sleutel);
+  return { ...state, afgevinkteDeadlines: afgevinkt ? [...zonder, sleutel] : zonder };
+}
+
+/**
+ * @param {{afgevinkteMijlpalen: string[]}} state
+ * @param {string} sleutel
+ * @param {boolean} afgevinkt
+ * @returns {{afgevinkteMijlpalen: string[]}}
+ */
+export function zetMijlpaalAfgevinkt(state, sleutel, afgevinkt) {
+  const zonder = state.afgevinkteMijlpalen.filter((s) => s !== sleutel);
+  return { ...state, afgevinkteMijlpalen: afgevinkt ? [...zonder, sleutel] : zonder };
+}
+
+/**
+ * @param {{eigenProjecten: object[]}} state
+ * @param {{naam: string, vak: string, mijlpalen: {datum: string, label: string}[]}} veld
+ * @returns {{eigenProjecten: object[]}}
+ */
+export function voegProjectToe(state, veld) {
+  const project = { id: crypto.randomUUID(), ...veld };
+  valideerProject(project);
+  return { ...state, eigenProjecten: [...state.eigenProjecten, project] };
+}
+
+/**
+ * @param {{eigenProjecten: object[]}} state
+ * @param {string} id
+ * @returns {{eigenProjecten: object[]}}
+ */
+export function verwijderProject(state, id) {
+  return { ...state, eigenProjecten: state.eigenProjecten.filter((p) => p.id !== id) };
+}
+
+/**
+ * @param {{pythonInschrijving: string}} state
+ * @param {"onbevestigd"|"bevestigd"|"afgewezen"} waarde
+ * @returns {{pythonInschrijving: string}}
+ */
+export function zetPythonInschrijving(state, waarde) {
+  return { ...state, pythonInschrijving: waarde };
+}
+
+/**
+ * @param {{vakkenVeldwaarden: Record<string, string>}} state
+ * @param {string} sleutel bijv. "AGTECH.room" of "PY.opdrachtenIngeleverd"
+ * @param {string} waarde
+ * @returns {{vakkenVeldwaarden: Record<string, string>}}
+ */
+export function zetVakVeld(state, sleutel, waarde) {
+  return { ...state, vakkenVeldwaarden: { ...state.vakkenVeldwaarden, [sleutel]: waarde } };
 }
 
 /**

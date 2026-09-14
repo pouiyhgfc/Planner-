@@ -63,14 +63,15 @@ function overlaptVakantie(start, end) {
  * alleen blocksWithCost past de dagdeel-trim toe die "3,5 dag" oplevert
  * (zie lib/blocks.js) — freeBlocks() geeft hier alleen hele dagen (3).
  * @param {string} vandaag
+ * @param {boolean} [pythonAfgewezen] Python-inschrijving afgewezen (fase 8F).
  * @returns {{drieËnHalf: number, vijfMetEenAbsentie: number, langBlokInVakantie: number}}
  */
-export function resterendeBlokken(vandaag) {
-  const nulAbsenties = blocksWithCost(0);
+export function resterendeBlokken(vandaag, pythonAfgewezen = false) {
+  const nulAbsenties = blocksWithCost(0, pythonAfgewezen);
 
   const drieËnHalf = nulAbsenties.filter((b) => b.length === 3.5 && b.start >= vandaag).length;
 
-  const vijfMetEenAbsentie = blocksWithCost(1).filter(
+  const vijfMetEenAbsentie = blocksWithCost(1, pythonAfgewezen).filter(
     (b) => b.length === 5 && b.budgetGebruikt === 1 && b.start >= vandaag
   ).length;
 
@@ -86,13 +87,14 @@ export function resterendeBlokken(vandaag) {
  * al geplande items met status "vast". Items met status "idee" tellen
  * niet mee — dat is nog geen commitment.
  * @param {{start: string, end: string, status: string}[]} items
+ * @param {boolean} [pythonAfgewezen] Python-inschrijving afgewezen (fase 8F).
  * @returns {Record<string, number>}
  */
-export function absentieTotaal(items) {
+export function absentieTotaal(items, pythonAfgewezen = false) {
   const totaal = {};
   for (const item of items) {
     if (item.status !== "vast") continue;
-    const { perVak } = costOfRange(item.start, item.end);
+    const { perVak } = costOfRange(item.start, item.end, pythonAfgewezen);
     for (const [vak, n] of Object.entries(perVak)) {
       totaal[vak] = (totaal[vak] ?? 0) + n;
     }

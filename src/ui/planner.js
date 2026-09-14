@@ -1,6 +1,7 @@
 /**
- * Interactieve laag van fase 4: item toevoegen, persist-status tonen.
- * Alleen dit bestand en render.js raken de DOM aan.
+ * Interactieve laag van fase 4/5: eigen item toevoegen, persist-status,
+ * export/import. Vanaf fase 8B gemonteerd in het instellingenpaneel
+ * (zie src/ui/main.js) — de inhoud zelf is ongewijzigd.
  */
 
 import { costOfRange } from "../lib/blocks.js";
@@ -12,14 +13,17 @@ const EXPORT_WAARSCHUWING_DAGEN = 14;
 /**
  * @param {HTMLElement} root
  * @param {(veld: {naam: string, start: string, end: string, status: string, notitie: string}) => void} onToevoegen
+ * @param {{start?: string, end?: string}} [voorinvulling] datumbereik dat al is ingevuld (bijv. vanuit het dagblad)
  */
-export function renderPlannerForm(root, onToevoegen) {
+export function renderPlannerForm(root, onToevoegen, voorinvulling) {
   root.textContent = "";
   root.className = "planner-form";
 
   const naam = veldInput("text", "Naam");
   const start = veldInput("date", "Van");
   const eind = veldInput("date", "Tot");
+  if (voorinvulling?.start) start.value = voorinvulling.start;
+  if (voorinvulling?.end) eind.value = voorinvulling.end;
   const status = document.createElement("select");
   for (const waarde of ["idee", "vast"]) {
     const optie = document.createElement("option");
@@ -85,6 +89,37 @@ function veldInput(type, placeholder) {
   input.placeholder = placeholder;
   if (type !== "date") input.required = type === "text" && placeholder === "Naam";
   return input;
+}
+
+const THEMA_OPTIES = [
+  { waarde: "systeem", label: "Systeem" },
+  { waarde: "licht", label: "Licht" },
+  { waarde: "donker", label: "Donker" },
+];
+
+/**
+ * @param {HTMLElement} root
+ * @param {string} huidigeWaarde
+ * @param {(waarde: string) => void} onWijzigen
+ */
+export function renderThemaRegel(root, huidigeWaarde, onWijzigen) {
+  root.className = "thema-regel";
+  root.textContent = "";
+
+  const label = document.createElement("span");
+  label.textContent = "Thema: ";
+  root.appendChild(label);
+
+  const select = document.createElement("select");
+  for (const optie of THEMA_OPTIES) {
+    const el = document.createElement("option");
+    el.value = optie.waarde;
+    el.textContent = optie.label;
+    select.appendChild(el);
+  }
+  select.value = huidigeWaarde;
+  select.addEventListener("change", () => onWijzigen(select.value));
+  root.appendChild(select);
 }
 
 /**
@@ -191,4 +226,43 @@ export function renderConflictenPaneel(root, conflicten, onOplossen) {
   knop.textContent = "Conflicten toepassen";
   knop.addEventListener("click", () => onOplossen(keuzes));
   root.appendChild(knop);
+}
+
+/**
+ * @param {HTMLElement} root
+ * @param {object[]} items
+ * @param {(id: string) => void} onVerwijderen
+ */
+export function renderEigenItemsLijst(root, items, onVerwijderen) {
+  root.className = "eigen-items-lijst";
+  root.textContent = "";
+
+  if (items.length === 0) {
+    const leeg = document.createElement("p");
+    leeg.className = "eigen-items-leeg";
+    leeg.textContent = "Nog geen eigen items.";
+    root.appendChild(leeg);
+    return;
+  }
+
+  const lijst = document.createElement("ul");
+  for (const item of [...items].sort((a, b) => a.start.localeCompare(b.start))) {
+    const li = document.createElement("li");
+    li.className = "eigen-item-rij";
+
+    const tekst = document.createElement("span");
+    const bereik = item.start === item.end ? item.start : `${item.start} → ${item.end}`;
+    tekst.textContent = `${bereik} — ${item.naam} (${item.status})`;
+    li.appendChild(tekst);
+
+    const verwijder = document.createElement("button");
+    verwijder.type = "button";
+    verwijder.textContent = "×";
+    verwijder.setAttribute("aria-label", `Verwijder "${item.naam}"`);
+    verwijder.addEventListener("click", () => onVerwijderen(item.id));
+    li.appendChild(verwijder);
+
+    lijst.appendChild(li);
+  }
+  root.appendChild(lijst);
 }

@@ -2,15 +2,55 @@ import { parseYMD, toYMD, addDays, dayOfWeek, isoWeek, rangeDays, diffDays } fro
 import { appPeriod, timezone, week12, semesterMarkers, calendarNotes } from "../src/data/semester.js";
 import { holidays } from "../src/data/holidays.js";
 import { courses } from "../src/data/courses.js";
-import { psyDates, agtechDates, rteDates, rteActionItems, chineseLessons, chineseMogelijkeTentamens } from "../src/data/coursedates.js";
+import { psyDates, agtechDates, rteDates, pythonDates, rteActionItems, chineseLessons, chineseMogelijkeTentamens } from "../src/data/coursedates.js";
 import { trips } from "../src/data/trips.js";
 import { chinaVisaFreeDeadline, flexWeekAnnouncementDeadline, academicDeadlines } from "../src/data/deadlines.js";
 import { dayStatus, genereerKalenderDagen } from "../src/lib/dayStatus.js";
 import { isFree, freeBlocks, blocksWithCost, costOfRange } from "../src/lib/blocks.js";
-import { leegState, migrate, valideerItem, CURRENT_SCHEMA_VERSION } from "../src/state/schema.js";
-import { voegItemToe, verwijderItem, huidigeYMD, bereidExportVoor, bereidSamenvoegingVoor, pasConflictKeuzesToe } from "../src/state/store.js";
+import {
+  leegState,
+  migrate,
+  valideerItem,
+  valideerProject,
+  CURRENT_SCHEMA_VERSION,
+  SCHERMEN,
+  PERIODES,
+  PYTHON_INSCHRIJVING_WAARDEN,
+} from "../src/state/schema.js";
+import {
+  voegItemToe,
+  verwijderItem,
+  zetDeadlineAfgevinkt,
+  zetMijlpaalAfgevinkt,
+  voegProjectToe,
+  verwijderProject,
+  zetPythonInschrijving,
+  zetVakVeld,
+  huidigeYMD,
+  bereidExportVoor,
+  bereidSamenvoegingVoor,
+  pasConflictKeuzesToe,
+} from "../src/state/store.js";
 import { chinaAftelling, flexWeekStatus, cnyDrukte, resterendeBlokken, absentieTotaal } from "../src/lib/overzicht.js";
 import { seizoensdataLabel } from "../src/data/season.js";
+import { kortDatum, collegeWeek } from "../src/ui/datumlabels.js";
+import { maandWeken, isStipMoment } from "../src/ui/maandGrid.js";
+import { deadlineSleutel } from "../src/ui/dagblad.js";
+import { maandagVan, weekAantal, weekStarts, verschuifVenster, dagdelenMetKleur } from "../src/ui/wekenGrid.js";
+import { projects } from "../src/data/projects.js";
+import { lesoverzicht, gemisteSessies, chineseAbsentieStand } from "../src/ui/vakkenData.js";
+import {
+  volgendeTentamenOfPresentatie,
+  aantalOpenstaandeDeadlines,
+  mijlpaalSleutel,
+  rijenSchooldagen,
+  rijenTentamens,
+  rijenDeadlines,
+  rijenProjecten,
+  rijenFeestdagen,
+  rijenEigenItems,
+  rijenVrijeBlokken,
+} from "../src/ui/overzichtData.js";
 import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -182,9 +222,26 @@ for (const c of courses) {
   checkBronZekerheid(`courses: ${c.id}.beoordeling`, c.beoordeling);
   check(`courses: ${c.id}.start is HH:MM`, /^\d{2}:\d{2}$/.test(c.start), true);
   check(`courses: ${c.id}.end is HH:MM`, /^\d{2}:\d{2}$/.test(c.end), true);
+  check(`courses: ${c.id}.beoordeling.weging is niet leeg`, c.beoordeling.weging.length > 0, true);
+  check(
+    `courses: ${c.id}.beoordeling.weging elk onderdeel heeft label + numerieke percentage`,
+    c.beoordeling.weging.every((w) => typeof w.label === "string" && w.label.length > 0 && typeof w.percentage === "number"),
+    true
+  );
   if (c.absentieregels) {
-    checkBronZekerheid(`courses: ${c.id}.absentieregels.puntenaftrek`, c.absentieregels.puntenaftrek);
-    checkBronZekerheid(`courses: ${c.id}.absentieregels.faaldrempel`, c.absentieregels.faaldrempel);
+    if (c.absentieregels.bron) {
+      checkBronZekerheid(`courses: ${c.id}.absentieregels`, c.absentieregels);
+    } else {
+      for (const [naam, regel] of Object.entries(c.absentieregels)) {
+        checkBronZekerheid(`courses: ${c.id}.absentieregels.${naam}`, regel);
+      }
+    }
+  }
+  if (c.groepsproject) checkBronZekerheid(`courses: ${c.id}.groepsproject`, c.groepsproject);
+  if (c.cursusrestricties) {
+    for (const [i, restrictie] of c.cursusrestricties.entries()) {
+      checkBronZekerheid(`courses: ${c.id}.cursusrestricties[${i}]`, restrictie);
+    }
   }
 }
 
@@ -198,9 +255,27 @@ for (const c of courses) {
   check("CHI: faaldrempel === 1/3 van de sessies", chi.absentieregels.faaldrempel.drempelFractieSessies, 1 / 3);
 }
 
+// FASE-8-1.md 0B: AgTech-vakcode gecorrigeerd naar ONBEKEND, Python nieuw vak
+{
+  const agtech = courses.find((c) => c.id === "AGTECH");
+  check("AGTECH: code is null (was foutief 946 U0060)", agtech.code, null);
+  check("AGTECH: onbekendeVelden bevat code, room en studiepunten", [...agtech.onbekendeVelden].sort().join(","), "code,room,studiepunten");
+
+  const py = courses.find((c) => c.id === "PY");
+  check("PY: vak bestaat", Boolean(py), true);
+  check("PY: weekdays === [woensdag]", py.weekdays.join(","), "2");
+  check("PY: start === 13:20", py.start, "13:20");
+  check("PY: end === 16:20", py.end, "16:20");
+  check("PY: inschrijving === onbevestigd", py.inschrijving, "onbevestigd");
+  check("PY: room ONBEKEND", py.room, null);
+  check("PY: groepsgrootte ONBEKEND", py.groepsproject.groepsgrootte, null);
+  check("PY: vormingstermijn ONBEKEND (niet verzonnen)", py.groepsproject.vormingstermijn, null);
+}
+
 for (const d of psyDates) checkItem(`psyDates: ${d.date}`, d);
 for (const d of agtechDates) checkItem(`agtechDates: ${d.date}`, d);
 for (const d of rteDates) checkItem(`rteDates: ${d.date}`, d);
+for (const d of pythonDates) checkItem(`pythonDates: ${d.date}`, d);
 for (const d of rteActionItems) checkItem(`rteActionItems: ${d.date} ${d.label}`, d);
 for (const d of chineseLessons) checkItem(`chineseLessons: ${d.date}`, d);
 for (const d of chineseMogelijkeTentamens) checkItem(`chineseMogelijkeTentamens: ${d.date}`, d);
@@ -216,10 +291,23 @@ check("flexWeekAnnouncementDeadline valt op einde week12", flexWeekAnnouncementD
 check("psyDates.length === 16", psyDates.length, 16);
 check("agtechDates.length === 16", agtechDates.length, 16);
 check("rteDates.length === 16", rteDates.length, 16);
+check("pythonDates.length === 16", pythonDates.length, 16);
 
 for (const d of psyDates) check(`${d.date} is woensdag (PSY)`, dayOfWeek(d.date), DAG.wo);
 for (const d of agtechDates) check(`${d.date} is donderdag (AgTech)`, dayOfWeek(d.date), DAG.do);
 for (const d of rteDates) check(`${d.date} is donderdag (RTE)`, dayOfWeek(d.date), DAG.do);
+for (const d of pythonDates) check(`${d.date} is woensdag (Python)`, dayOfWeek(d.date), DAG.wo);
+
+// Python-weekindeling is generatie-consistent: elke woensdag 09-09 t/m 12-23,
+// geen enkele feestdag valt op een woensdag (FASE-8-1.md 0B, correctie 2)
+{
+  const gegenereerd = rangeDays("2026-09-09", "2026-12-23").filter((d) => dayOfWeek(d) === DAG.wo);
+  check(
+    "pythonDates: datums zijn gelijk aan elke woensdag 09-09 t/m 12-23",
+    pythonDates.map((d) => d.date).join(","),
+    gegenereerd.join(",")
+  );
+}
 
 // --- General Chinese generator vs. controlelijst DATA.md §3.4 (CORRECTIE-CHINEES.md) ---
 const chiMondays = chineseLessons.filter((l) => dayOfWeek(l.date) === DAG.ma);
@@ -263,6 +351,7 @@ function checkNoDuplicateDates(label, items) {
 checkNoDuplicateDates("psyDates", psyDates);
 checkNoDuplicateDates("agtechDates", agtechDates);
 checkNoDuplicateDates("rteDates", rteDates);
+checkNoDuplicateDates("pythonDates", pythonDates);
 checkNoDuplicateDates("chineseLessons", chineseLessons);
 
 // =====================================================================
@@ -278,6 +367,20 @@ check("genereerKalenderDagen(): precies 181 dagen", genereerKalenderDagen().leng
   check("2026-10-28 bevat PSY-midterm", dag.vakken.some((v) => v.course === "PSY" && v.type === "tentamen"), true);
   check("2026-10-28 ochtend bezet (PSY-midterm)", dag.dagdelen.ochtend.bezet, true);
   check("2026-10-28 avond bezet (Chinees)", dag.dagdelen.avond.bezet, true);
+}
+
+// FASE-8-1.md 0B "klaar als": een gewone woensdag heeft nu alle drie de
+// dagdelen bezet (PSY ochtend, Python middag, Chinees avond) — was ochtend+avond
+{
+  const dag = dayStatus("2026-11-18"); // gewone lesweek-woensdag, geen tentamen
+  check("2026-11-18 ochtend bezet (PSY)", dag.dagdelen.ochtend.bezet, true);
+  check("2026-11-18 middag bezet (Python)", dag.dagdelen.middag.bezet, true);
+  check("2026-11-18 avond bezet (Chinees)", dag.dagdelen.avond.bezet, true);
+  check(
+    "2026-11-18 bevat Python-onderwerp Pandas",
+    dag.vakken.some((v) => v.course === "PY" && v.label.includes("Pandas")),
+    true
+  );
 }
 
 // 2026-10-29: AgTech + RTE, valt in de midterm-periode
@@ -363,14 +466,17 @@ check('isFree("2026-11-14") === true (zaterdag)', isFree("2026-11-14"), true);
 
 // Bij twee absenties: loopt door tot en met woensdag, kosten 2x Chinees + 1x PSY
 // (bevestigd door Idries: kosten leidend boven de eindtijd-frasering in DATA.md)
+// + 1x Python sinds FASE-8-1.md 0B (woensdagmiddag is nu ook bezet)
 {
   const week = blocksWithCost(2).find((b) => b.start === "2026-11-13");
   check("N=2: eindigt op woensdag 2026-11-18", week.end, "2026-11-18");
   check("N=2: lengte === 6 dagen", week.length, 6);
   const chinees = week.gemisteLessen.filter((l) => l.course === "CHI").length;
   const psy = week.gemisteLessen.filter((l) => l.course === "PSY").length;
+  const py = week.gemisteLessen.filter((l) => l.course === "PY").length;
   check("N=2: 2x Chinees gemist", chinees, 2);
   check("N=2: 1x PSY gemist", psy, 1);
+  check("N=2: 1x Python gemist", py, 1);
 }
 
 // blocksWithCost(0) bevat nooit een lesmoment, ook geen maandag-/woensdagavond
@@ -384,14 +490,17 @@ check("blocksWithCost(0): nergens een gemist lesmoment", blocksWithCost(0).every
   check("langste blok: bevat de flexibele week als risico", langste.bevatRisicoperiode, true);
 }
 
-// Japan-controlewaarde (DATA.md §3.5, CORRECTIE-CHINEES.md): 3 Chinees-
+// Japan-controlewaarde (DATA.md §3.6, FASE-8-1.md 0B correctie 5): 3 Chinees-
 // sessies / 9 uur is de belangrijkste controlewaarde in de hele app.
+// AgTech/RTE blijven 1x elk (10-29 telt niet mee — bevestigd door Idries,
+// FASE-8-1.md noemde per abuis weer 2x, genegeerd na navraag).
 {
   const kosten = costOfRange("2026-10-30", "2026-11-09").perVak;
   check("Japan: 3x Chinees (belangrijkste controlewaarde)", kosten.CHI, 3);
   check("Japan: 1x AgTech", kosten.AGTECH, 1);
   check("Japan: 1x RTE", kosten.RTE, 1);
   check("Japan: 1x PSY", kosten.PSY, 1);
+  check("Japan: 1x Python (11-04, week 9)", kosten.PY, 1);
 
   const chi = courses.find((c) => c.id === "CHI");
   const chiUren = kosten.CHI * chi.absentieregels.puntenaftrek.uurPerSessie;
@@ -496,17 +605,50 @@ check("leegState() heeft geen items", leegState().items.length, 0);
     items: [{ id: "b1", naam: "Oud item", start: "2026-10-05", end: "2026-10-06", status: "vast", notitie: "" }],
   };
   const gemigreerd = migrate(v1);
-  check("migrate v1->v2: schemaVersion wordt 2", gemigreerd.schemaVersion, 2);
-  check("migrate v1->v2: laatsteExport default null", gemigreerd.laatsteExport, null);
-  check("migrate v1->v2: item blijft behouden", gemigreerd.items.length, 1);
-  check("migrate v1->v2: bijgewerkt default null", gemigreerd.items[0].bijgewerkt, null);
-  check("migrate v1->v2: naam blijft behouden", gemigreerd.items[0].naam, "Oud item");
+  check("migrate v1->actueel: schemaVersion wordt de actuele versie", gemigreerd.schemaVersion, CURRENT_SCHEMA_VERSION);
+  check("migrate v1->actueel: laatsteExport default null", gemigreerd.laatsteExport, null);
+  check("migrate v1->actueel: item blijft behouden", gemigreerd.items.length, 1);
+  check("migrate v1->actueel: bijgewerkt default null", gemigreerd.items[0].bijgewerkt, null);
+  check("migrate v1->actueel: naam blijft behouden", gemigreerd.items[0].naam, "Oud item");
+  check("migrate v1->actueel: ui krijgt een default", gemigreerd.ui.activeScreen, "maand");
 
-  // volledige keten v0 -> v2
+  // volledige keten v0 -> actueel
   const v0 = { schemaVersion: 0, items: [{ id: "c1", naam: "Zeer oud item", datum: "2026-11-01" }] };
   const vanV0 = migrate(v0);
-  check("migrate v0->v2: schemaVersion wordt 2", vanV0.schemaVersion, 2);
-  check("migrate v0->v2: start/end afgeleid van datum", vanV0.items[0].start === "2026-11-01" && vanV0.items[0].end === "2026-11-01", true);
+  check("migrate v0->actueel: schemaVersion wordt de actuele versie", vanV0.schemaVersion, CURRENT_SCHEMA_VERSION);
+  check("migrate v0->actueel: start/end afgeleid van datum", vanV0.items[0].start === "2026-11-01" && vanV0.items[0].end === "2026-11-01", true);
+}
+
+// migrate(): schemaVersion 2 -> actueel (v3 ui, v4 afgevinkteDeadlines) gooit niets weg
+{
+  const v2 = {
+    schemaVersion: 2,
+    laatsteExport: "2026-10-01",
+    items: [{ id: "d1", naam: "Item", start: "2026-10-05", end: "2026-10-06", status: "vast", notitie: "", bijgewerkt: "2026-10-01" }],
+  };
+  const gemigreerd = migrate(v2);
+  check("migrate v2->actueel: schemaVersion wordt de actuele versie", gemigreerd.schemaVersion, CURRENT_SCHEMA_VERSION);
+  check("migrate v2->actueel: laatsteExport blijft behouden", gemigreerd.laatsteExport, "2026-10-01");
+  check("migrate v2->actueel: item blijft behouden", gemigreerd.items.length, 1);
+  check("migrate v2->actueel: ui.activeScreen default maand", gemigreerd.ui.activeScreen, "maand");
+  check("migrate v2->actueel: ui.thema default systeem", gemigreerd.ui.thema, "systeem");
+  check("migrate v2->actueel: ui.scrollPositions heeft alle schermen", SCHERMEN.every((s) => gemigreerd.ui.scrollPositions[s] === 0), true);
+  check("migrate v2->actueel: afgevinkteDeadlines default leeg", gemigreerd.afgevinkteDeadlines.length, 0);
+
+  // een export met een gedeeltelijk ui-veld (bijv. een oudere v3-export) verliest niets
+  const v3MetGedeeltelijkeUi = { ...v2, schemaVersion: 3, ui: { activeScreen: "weken", scrollPositions: { maand: 40 } } };
+  const behouden = migrate(v3MetGedeeltelijkeUi);
+  check("migrate v3: bestaand activeScreen blijft staan", behouden.ui.activeScreen, "weken");
+  check("migrate v3: bestaande scrollpositie blijft staan", behouden.ui.scrollPositions.maand, 40);
+  check("migrate v3: ontbrekende scrollpositie krijgt default 0", behouden.ui.scrollPositions.weken, 0);
+  check("migrate v3->v4: afgevinkteDeadlines default leeg", behouden.afgevinkteDeadlines.length, 0);
+}
+
+// migrate(): schemaVersion 4 (actueel) met bestaande afgevinkteDeadlines blijft ongewijzigd
+{
+  const v4 = { ...leegState(), afgevinkteDeadlines: ["2026-09-24::Term project topic + groepen (5 pers.)"] };
+  const gemigreerd = migrate(v4);
+  check("migrate v4: bestaande afgevinkteDeadlines blijft staan", gemigreerd.afgevinkteDeadlines.length, 1);
 }
 
 // bereidExportVoor(): bestandsnaam met datum, geldige JSON-inhoud
@@ -660,6 +802,603 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
     if (pad === "./") continue; // navigatie-alias voor index.html, geen los bestand
     check(`sw.js: app-shell-bestand bestaat (${pad})`, existsSync(join(PROJECT_ROOT, pad.replace(/^\.\//, ""))), true);
   }
+}
+
+// =====================================================================
+// Fase 8A — visueel systeem
+// =====================================================================
+
+// Zelf-gehoste fonts: bestaan op schijf, en styles.css verwijst ernaar met
+// @font-face (geen fonts.googleapis.com-link — CLAUDE.md §2, herzien in fase 8)
+{
+  const lettertypen = ["DMSans-Variable.woff2", "Outfit-Variable.woff2", "SchibstedGrotesk-Variable.woff2"];
+  for (const bestand of lettertypen) {
+    check(`fonts/${bestand} bestaat op schijf`, existsSync(join(PROJECT_ROOT, "fonts", bestand)), true);
+  }
+
+  const css = readFileSync(join(PROJECT_ROOT, "styles.css"), "utf8");
+  check('styles.css: geen fonts.googleapis.com-link', css.includes("fonts.googleapis.com"), false);
+  check('styles.css: geen fonts.gstatic.com-link', css.includes("fonts.gstatic.com"), false);
+  for (const bestand of lettertypen) {
+    check(`styles.css: @font-face verwijst naar fonts/${bestand}`, css.includes(`fonts/${bestand}`), true);
+  }
+  check("styles.css: --ff-display token aanwezig", css.includes("--ff-display"), true);
+  check("styles.css: --ff-head token aanwezig", css.includes("--ff-head"), true);
+  check("styles.css: --ff-body token aanwezig", css.includes("--ff-body"), true);
+
+  // fonts moeten ook in de service-worker-cache staan (FASE-8.md §0)
+  const swBron = readFileSync(join(PROJECT_ROOT, "sw.js"), "utf8");
+  for (const bestand of lettertypen) {
+    check(`sw.js: APP_SHELL bevat fonts/${bestand}`, swBron.includes(`fonts/${bestand}`), true);
+  }
+}
+
+// =====================================================================
+// Fase 8B — navigatie en schermen
+// =====================================================================
+
+// kortDatum(): "wo 4 nov"-formaat, geverifieerd tegen bekende weekdagen
+{
+  check("kortDatum: 2026-11-04 is een woensdag", kortDatum("2026-11-04"), "wo 4 nov");
+  check("kortDatum: 2026-09-07 is een maandag (semesterstart)", kortDatum("2026-09-07"), "ma 7 sep");
+  check("kortDatum: jaargrens 2026-12-31", kortDatum("2026-12-31"), "do 31 dec");
+  check("kortDatum: jaargrens 2027-01-01", kortDatum("2027-01-01"), "vr 1 jan");
+  check("kortDatum: 28 februari 2027 (geen schrikkeljaar)", kortDatum("2027-02-28"), "zo 28 feb");
+}
+
+// collegeWeek(): afgeleid uit semesterMarkers + de week-velden in coursedates.js,
+// niet hardcoded — 2026-11-04 staat als week 9 bij alle vier de wekelijkse vakken.
+{
+  const w = collegeWeek("2026-11-04");
+  check("collegeWeek: 2026-11-04 is week 9", w?.week, 9);
+  check("collegeWeek: totaal is 16 (afgeleid uit coursedates.js, niet ingevoerd)", w?.totaal, 16);
+  check("collegeWeek: semesterstart zelf is week 1", collegeWeek("2026-09-07")?.week, 1);
+  check("collegeWeek: voor semesterstart is null", collegeWeek("2026-09-01"), null);
+  check("collegeWeek: diep in de wintervakantie is null", collegeWeek("2027-01-15"), null);
+}
+
+// index.html: de vier schermen, de tabbalk en het instellingenpaneel bestaan
+{
+  const html = readFileSync(join(PROJECT_ROOT, "index.html"), "utf8");
+  for (const scherm of SCHERMEN) {
+    check(`index.html: scherm-${scherm} aanwezig`, html.includes(`id="scherm-${scherm}"`), true);
+    check(`index.html: navknop voor ${scherm} aanwezig`, html.includes(`data-scherm="${scherm}"`), true);
+  }
+  check("index.html: topbar aanwezig", html.includes('id="topbar"'), true);
+  check("index.html: bottomnav aanwezig", html.includes('id="bottomnav"'), true);
+  check("index.html: instellingenpaneel aanwezig", html.includes('id="instellingen-paneel"'), true);
+  check("index.html: geen title-attributen (tooltips bestaan niet op Android)", /\stitle=/.test(html), false);
+}
+
+// Geen title-attributen in de nieuwe UI-laag van fase 8B
+{
+  for (const bestand of ["src/ui/main.js", "src/ui/nav.js", "src/ui/datumlabels.js", "src/ui/planner.js"]) {
+    const bron = readFileSync(join(PROJECT_ROOT, bestand), "utf8");
+    check(`${bestand}: geen title-attributen`, /\.title\s*=|setAttribute\(\s*["']title["']/.test(bron), false);
+  }
+}
+
+// main.js: de thema-waarden ("licht"/"donker") moeten mappen op de Engelse
+// data-theme-attribuutwaarden ("light"/"dark") die styles.css (fase 8A)
+// daadwerkelijk gebruikt — anders werkt de handmatige schakelaar niet.
+{
+  const mainBron = readFileSync(join(PROJECT_ROOT, "src/ui/main.js"), "utf8");
+  check('main.js: "licht" mapt naar data-theme="light"', /licht:\s*"light"/.test(mainBron), true);
+  check('main.js: "donker" mapt naar data-theme="dark"', /donker:\s*"dark"/.test(mainBron), true);
+}
+
+// sw.js: de oude fase 1-6 UI-bestanden zijn vervangen, niet blijven hangen
+{
+  const swBron = readFileSync(join(PROJECT_ROOT, "sw.js"), "utf8");
+  check("sw.js: render.js niet meer gecachet (vervangen in 8B)", swBron.includes("render.js"), false);
+  check("sw.js: overzicht.js (oud) niet meer gecachet (vervangen in 8B)", swBron.includes("ui/overzicht.js"), false);
+  for (const bestand of ["nav.js", "datumlabels.js"]) {
+    check(`sw.js: APP_SHELL bevat ui/${bestand}`, swBron.includes(`ui/${bestand}`), true);
+  }
+}
+
+// =====================================================================
+// Fase 8C — scherm "Maand"
+// =====================================================================
+
+// maandWeken(): volledige weekrijen (ma-zo), grenzen kloppen voor de drie
+// maanden uit het "Klaar als"-criterium (semestergrens, gewone maand, en de
+// laatste maand van de app-periode — geen schrikkeljaar).
+{
+  for (const [jaar, maand, eersteDagVanMaand, laatsteDagVanMaand] of [
+    [2026, 9, "2026-09-01", "2026-09-30"],
+    [2026, 10, "2026-10-01", "2026-10-31"],
+    [2027, 2, "2027-02-01", "2027-02-28"],
+  ]) {
+    const weken = maandWeken(jaar, maand);
+    const alleDagen = weken.flat();
+    check(`maandWeken(${jaar},${maand}): elke week heeft 7 dagen`, weken.every((w) => w.length === 7), true);
+    check(`maandWeken(${jaar},${maand}): grid begint op maandag`, dayOfWeek(alleDagen[0]), 0);
+    check(`maandWeken(${jaar},${maand}): grid eindigt op zondag`, dayOfWeek(alleDagen.at(-1)), 6);
+    check(`maandWeken(${jaar},${maand}): bevat ${eersteDagVanMaand}`, alleDagen.includes(eersteDagVanMaand), true);
+    check(`maandWeken(${jaar},${maand}): bevat ${laatsteDagVanMaand}`, alleDagen.includes(laatsteDagVanMaand), true);
+    check(`maandWeken(${jaar},${maand}): geen duplicaten`, new Set(alleDagen).size, alleDagen.length);
+  }
+}
+
+// dagblad van 2026-11-04: drie lessen (PSY, Python, Chinees), elk met het
+// juiste syllabusonderwerp uit coursedates.js — het expliciete "Klaar als"-
+// voorbeeld uit FASE-8.md 8C.
+{
+  const dag = dayStatus("2026-11-04");
+  const lessen = dag.vakken.filter((v) => v.type === "les");
+  check("dayStatus(2026-11-04): precies drie lessen", lessen.length, 3);
+  const perVak = Object.fromEntries(lessen.map((v) => [v.course, v.label]));
+  check("dayStatus(2026-11-04): PSY-onderwerp", perVak.PSY, "Learning");
+  check("dayStatus(2026-11-04): Python-onderwerp", perVak.PY, "Nested Structure");
+  check("dayStatus(2026-11-04): Chinees-onderwerp", perVak.CHI, "General Chinese");
+}
+
+// isStipMoment() via de labels: tentamens en presentatie-lessen krijgen een
+// stip, gewone lessen een streepje — heuristiek werkt op de bestaande
+// letterlijke labels, geen nieuw dataveld.
+{
+  const presentatieLes = { type: "les", label: "Term Project Presentations" };
+  const gewoneLes = { type: "les", label: "Signal & Train Control" };
+  const tentamen = { type: "tentamen", label: "Midterm Exam (35%)" };
+  check("isStipMoment: presentatie-les is een stip", isStipMoment(presentatieLes), true);
+  check("isStipMoment: gewone les is geen stip", isStipMoment(gewoneLes), false);
+  check("isStipMoment: tentamen is een stip", isStipMoment(tentamen), true);
+}
+
+// deadlineSleutel(): stabiel en uniek genoeg om af te vinken, ook voor
+// deadlines met alleen een start (geen los date-veld).
+{
+  check("deadlineSleutel: date-veld", deadlineSleutel({ date: "2026-09-24", label: "X" }), "2026-09-24::X");
+  check("deadlineSleutel: start-veld (geen date)", deadlineSleutel({ start: "2026-09-23", end: "2026-09-24", label: "Y" }), "2026-09-23::Y");
+
+  const alleDeadlineSleutels = [...rteActionItems, ...academicDeadlines, chinaVisaFreeDeadline, flexWeekAnnouncementDeadline].map(deadlineSleutel);
+  check("deadlineSleutel: elke deadline heeft een unieke sleutel", new Set(alleDeadlineSleutels).size, alleDeadlineSleutels.length);
+}
+
+// zetDeadlineAfgevinkt(): pure state-transformatie, geen duplicaten
+{
+  let state = leegState();
+  state = zetDeadlineAfgevinkt(state, "sleutel-a", true);
+  check("zetDeadlineAfgevinkt: toevoegen", state.afgevinkteDeadlines, ["sleutel-a"]);
+  state = zetDeadlineAfgevinkt(state, "sleutel-a", true);
+  check("zetDeadlineAfgevinkt: nogmaals afvinken is geen duplicaat", state.afgevinkteDeadlines, ["sleutel-a"]);
+  state = zetDeadlineAfgevinkt(state, "sleutel-a", false);
+  check("zetDeadlineAfgevinkt: uitvinken", state.afgevinkteDeadlines, []);
+}
+
+// sw.js: de fase 8C-bestanden zitten in de app-shell
+{
+  const swBron = readFileSync(join(PROJECT_ROOT, "sw.js"), "utf8");
+  for (const bestand of ["schermMaand.js", "maandGrid.js", "dagblad.js"]) {
+    check(`sw.js: APP_SHELL bevat ui/${bestand}`, swBron.includes(`ui/${bestand}`), true);
+  }
+}
+
+// Geen title-attributen in de fase 8C-bestanden
+{
+  for (const bestand of ["src/ui/maandGrid.js", "src/ui/dagblad.js", "src/ui/schermMaand.js"]) {
+    const bron = readFileSync(join(PROJECT_ROOT, bestand), "utf8");
+    check(`${bestand}: geen title-attributen`, /\.title\s*=|setAttribute\(\s*["']title["']/.test(bron), false);
+  }
+}
+
+// =====================================================================
+// Fase 8D — scherm "Weken"
+// =====================================================================
+
+// migrate(): schemaVersion 4 -> 5 voegt weekWeergave toe zonder iets weg te gooien
+{
+  const v4 = { ...leegState(), schemaVersion: 4 };
+  delete v4.weekWeergave;
+  const gemigreerd = migrate(v4);
+  check("migrate v4->v5: schemaVersion wordt de actuele versie", gemigreerd.schemaVersion, CURRENT_SCHEMA_VERSION);
+  check("migrate v4->v5: weekWeergave.periode default 1w", gemigreerd.weekWeergave.periode, "1w");
+  check("migrate v4->v5: weekWeergave.startWeek default null", gemigreerd.weekWeergave.startWeek, null);
+
+  const metOnbekendePeriode = { ...leegState(), weekWeergave: { periode: "onbekend", startWeek: "2026-10-05" } };
+  const genormaliseerd = migrate(metOnbekendePeriode);
+  check("migrate: onbekende periode valt terug op default", genormaliseerd.weekWeergave.periode, "1w");
+  check("migrate: bestaande startWeek blijft staan", genormaliseerd.weekWeergave.startWeek, "2026-10-05");
+}
+
+// maandagVan(): altijd een maandag, ook als ymd zelf al maandag is
+{
+  check("maandagVan: woensdag terug naar maandag", maandagVan("2026-11-04"), "2026-11-02");
+  check("maandagVan: maandag blijft gelijk", maandagVan("2026-11-02"), "2026-11-02");
+  check("maandagVan: zondag terug naar maandag", maandagVan("2026-11-08"), "2026-11-02");
+}
+
+// weekAantal() / weekStarts(): elke periodekeuze levert het juiste aantal weken
+{
+  check("weekAantal: 1w", weekAantal("1w", null, null), 1);
+  check("weekAantal: 2w", weekAantal("2w", null, null), 2);
+  check("weekAantal: 4w", weekAantal("4w", null, null), 4);
+  check("weekAantal: 1m", weekAantal("1m", null, null), 5);
+  check("weekAantal: 3m", weekAantal("3m", null, null), 13);
+  check("weekAantal: eigen (2 weken bereik)", weekAantal("eigen", "2026-09-07", "2026-09-20"), 2);
+  check("weekAantal: eigen zonder geldig bereik valt terug op 1", weekAantal("eigen", null, null), 1);
+
+  for (const periode of PERIODES.filter((p) => p !== "eigen")) {
+    const starts = weekStarts("2026-10-05", periode, null, null);
+    check(`weekStarts(${periode}): aantal weken klopt met weekAantal`, starts.length, weekAantal(periode, null, null));
+    check(`weekStarts(${periode}): elke start is een maandag`, starts.every((s) => dayOfWeek(s) === 0), true);
+  }
+}
+
+// verschuifVenster(): schuift correct over de jaargrens 2026 -> 2027
+{
+  const overJaargrens = verschuifVenster("2026-12-21", "2w", null, null, 1);
+  check("verschuifVenster: 2 weken vooruit vanaf 21 dec 2026", overJaargrens, "2027-01-04");
+  check("verschuifVenster: 1 week terug", verschuifVenster("2027-01-04", "1w", null, null, -1), "2026-12-28");
+}
+
+// dagdelenMetKleur(): woensdag 4 nov 2026 heeft alle drie de dagdelen bezet
+// (PSY ochtend, Python middag, Chinees avond) — het "Klaar als"-voorbeeld uit 8D.
+{
+  const dagdelen = dagdelenMetKleur(dayStatus("2026-11-04"));
+  check("dagdelenMetKleur: ochtend bezet (PSY)", dagdelen.ochtend?.kleurVar, "--vak-psy-text");
+  check("dagdelenMetKleur: middag bezet (Python)", dagdelen.middag?.kleurVar, "--vak-py-text");
+  check("dagdelenMetKleur: avond bezet (Chinees)", dagdelen.avond?.kleurVar, "--vak-chi-text");
+}
+
+// sw.js: de fase 8D-bestanden zitten in de app-shell
+{
+  const swBron = readFileSync(join(PROJECT_ROOT, "sw.js"), "utf8");
+  for (const bestand of ["schermWeken.js", "wekenGrid.js"]) {
+    check(`sw.js: APP_SHELL bevat ui/${bestand}`, swBron.includes(`ui/${bestand}`), true);
+  }
+}
+
+// Geen title-attributen in de fase 8D-bestanden
+{
+  for (const bestand of ["src/ui/wekenGrid.js", "src/ui/schermWeken.js"]) {
+    const bron = readFileSync(join(PROJECT_ROOT, bestand), "utf8");
+    check(`${bestand}: geen title-attributen`, /\.title\s*=|setAttribute\(\s*["']title["']/.test(bron), false);
+  }
+}
+
+// =====================================================================
+// Fase 8E — scherm "Overzicht"
+// =====================================================================
+
+// projects.js: beide projecten uit FASE-8.md 8E staan erin, met geldige bron/zekerheid
+{
+  check("projects.js: precies twee projecten (RTE + Python)", projects.length, 2);
+  const rte = projects.find((p) => p.id === "RTE_TERMPROJECT");
+  const py = projects.find((p) => p.id === "PY_GROEPSPROJECT");
+  check("projects.js: RTE termproject aanwezig", Boolean(rte), true);
+  check("projects.js: Python groepsproject aanwezig", Boolean(py), true);
+  check("projects.js: RTE heeft 5 mijlpalen (§3.3)", rte?.mijlpalen.length, 5);
+  check("projects.js: Python heeft 3 mijlpalen (weken 14-16)", py?.mijlpalen.length, 3);
+  check("projects.js: Python-mijlpalen matchen pythonDates-presentatiedata", py?.mijlpalen.map((m) => m.datum), ["2026-12-09", "2026-12-16", "2026-12-23"]);
+  check("projects.js: Python groepsproject heeft een waarschuwing", Boolean(py?.waarschuwing), true);
+  check("projects.js: Python groepsgrootte staat op null (ONBEKEND)", py?.groepsgrootte, null);
+
+  for (const project of projects) {
+    checkBronZekerheid(`projects.js: ${project.id}`, project);
+    for (const mijlpaal of project.mijlpalen) {
+      check(`projects.js: ${project.id} mijlpaal "${mijlpaal.label}" heeft geldige datum`, YMD_PATTERN.test(mijlpaal.datum), true);
+    }
+  }
+}
+
+// valideerProject() / voegProjectToe() / verwijderProject(): pure state-transformaties
+{
+  let state = leegState();
+  state = voegProjectToe(state, { naam: "Eigen project", vak: null, mijlpalen: [{ datum: "2026-10-01", label: "Start" }] });
+  check("voegProjectToe: project toegevoegd", state.eigenProjecten.length, 1);
+  check("voegProjectToe: project heeft een id", typeof state.eigenProjecten[0].id === "string" && state.eigenProjecten[0].id.length > 0, true);
+
+  let wierpFout = false;
+  try {
+    valideerProject({ id: "x", naam: "Zonder mijlpalen", mijlpalen: [] });
+  } catch {
+    wierpFout = true;
+  }
+  check("valideerProject: project zonder mijlpalen werpt een fout", wierpFout, true);
+
+  const id = state.eigenProjecten[0].id;
+  state = verwijderProject(state, id);
+  check("verwijderProject: project weer weg", state.eigenProjecten.length, 0);
+}
+
+// zetMijlpaalAfgevinkt(): pure state-transformatie, geen duplicaten
+{
+  let state = leegState();
+  state = zetMijlpaalAfgevinkt(state, "sleutel-a", true);
+  check("zetMijlpaalAfgevinkt: toevoegen", state.afgevinkteMijlpalen, ["sleutel-a"]);
+  state = zetMijlpaalAfgevinkt(state, "sleutel-a", false);
+  check("zetMijlpaalAfgevinkt: uitvinken", state.afgevinkteMijlpalen, []);
+}
+
+// migrate(): schemaVersion 5 -> 6 voegt afgevinkteMijlpalen/eigenProjecten toe
+{
+  const v5 = { ...leegState(), schemaVersion: 5 };
+  delete v5.afgevinkteMijlpalen;
+  delete v5.eigenProjecten;
+  const gemigreerd = migrate(v5);
+  check("migrate v5->v6: schemaVersion wordt de actuele versie", gemigreerd.schemaVersion, CURRENT_SCHEMA_VERSION);
+  check("migrate v5->v6: afgevinkteMijlpalen default leeg", gemigreerd.afgevinkteMijlpalen.length, 0);
+  check("migrate v5->v6: eigenProjecten default leeg", gemigreerd.eigenProjecten.length, 0);
+}
+
+// mijlpaalSleutel(): stabiel per project+mijlpaal
+{
+  const project = { id: "P1" };
+  const mijlpaal = { datum: "2026-10-01", label: "X" };
+  check("mijlpaalSleutel: verwachte vorm", mijlpaalSleutel(project, mijlpaal), "P1::2026-10-01::X");
+}
+
+// volgendeTentamenOfPresentatie(): vindt tentamens én presentatie-labels,
+// op een gesimuleerde datum — geen systeemklok nodig om dit te testen.
+{
+  const vlakVoorMidterm = volgendeTentamenOfPresentatie("2026-10-20");
+  check("volgendeTentamenOfPresentatie(2026-10-20): vindt het eerstvolgende tentamen", vlakVoorMidterm?.datum, "2026-10-28");
+
+  const vlakVoorPresentaties = volgendeTentamenOfPresentatie("2026-12-01");
+  check("volgendeTentamenOfPresentatie(2026-12-01): vindt de eerstvolgende presentatie (Python, 12-09, vóór RTE's 12-10)", vlakVoorPresentaties?.datum, "2026-12-09");
+
+  const naAlles = volgendeTentamenOfPresentatie("2027-01-01");
+  check("volgendeTentamenOfPresentatie(2027-01-01): niets meer over, dus null", naAlles, null);
+}
+
+// aantalOpenstaandeDeadlines(): telt alleen nog-niet-afgevinkte, nog-niet-verstreken deadlines
+{
+  const alleOpen = aantalOpenstaandeDeadlines("2026-09-01", []);
+  const eenAfgevinkt = aantalOpenstaandeDeadlines("2026-09-01", [deadlineSleutel({ date: "2026-09-19", label: "Laatste dag online vakken laten vallen" })]);
+  check("aantalOpenstaandeDeadlines: afvinken vermindert de telling met 1", eenAfgevinkt, alleOpen - 1);
+  check("aantalOpenstaandeDeadlines: na de app-periode is alles verstreken", aantalOpenstaandeDeadlines("2027-03-01", []), 0);
+}
+
+// rijen*(): elke bouwer levert alleen rijen met een geldige YYYY-MM-DD-datum
+{
+  for (const [naam, rijen] of [
+    ["rijenSchooldagen", rijenSchooldagen()],
+    ["rijenTentamens", rijenTentamens()],
+    ["rijenDeadlines", rijenDeadlines()],
+    ["rijenProjecten", rijenProjecten()],
+    ["rijenFeestdagen", rijenFeestdagen()],
+    ["rijenEigenItems", rijenEigenItems([{ naam: "Test", start: "2026-10-01", end: "2026-10-01", status: "idee", notitie: "" }])],
+    ["rijenVrijeBlokken", rijenVrijeBlokken()],
+  ]) {
+    check(`${naam}: levert rijen`, rijen.length > 0, true);
+    check(`${naam}: elke rij heeft een geldige datum`, rijen.every((r) => YMD_PATTERN.test(r.datum)), true);
+    check(`${naam}: elke rij heeft inhoud`, rijen.every((r) => typeof r.inhoud === "string" && r.inhoud.length > 0), true);
+  }
+  check("rijenProjecten: bevat zowel RTE als Python", new Set(rijenProjecten().map((r) => r.project.id)).size, 2);
+  check("rijenTentamens: bevat geen presentaties (alleen type tentamen)", rijenTentamens().every((r) => !/presentat/i.test(r.inhoud)) , true);
+}
+
+// sw.js: de fase 8E-bestanden zitten in de app-shell
+{
+  const swBron = readFileSync(join(PROJECT_ROOT, "sw.js"), "utf8");
+  for (const bestand of ["schermOverzicht.js", "overzichtData.js"]) {
+    check(`sw.js: APP_SHELL bevat ui/${bestand}`, swBron.includes(`ui/${bestand}`), true);
+  }
+  check("sw.js: APP_SHELL bevat data/projects.js", swBron.includes("data/projects.js"), true);
+}
+
+// Geen title-attributen in de fase 8E-bestanden
+{
+  for (const bestand of ["src/ui/schermOverzicht.js", "src/ui/overzichtData.js", "src/data/projects.js"]) {
+    const bron = readFileSync(join(PROJECT_ROOT, bestand), "utf8");
+    check(`${bestand}: geen title-attributen`, /\.title\s*=|setAttribute\(\s*["']title["']/.test(bron), false);
+  }
+}
+
+// =====================================================================
+// Fase 8F — scherm "Vakken" (laatste subfase)
+// =====================================================================
+
+// courses.js: de docent-gaten die 8F ontdekte (DATA.md §3.1/§3.2 noemden geen
+// naam) zijn later opgelost door VAKKEN.md §3/§5 — niet meer ONBEKEND, en niet
+// meer in onbekendeVelden.
+{
+  const psy = courses.find((c) => c.id === "PSY");
+  check("PSY: docent is nu bekend (VAKKEN.md §3)", psy.docent, "周珮雯 (Catherine P. Chou)");
+  check("PSY: onbekendeVelden bevat geen docent meer", psy.onbekendeVelden.includes("docent"), false);
+
+  const agtech = courses.find((c) => c.id === "AGTECH");
+  check("AGTECH: docent is nu bekend (VAKKEN.md §5)", agtech.docent, "Chih-Wei Tung (programmadirecteur MS Global ATGS)");
+  check("AGTECH: onbekendeVelden bevat geen docent meer", agtech.onbekendeVelden.includes("docent"), false);
+}
+
+// dayStatus()/blocks.js: pythonAfgewezen=true sluit Python uit, zonder de
+// bestaande (default false) uitkomst te veranderen — 2026-09-09 is de eerste
+// woensdag van het semester met alle drie de vakken.
+{
+  const metPython = dayStatus("2026-09-09");
+  const zonderPython = dayStatus("2026-09-09", true);
+  check("dayStatus(2026-09-09): default heeft 3 lessen", metPython.vakken.filter((v) => v.type === "les").length, 3);
+  check("dayStatus(2026-09-09, pythonAfgewezen): nog maar 2 lessen", zonderPython.vakken.filter((v) => v.type === "les").length, 2);
+  check("dayStatus(2026-09-09, pythonAfgewezen): PY niet meer aanwezig", zonderPython.vakken.some((v) => v.course === "PY"), false);
+  check("dayStatus(2026-09-09, pythonAfgewezen): PSY blijft aanwezig", zonderPython.vakken.some((v) => v.course === "PSY"), true);
+
+  const kostenMet = costOfRange("2026-09-09", "2026-09-09");
+  const kostenZonder = costOfRange("2026-09-09", "2026-09-09", true);
+  check("costOfRange: default telt PY mee", kostenMet.perVak.PY, 1);
+  check("costOfRange: pythonAfgewezen telt PY niet mee", kostenZonder.perVak.PY, undefined);
+}
+
+// lib/overzicht.js: pythonAfgewezen-parameter is optioneel en verandert het
+// default gedrag niet
+{
+  const vandaag = "2026-10-01";
+  check(
+    "resterendeBlokken: met/zonder expliciete pythonAfgewezen=false is identiek",
+    JSON.stringify(resterendeBlokken(vandaag)),
+    JSON.stringify(resterendeBlokken(vandaag, false))
+  );
+  const items = [{ start: "2026-09-09", end: "2026-09-09", status: "vast" }];
+  check(
+    "absentieTotaal: pythonAfgewezen=true telt PY niet mee",
+    absentieTotaal(items, true).PY,
+    undefined
+  );
+}
+
+// vakkenData.js: lesoverzicht() per vak klopt met de tellingen die validate.mjs
+// elders al bevestigt (16 per typed vak, 30 gegenereerde Chinese lessen)
+{
+  check("lesoverzicht(PSY): 16 lesmomenten", lesoverzicht("PSY").length, 16);
+  check("lesoverzicht(AGTECH): 16 lesmomenten", lesoverzicht("AGTECH").length, 16);
+  check("lesoverzicht(RTE): 16 lesmomenten", lesoverzicht("RTE").length, 16);
+  check("lesoverzicht(PY): 16 lesmomenten", lesoverzicht("PY").length, 16);
+  check("lesoverzicht(CHI): 30 gegenereerde lessen", lesoverzicht("CHI").length, 30);
+  check("lesoverzicht: chronologisch gesorteerd", lesoverzicht("PSY").every((l, i, arr) => i === 0 || arr[i - 1].date <= l.date), true);
+}
+
+// gemisteSessies(): telt alleen "vast" items, per vak apart
+{
+  const items = [
+    { start: "2026-09-09", end: "2026-09-09", status: "vast" }, // PSY + PY + CHI die woensdag
+    { start: "2026-09-10", end: "2026-09-10", status: "idee" }, // telt niet mee (geen "vast")
+  ];
+  const psyGemist = gemisteSessies("PSY", items);
+  check("gemisteSessies(PSY): 1 sessie gemist door het vast-item", psyGemist.length, 1);
+  check("gemisteSessies(PSY): datum klopt", psyGemist[0]?.date, "2026-09-09");
+  check("gemisteSessies(AGTECH): 0 — het idee-item op 09-10 telt niet mee", gemisteSessies("AGTECH", items).length, 0);
+  check("gemisteSessies(PY, pythonAfgewezen): PY telt niet mee als afgewezen", gemisteSessies("PY", items, true).length, 0);
+}
+
+// chineseAbsentieStand(): twee onafhankelijke grenzen, niet met elkaar verrekend
+{
+  const geenAbsenties = chineseAbsentieStand([]);
+  check("chineseAbsentieStand: 0 absenties -> 0 uur gebruikt", geenAbsenties.urenGebruikt, 0);
+  check("chineseAbsentieStand: 0 absenties -> geen aftrek", geenAbsenties.aftrek, 0);
+  check("chineseAbsentieStand: 0 absenties -> drempel niet bereikt", geenAbsenties.drempelBereikt, false);
+
+  // 3 gemiste Chinese sessies (ma 07-09, wo 09-09, ma 14-09) = 9 uur, 3 boven
+  // de 6-uursvrijstelling -> 1,5 punt aftrek. Nog ver onder de 1/3-drempel.
+  const items = [
+    { start: "2026-09-07", end: "2026-09-07", status: "vast" },
+    { start: "2026-09-09", end: "2026-09-09", status: "vast" },
+    { start: "2026-09-14", end: "2026-09-14", status: "vast" },
+  ];
+  const stand = chineseAbsentieStand(items);
+  check("chineseAbsentieStand: 3 sessies gemist", stand.gemisteSessies, 3);
+  check("chineseAbsentieStand: 9 uur gebruikt", stand.urenGebruikt, 9);
+  check("chineseAbsentieStand: 3 uur boven de vrijstelling", stand.urenBovenVrijstelling, 3);
+  check("chineseAbsentieStand: 1.5 punt aftrek", stand.aftrek, 1.5);
+  check("chineseAbsentieStand: fractie nog ver onder 1/3", stand.fractieGemist < 1 / 3, true);
+  check("chineseAbsentieStand: drempel niet bereikt bij 3 van 30", stand.drempelBereikt, false);
+}
+
+// migrate(): schemaVersion 6 -> 7 voegt pythonInschrijving/vakkenVeldwaarden toe
+{
+  const v6 = { ...leegState(), schemaVersion: 6 };
+  delete v6.pythonInschrijving;
+  delete v6.vakkenVeldwaarden;
+  const gemigreerd = migrate(v6);
+  check("migrate v6->v7: schemaVersion wordt de actuele versie", gemigreerd.schemaVersion, CURRENT_SCHEMA_VERSION);
+  check("migrate v6->v7: pythonInschrijving default onbevestigd", gemigreerd.pythonInschrijving, "onbevestigd");
+  check("migrate v6->v7: vakkenVeldwaarden default leeg object", Object.keys(gemigreerd.vakkenVeldwaarden).length, 0);
+
+  const ongeldigeWaarde = migrate({ ...leegState(), pythonInschrijving: "iets-anders" });
+  check("migrate: ongeldige pythonInschrijving valt terug op onbevestigd", ongeldigeWaarde.pythonInschrijving, "onbevestigd");
+}
+
+// zetPythonInschrijving() / zetVakVeld(): pure state-transformaties
+{
+  check("PYTHON_INSCHRIJVING_WAARDEN bevat de drie statussen", PYTHON_INSCHRIJVING_WAARDEN, ["onbevestigd", "bevestigd", "afgewezen"]);
+
+  let state = leegState();
+  state = zetPythonInschrijving(state, "afgewezen");
+  check("zetPythonInschrijving: status bijgewerkt", state.pythonInschrijving, "afgewezen");
+
+  state = zetVakVeld(state, "AGTECH.room", "博雅 305");
+  check("zetVakVeld: waarde opgeslagen", state.vakkenVeldwaarden["AGTECH.room"], "博雅 305");
+  state = zetVakVeld(state, "PY.opdrachtenIngeleverd", "3");
+  check("zetVakVeld: tweede sleutel blijft naast de eerste staan", Object.keys(state.vakkenVeldwaarden).length, 2);
+}
+
+// sw.js: de fase 8F-bestanden zitten in de app-shell, het oude schermen.js niet meer
+{
+  const swBron = readFileSync(join(PROJECT_ROOT, "sw.js"), "utf8");
+  check("sw.js: schermen.js niet meer gecachet (vervangen in 8F)", swBron.includes("ui/schermen.js"), false);
+  for (const bestand of ["schermVakken.js", "vakkenData.js"]) {
+    check(`sw.js: APP_SHELL bevat ui/${bestand}`, swBron.includes(`ui/${bestand}`), true);
+  }
+}
+
+// Geen title-attributen in de fase 8F-bestanden
+{
+  for (const bestand of ["src/ui/schermVakken.js", "src/ui/vakkenData.js"]) {
+    const bron = readFileSync(join(PROJECT_ROOT, bestand), "utf8");
+    check(`${bestand}: geen title-attributen`, /\.title\s*=|setAttribute\(\s*["']title["']/.test(bron), false);
+  }
+}
+
+// =====================================================================
+// VAKKEN.md-correctiepas — bij tegenspraak met DATA.md geldt VAKKEN.md
+// =====================================================================
+
+// AgTech: vijf onderwerpen die in de oude data waren afgekort t.o.v. de
+// letterlijke titel in VAKKEN.md §5, plus de nieuw toegevoegde sprekerdata.
+{
+  const gevonden = Object.fromEntries(agtechDates.map((d) => [d.week, d]));
+  check("AGTECH wk6: volledige titel (was afgekort met een pijl)", gevonden[6].label, "Smart Agriculture: field monitoring to postharvest quality evaluation");
+  check("AGTECH wk6: spreker Shih-Fang Chen", gevonden[6].spreker, "Shih-Fang Chen");
+  check("AGTECH wk8: volledige titel (miste 'and Trends')", gevonden[8].label, "Global Pest Management Technologies and Trends");
+  check("AGTECH wk10: volledige titel (was 'FarmiSpace / DATAYOO')", gevonden[10].label, "Unlocking the Infinite Possibilities of Agriculture using FarmiSpace");
+  check("AGTECH wk10: DATAYOO Company nu als spreker, niet als deel van de titel", gevonden[10].spreker, "DATAYOO Company");
+  check("AGTECH wk11: volledige titel (miste 'and Green Biotechnology')", gevonden[11].label, "Plant-Microbe Interactions and Green Biotechnology");
+  check("AGTECH wk13: volledige titel (miste 'Applications of')", gevonden[13].label, "Applications of Plant Phenology and Crop Modeling");
+  check("AGTECH wk1: spreker Chih-Wei Tung", gevonden[1].spreker, "Chih-Wei Tung");
+  check("AGTECH wk3 (invited talk): spreker ONBEKEND blijft null, niet gegokt", gevonden[3].spreker, null);
+  check("AGTECH: alle 16 weken hebben een spreker-veld (ook als het null is)", agtechDates.every((d) => "spreker" in d), true);
+}
+
+// Python: twee onderwerpen die waren afgekort t.o.v. de letterlijke titel
+{
+  const gevonden = Object.fromEntries(pythonDates.map((d) => [d.week, d]));
+  check("PY wk10: volledige titel (was kort 'NumPy')", gevonden[10].label, "Something just like vectors and matrices: NumPy");
+  check("PY wk11: volledige titel (was kort 'Pandas')", gevonden[11].label, "Something just like spreadsheets: Pandas");
+}
+
+// Python: drie cursusrestricties i.p.v. de ene die er eerder stond
+{
+  const py = courses.find((c) => c.id === "PY");
+  check("PY: drie afzonderlijke cursusrestricties (was er maar één)", py.cursusrestricties.length, 3);
+  check(
+    "PY: restrictie 1 is de EECS-uitsluitingsregel (ontbrak volledig)",
+    py.cursusrestricties[0].tekst.includes("Electrical Engineering and Computer Science"),
+    true
+  );
+  check(
+    "PY: restrictie 3 is de master/PhD-goedkeuringsbrief (ontbrak volledig)",
+    py.cursusrestricties[2].tekst.includes("goedkeuringsbrief"),
+    true
+  );
+  for (const [i, restrictie] of py.cursusrestricties.entries()) {
+    check(`PY: cursusrestrictie[${i}] heeft geldige zekerheid`, ZEKERHEID_WAARDEN.includes(restrictie.zekerheid), true);
+  }
+}
+
+// Docenten die 8F als ONBEKEND markeerde, zijn nu bekend (zie hierboven, fase
+// 8F-sectie) — hier alleen de studiepunten-aanvulling die VAKKEN.md §1 gaf.
+{
+  check("CHI: studiepunten = 3 (VAKKEN.md §1)", courses.find((c) => c.id === "CHI").studiepunten, 3);
+  check("PY: studiepunten = 3 (VAKKEN.md §1)", courses.find((c) => c.id === "PY").studiepunten, 3);
+  check("PSY: studiepunten blijft ONBEKEND (VAKKEN.md §1 geeft geen waarde)", courses.find((c) => c.id === "PSY").studiepunten, null);
+  check("AGTECH: studiepunten blijft ONBEKEND", courses.find((c) => c.id === "AGTECH").studiepunten, null);
+  check("RTE: studiepunten blijft ONBEKEND", courses.find((c) => c.id === "RTE").studiepunten, null);
+}
+
+// RTE termproject: beschrijvende tekst die er nog niet stond
+{
+  const rte = projects.find((p) => p.id === "RTE_TERMPROJECT");
+  check("RTE_TERMPROJECT: heeft nu een beschrijvende tekst", typeof rte.tekst === "string" && rte.tekst.length > 0, true);
+  check("RTE_TERMPROJECT: tekst noemt groepen van 5", rte.tekst.includes("5 personen"), true);
+  check("RTE_TERMPROJECT: tekst noemt de 15/10-verdeling", rte.tekst.includes("15%") && rte.tekst.includes("10%"), true);
+}
+
+// PSY: de expliciete "syllabus noemt geen wekelijkse opdrachten"-waarschuwing
+// uit VAKKEN.md §3 mag nooit alsnog wekelijkse PSY-deadlines opleveren
+{
+  const psyGerelateerdeDeadlines = academicDeadlines.filter((d) => d.label?.toLowerCase().includes("psychol"));
+  check("Geen verzonnen wekelijkse PSY-opdrachten in academicDeadlines (VAKKEN.md §3 waarschuwing)", psyGerelateerdeDeadlines.length, 0);
 }
 
 console.log(`\n${passed} geslaagd, ${failures} mislukt.`);
