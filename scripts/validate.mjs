@@ -1600,5 +1600,51 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   );
 }
 
+// =====================================================================
+// FASE-9.md A3 — PSY-leeshoofdstukken
+// =====================================================================
+
+{
+  const metLezen = psyDates.filter((d) => d.lezen !== undefined);
+  check("psyDates: precies 11 dagen met een leeshoofdstuk", metLezen.length, 11);
+
+  const verwacht = {
+    2: "hoofdstuk 1",
+    3: "hoofdstuk 2",
+    4: "hoofdstuk 14",
+    5: "hoofdstuk 15",
+    6: "hoofdstuk 5",
+    9: "hoofdstuk 6",
+    10: "hoofdstuk 7",
+    11: "hoofdstuk 4",
+    12: "hoofdstuk 12",
+    13: "hoofdstuk 16",
+    14: "hoofdstuk 11",
+  };
+  for (const [week, hoofdstuk] of Object.entries(verwacht)) {
+    const dag = psyDates.find((d) => d.week === Number(week));
+    check(`psyDates week ${week}: lezen === "${hoofdstuk}"`, dag.lezen, hoofdstuk);
+  }
+
+  const zonderLezen = [1, 7, 8, 15, 16];
+  for (const week of zonderLezen) {
+    const dag = psyDates.find((d) => d.week === week);
+    check(`psyDates week ${week}: geen leesopdracht (geen veld, geen gok)`, dag.lezen, undefined);
+  }
+}
+
+// FASE-9.md A3 — RTE-lesvorm: de "Lecture Style"-kolom uit de syllabus staat
+// nergens in de repo (zie DATA.md §9-1h), dus alle 15 lesdagen zijn ONBEKEND
+// in plaats van de 14-met-waarde/2-ONBEKEND die FASE-9.md veronderstelde.
+// Elke lesdag heeft wél het veld — het is geen gok, maar ook niet weggelaten.
+{
+  const lesdagen = rteDates.filter((d) => d.type === "les");
+  check("rteDates: 15 lesdagen", lesdagen.length, 15);
+  check("rteDates: elke lesdag heeft het veld vorm", lesdagen.every((d) => "vorm" in d), true);
+  check("rteDates: vorm is overal ONBEKEND (null) — niet verzonnen", lesdagen.every((d) => d.vorm === null), true);
+  const tentamen = rteDates.find((d) => d.type === "tentamen");
+  check("rteDates: het tentamen (geen lesdag) heeft geen vorm-veld", "vorm" in tentamen, false);
+}
+
 console.log(`\n${passed} geslaagd, ${failures} mislukt.`);
 if (failures > 0) process.exit(1);

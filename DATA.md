@@ -139,24 +139,29 @@ van de gemeente Taipei; of er wordt ingehaald bepaalt elke docent zelf.
 ### 3.1 General Psychology (woensdag 09:10–12:10)
 Bron: syllabus PSY1007-09. Zekerheid: **ZEKER**. Docent behoudt recht op wijziging.
 
-| Datum | Week | Onderwerp |
-|---|---|---|
-| 2026-09-09 | 1 | Introductie / syllabus |
-| 2026-09-16 | 2 | Introduction to Psychology |
-| 2026-09-23 | 3 | Research in Psychology |
-| 2026-09-30 | 4 | Lifespan Development |
-| 2026-10-07 | 5 | Stress and Health |
-| 2026-10-14 | 6 | Consciousness |
-| 2026-10-21 | 7 | Review |
-| **2026-10-28** | 8 | **Midterm Exam (35%)** |
-| 2026-11-04 | 9 | Learning |
-| 2026-11-11 | 10 | Memory |
-| 2026-11-18 | 11 | Sensation and Perception |
-| 2026-11-25 | 12 | Personality |
-| 2026-12-02 | 13 | Psychological Disorders |
-| 2026-12-09 | 14 | Motivation & Emotion |
-| 2026-12-16 | 15 | Review |
-| **2026-12-23** | 16 | **Final Exam (35%)** |
+| Datum | Week | Onderwerp | Lezen |
+|---|---|---|---|
+| 2026-09-09 | 1 | Introductie / syllabus | — |
+| 2026-09-16 | 2 | Introduction to Psychology | hoofdstuk 1 |
+| 2026-09-23 | 3 | Research in Psychology | hoofdstuk 2 |
+| 2026-09-30 | 4 | Lifespan Development | hoofdstuk 14 |
+| 2026-10-07 | 5 | Stress and Health | hoofdstuk 15 |
+| 2026-10-14 | 6 | Consciousness | hoofdstuk 5 |
+| 2026-10-21 | 7 | Review | — |
+| **2026-10-28** | 8 | **Midterm Exam (35%)** | — |
+| 2026-11-04 | 9 | Learning | hoofdstuk 6 |
+| 2026-11-11 | 10 | Memory | hoofdstuk 7 |
+| 2026-11-18 | 11 | Sensation and Perception | hoofdstuk 4 |
+| 2026-11-25 | 12 | Personality | hoofdstuk 12 |
+| 2026-12-02 | 13 | Psychological Disorders | hoofdstuk 16 |
+| 2026-12-09 | 14 | Motivation & Emotion | hoofdstuk 11 |
+| 2026-12-16 | 15 | Review | — |
+| **2026-12-23** | 16 | **Final Exam (35%)** | — |
+
+**Leeshoofdstukken — correctie FASE-9.md A3, bron: syllabus PSY1007-09,
+zekerheid ZEKER.** Alleen deze elf weken hebben een leesopdracht; weken 1, 7,
+8, 15 en 16 niet. Voor de andere vier vakken geven de syllabi geen
+leesopdracht per week — niet verzinnen.
 
 Beoordeling: midterm 35%, final 35%, 4 opdrachten 20%, participatie 10%.
 Te laat inleveren: −10% per dag inclusief weekend; na 1 week geen punten.
@@ -233,6 +238,12 @@ Klasregels: geen laat huiswerk, geen telefoon, geen eten.
 in het spoor, groepen van 5 personen. 20 minuten Engelse presentatie (5
 minuten per persoon) plus een Engels termverslag. Verdeling binnen de 25%:
 presentatie 15%, verslag 10%.
+
+**Lesvorm (FASE-9.md A3) — ONBEKEND op alle 15 lesdagen.** De syllabus heeft
+een kolom "Lecture Style" (in de les / discussietijd) die niet is
+overgenomen in deze tabel en nergens anders in de repo staat — zie open punt
+§9-1h. Niet verzonnen; elke lesdag heeft een `vorm`-veld met waarde null tot
+de kolom wordt aangeleverd.
 
 ### 3.4 General Chinese (maandag + woensdag 18:25–21:05)
 Bron: NTU Course-pagina + syllabus PTCSL7908-23 (CORRECTIE-CHINEES.md,
@@ -621,6 +632,12 @@ De app maakt hiervoor lege, gemarkeerde velden — géén aannames.
     technical visit op 2026-11-19 (week 11).
 1g. Studiepunten voor General Psychology, Global AgTech Foresight en Railroad
     Transportation Engineering — VAKKEN.md §1 geeft ze niet.
+1h. Railroad Transportation Engineering: de kolom "Lecture Style" (in de les
+    / discussietijd) per week uit `2026-NTU_RTE_Syllabus_ver_1.docx` —
+    FASE-9.md A3 veronderstelde dat dit al bekend was op 13 van de 15
+    lesdagen (alleen week 9 en 11 ONBEKEND), maar deze kolom staat nergens in
+    DATA.md of elders in de repo. Staat daarom op alle 15 lesdagen ONBEKEND
+    (`vorm: null`) totdat de syllabus-kolom is aangeleverd.
 2. Of de docenten inhaallessen plannen in de flexibele week 2026-12-28 → 12-31.
    Aankondiging uiterlijk 2026-11-28 volgens de kalender.
 3. Datum en duur van de afstudeeropdracht in Nederland (februari 2027) — bepaalt
