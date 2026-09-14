@@ -14,8 +14,10 @@ export const courses = [
     start: "09:10",
     end: "12:10",
     room: "博雅 101",
-    docent: null,
-    onbekendeVelden: ["docent"],
+    docent: "周珮雯 (Catherine P. Chou)",
+    studiepunten: null,
+    onbekendeVelden: ["studiepunten"],
+    opmerking: "Docentnaam komt uit VAKKEN.md §3 — de syllabus zelf noemt geen naam, alleen dat de docent het recht op wijziging behoudt.",
     bron: "syllabus PSY1007-09",
     zekerheid: "ZEKER",
     beoordeling: {
@@ -38,9 +40,10 @@ export const courses = [
     start: "09:10",
     end: "12:10",
     room: null,
-    docent: null,
-    onbekendeVelden: ["code", "room", "docent"],
-    opmerking: "De eerder aangenomen code 946 U0060 (ser. 52089) bleek bij Computer Programming in Python te horen, niet bij AgTech — FASE-8-1.md 0B, correctie 1. AgTech's eigen code is ONBEKEND.",
+    docent: "Chih-Wei Tung (programmadirecteur MS Global ATGS)",
+    studiepunten: null,
+    onbekendeVelden: ["code", "room", "studiepunten"],
+    opmerking: "De eerder aangenomen code 946 U0060 (ser. 52089) bleek bij Computer Programming in Python te horen, niet bij AgTech — FASE-8-1.md 0B, correctie 1. AgTech's eigen code is ONBEKEND. Docentnaam (Chih-Wei Tung) komt uit VAKKEN.md §5, eerder ONBEKEND.",
     bron: "presentatie 20260910-_Global_AgTech_Foresight.pdf",
     zekerheid: "ZEKER",
     beoordeling: {
@@ -62,8 +65,9 @@ export const courses = [
     start: "14:20",
     end: "17:20",
     room: "新 103",
-    onbekendeVelden: [],
     docent: "Yung-Cheng (Rex) Lai",
+    studiepunten: null,
+    onbekendeVelden: ["studiepunten"],
     bron: "2026-NTU_RTE_Syllabus_ver_1.docx",
     zekerheid: "ZEKER",
     beoordeling: {
@@ -90,8 +94,9 @@ export const courses = [
     end: "21:05",
     room: "普502 (Pu 502)",
     docent: "何宣瑩 (HE, SYUAN-YING)",
+    studiepunten: 3,
     onbekendeVelden: [],
-    opmerking: "3 studiepunten, keuzevak, voertaal Chinees met Engels als hulptaal, lesmateriaal Practical Audio-Visual Chinese 1 (les 1-6), alleen voor internationale studenten. Dag/zaal-conflict met een tegenstrijdig Course Description-blok (di/do, zaal 普406) is opgelost ten gunste van ma/wo — zie DATA.md §3.4.",
+    opmerking: "Keuzevak, voertaal Chinees met Engels als hulptaal, lesmateriaal Practical Audio-Visual Chinese 1 (les 1-6), alleen voor internationale studenten. Dag/zaal-conflict met een tegenstrijdig Course Description-blok (di/do, zaal 普406) is opgelost ten gunste van ma/wo — zie DATA.md §3.4.",
     bron: "NTU Course-pagina + syllabus PTCSL7908-23",
     zekerheid: "ZEKER",
     beoordeling: {
@@ -133,9 +138,10 @@ export const courses = [
     end: "16:20",
     room: null,
     docent: "LIN, TSE-YU",
+    studiepunten: 3,
     onbekendeVelden: ["room"],
     inschrijving: "onbevestigd",
-    opmerking: "Inschrijving liep via een Google Form, deadline 2026-09-13 09:13 (Taipei) inmiddels verstreken; permissienummers worden verloot, uitkomst onbekend. Telt desondanks wel mee in de bezetting van woensdagmiddag totdat de status wijzigt (DATA.md §3.5). 3 studiepunten, half jaar, max. 80 studenten.",
+    opmerking: "Inschrijving liep via een Google Form, deadline 2026-09-13 09:13 (Taipei) inmiddels verstreken; permissienummers worden verloot, uitkomst onbekend. Telt desondanks wel mee in de bezetting van woensdagmiddag totdat de status wijzigt (DATA.md §3.5). Half jaar, max. 80 studenten.",
     bron: "NTU-cursuspagina (FASE-8-1.md 0B, correctie 2)",
     zekerheid: "ZEKER",
     beoordeling: {
@@ -161,10 +167,25 @@ export const courses = [
       bron: "NTU-cursuspagina",
       zekerheid: "ZEKER",
     },
-    cursusrestrictieOpenPunt: {
-      tekst: "Voor bachelorstudenten met een hoofd-, tweede of bijvak in een afdeling die programmeervakken aanbiedt geldt een strengere cijfergrens (syllabus-voorbeeld: 95+ i.p.v. 90+ voor een A+). Of dit op civiele techniek van toepassing is, is niet vastgesteld.",
-      bron: "NTU-cursuspagina",
-      zekerheid: "TE VERIFIËREN",
-    },
+    // Drie afzonderlijke cursusrestricties uit VAKKEN.md §4 — eerder stond hier
+    // alleen de tweede (cijfergrens); de uitsluitingsregel (#1) en de
+    // goedkeuringsbrief-eis (#3) ontbraken volledig.
+    cursusrestricties: [
+      {
+        tekst: "Bachelorstudenten met een hoofd- of tweede hoofdvak in een afdeling van het College of Electrical Engineering and Computer Science mogen dit vak niet volgen (bijvak uitgezonderd). Overtreding betekent een F voor het hele vak.",
+        bron: "VAKKEN.md §4",
+        zekerheid: "ZEKER",
+      },
+      {
+        tekst: "Studenten met een hoofd-, tweede of bijvak in een afdeling die programmeervakken aanbiedt krijgen een strengere cijfergrens (syllabus-voorbeeld: 95+ i.p.v. 90+ voor een A+). Of dit op civiele techniek van toepassing is, is niet vastgesteld.",
+        bron: "NTU-cursuspagina",
+        zekerheid: "TE VERIFIËREN",
+      },
+      {
+        tekst: "Master- en PhD-studenten hebben een ondertekende goedkeuringsbrief van hun begeleider of afdelingshoofd nodig.",
+        bron: "VAKKEN.md §4",
+        zekerheid: "ZEKER",
+      },
+    ],
   },
 ];

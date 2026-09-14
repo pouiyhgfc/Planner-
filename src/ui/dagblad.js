@@ -78,7 +78,8 @@ export function renderDagblad(root, { ymd, dag, eigenItems, afgevinkteDeadlines,
       const course = courseVoor(les.course);
       const li = document.createElement("li");
       const zaal = course.room ?? "zaal onbekend";
-      li.textContent = `${course.name} — ${course.start}–${course.end} — ${zaal} — ${les.label}`;
+      const spreker = les.spreker ? ` (${les.spreker})` : "";
+      li.textContent = `${course.name} — ${course.start}–${course.end} — ${zaal} — ${les.label}${spreker}`;
       lijst.appendChild(li);
     }
     root.appendChild(lijst);

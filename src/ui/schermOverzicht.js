@@ -141,6 +141,13 @@ export function initOverzichtScherm(root, callbacks) {
     }
     kaart.appendChild(kop);
 
+    if (project.tekst) {
+      const tekst = document.createElement("p");
+      tekst.className = "vak-detail-klein";
+      tekst.textContent = project.tekst;
+      kaart.appendChild(tekst);
+    }
+
     if (project.waarschuwing) {
       const waarschuwing = document.createElement("p");
       waarschuwing.className = "project-waarschuwing";

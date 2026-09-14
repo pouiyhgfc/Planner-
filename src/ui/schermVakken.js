@@ -103,6 +103,7 @@ function renderKopSectie(course, veldwaarden, ctx, callbacks) {
   regel("Code", "code", course.code);
   regel("Docent", "docent", course.docent);
   regel("Zaal", "room", course.room);
+  regel("Studiepunten", "studiepunten", course.studiepunten ? String(course.studiepunten) : null);
 
   const dagTijdDt = document.createElement("dt");
   dagTijdDt.textContent = "Dag en tijd";
@@ -288,7 +289,23 @@ function renderLesoverzichtSectie(vakId) {
   for (const les of lesoverzicht(vakId)) {
     const li = document.createElement("li");
     const weekTekst = les.week ? ` (week ${les.week})` : "";
-    li.textContent = `${kortDatum(les.date)}${weekTekst} — ${les.label}`;
+    const sprekerTekst = les.spreker ? ` — ${les.spreker}` : "";
+    li.textContent = `${kortDatum(les.date)}${weekTekst} — ${les.label}${sprekerTekst}`;
+    lijst.appendChild(li);
+  }
+  wrap.appendChild(lijst);
+  return wrap;
+}
+
+function renderCursusrestrictiesSectie(course) {
+  if (!course.cursusrestricties || course.cursusrestricties.length === 0) return null;
+  const wrap = document.createElement("div");
+  wrap.appendChild(sectieKop("Cursusrestricties"));
+  const lijst = document.createElement("ul");
+  for (const restrictie of course.cursusrestricties) {
+    const li = document.createElement("li");
+    li.className = "vak-detail-klein";
+    li.textContent = restrictie.zekerheid === "ZEKER" ? restrictie.tekst : `${restrictie.tekst} (${restrictie.zekerheid})`;
     lijst.appendChild(li);
   }
   wrap.appendChild(lijst);
@@ -312,6 +329,8 @@ function renderDetail(root, course, ctx, callbacks) {
 
   root.appendChild(renderKopSectie(course, ctx.vakkenVeldwaarden, ctx, callbacks));
   root.appendChild(renderWegingSectie(course));
+  const restrictiesSectie = renderCursusrestrictiesSectie(course);
+  if (restrictiesSectie) root.appendChild(restrictiesSectie);
   root.appendChild(renderAbsentieSectie(course, ctx.items, pythonAfgewezen));
   const deadlinesSectie = renderDeadlinesSectie(course.id, ctx.afgevinkteDeadlines, callbacks.onDeadlineToggle);
   if (deadlinesSectie) root.appendChild(deadlinesSectie);

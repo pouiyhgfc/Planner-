@@ -238,7 +238,11 @@ for (const c of courses) {
     }
   }
   if (c.groepsproject) checkBronZekerheid(`courses: ${c.id}.groepsproject`, c.groepsproject);
-  if (c.cursusrestrictieOpenPunt) checkBronZekerheid(`courses: ${c.id}.cursusrestrictieOpenPunt`, c.cursusrestrictieOpenPunt);
+  if (c.cursusrestricties) {
+    for (const [i, restrictie] of c.cursusrestricties.entries()) {
+      checkBronZekerheid(`courses: ${c.id}.cursusrestricties[${i}]`, restrictie);
+    }
+  }
 }
 
 // General Chinese tijd is gecorrigeerd naar 18:25-21:05 (CORRECTIE-CHINEES.md)
@@ -255,7 +259,7 @@ for (const c of courses) {
 {
   const agtech = courses.find((c) => c.id === "AGTECH");
   check("AGTECH: code is null (was foutief 946 U0060)", agtech.code, null);
-  check("AGTECH: onbekendeVelden bevat code, room en docent", [...agtech.onbekendeVelden].sort().join(","), "code,docent,room");
+  check("AGTECH: onbekendeVelden bevat code, room en studiepunten", [...agtech.onbekendeVelden].sort().join(","), "code,room,studiepunten");
 
   const py = courses.find((c) => c.id === "PY");
   check("PY: vak bestaat", Boolean(py), true);
@@ -372,7 +376,11 @@ check("genereerKalenderDagen(): precies 181 dagen", genereerKalenderDagen().leng
   check("2026-11-18 ochtend bezet (PSY)", dag.dagdelen.ochtend.bezet, true);
   check("2026-11-18 middag bezet (Python)", dag.dagdelen.middag.bezet, true);
   check("2026-11-18 avond bezet (Chinees)", dag.dagdelen.avond.bezet, true);
-  check("2026-11-18 bevat Python-onderwerp Pandas", dag.vakken.some((v) => v.course === "PY" && v.label === "Pandas"), true);
+  check(
+    "2026-11-18 bevat Python-onderwerp Pandas",
+    dag.vakken.some((v) => v.course === "PY" && v.label.includes("Pandas")),
+    true
+  );
 }
 
 // 2026-10-29: AgTech + RTE, valt in de midterm-periode
@@ -1183,16 +1191,17 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
 // Fase 8F — scherm "Vakken" (laatste subfase)
 // =====================================================================
 
-// courses.js: ontdekte ONBEKEND-gaten (docentnamen) zijn zichtbaar gemarkeerd,
-// niet verzonnen
+// courses.js: de docent-gaten die 8F ontdekte (DATA.md §3.1/§3.2 noemden geen
+// naam) zijn later opgelost door VAKKEN.md §3/§5 — niet meer ONBEKEND, en niet
+// meer in onbekendeVelden.
 {
   const psy = courses.find((c) => c.id === "PSY");
-  check("PSY: docent is null (niet genoemd in DATA.md §3.1)", psy.docent, null);
-  check("PSY: onbekendeVelden bevat docent", psy.onbekendeVelden.includes("docent"), true);
+  check("PSY: docent is nu bekend (VAKKEN.md §3)", psy.docent, "周珮雯 (Catherine P. Chou)");
+  check("PSY: onbekendeVelden bevat geen docent meer", psy.onbekendeVelden.includes("docent"), false);
 
   const agtech = courses.find((c) => c.id === "AGTECH");
-  check("AGTECH: docent is null (niet genoemd in DATA.md §3.2)", agtech.docent, null);
-  check("AGTECH: onbekendeVelden bevat docent", agtech.onbekendeVelden.includes("docent"), true);
+  check("AGTECH: docent is nu bekend (VAKKEN.md §5)", agtech.docent, "Chih-Wei Tung (programmadirecteur MS Global ATGS)");
+  check("AGTECH: onbekendeVelden bevat geen docent meer", agtech.onbekendeVelden.includes("docent"), false);
 }
 
 // dayStatus()/blocks.js: pythonAfgewezen=true sluit Python uit, zonder de
@@ -1319,6 +1328,77 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
     const bron = readFileSync(join(PROJECT_ROOT, bestand), "utf8");
     check(`${bestand}: geen title-attributen`, /\.title\s*=|setAttribute\(\s*["']title["']/.test(bron), false);
   }
+}
+
+// =====================================================================
+// VAKKEN.md-correctiepas — bij tegenspraak met DATA.md geldt VAKKEN.md
+// =====================================================================
+
+// AgTech: vijf onderwerpen die in de oude data waren afgekort t.o.v. de
+// letterlijke titel in VAKKEN.md §5, plus de nieuw toegevoegde sprekerdata.
+{
+  const gevonden = Object.fromEntries(agtechDates.map((d) => [d.week, d]));
+  check("AGTECH wk6: volledige titel (was afgekort met een pijl)", gevonden[6].label, "Smart Agriculture: field monitoring to postharvest quality evaluation");
+  check("AGTECH wk6: spreker Shih-Fang Chen", gevonden[6].spreker, "Shih-Fang Chen");
+  check("AGTECH wk8: volledige titel (miste 'and Trends')", gevonden[8].label, "Global Pest Management Technologies and Trends");
+  check("AGTECH wk10: volledige titel (was 'FarmiSpace / DATAYOO')", gevonden[10].label, "Unlocking the Infinite Possibilities of Agriculture using FarmiSpace");
+  check("AGTECH wk10: DATAYOO Company nu als spreker, niet als deel van de titel", gevonden[10].spreker, "DATAYOO Company");
+  check("AGTECH wk11: volledige titel (miste 'and Green Biotechnology')", gevonden[11].label, "Plant-Microbe Interactions and Green Biotechnology");
+  check("AGTECH wk13: volledige titel (miste 'Applications of')", gevonden[13].label, "Applications of Plant Phenology and Crop Modeling");
+  check("AGTECH wk1: spreker Chih-Wei Tung", gevonden[1].spreker, "Chih-Wei Tung");
+  check("AGTECH wk3 (invited talk): spreker ONBEKEND blijft null, niet gegokt", gevonden[3].spreker, null);
+  check("AGTECH: alle 16 weken hebben een spreker-veld (ook als het null is)", agtechDates.every((d) => "spreker" in d), true);
+}
+
+// Python: twee onderwerpen die waren afgekort t.o.v. de letterlijke titel
+{
+  const gevonden = Object.fromEntries(pythonDates.map((d) => [d.week, d]));
+  check("PY wk10: volledige titel (was kort 'NumPy')", gevonden[10].label, "Something just like vectors and matrices: NumPy");
+  check("PY wk11: volledige titel (was kort 'Pandas')", gevonden[11].label, "Something just like spreadsheets: Pandas");
+}
+
+// Python: drie cursusrestricties i.p.v. de ene die er eerder stond
+{
+  const py = courses.find((c) => c.id === "PY");
+  check("PY: drie afzonderlijke cursusrestricties (was er maar één)", py.cursusrestricties.length, 3);
+  check(
+    "PY: restrictie 1 is de EECS-uitsluitingsregel (ontbrak volledig)",
+    py.cursusrestricties[0].tekst.includes("Electrical Engineering and Computer Science"),
+    true
+  );
+  check(
+    "PY: restrictie 3 is de master/PhD-goedkeuringsbrief (ontbrak volledig)",
+    py.cursusrestricties[2].tekst.includes("goedkeuringsbrief"),
+    true
+  );
+  for (const [i, restrictie] of py.cursusrestricties.entries()) {
+    check(`PY: cursusrestrictie[${i}] heeft geldige zekerheid`, ZEKERHEID_WAARDEN.includes(restrictie.zekerheid), true);
+  }
+}
+
+// Docenten die 8F als ONBEKEND markeerde, zijn nu bekend (zie hierboven, fase
+// 8F-sectie) — hier alleen de studiepunten-aanvulling die VAKKEN.md §1 gaf.
+{
+  check("CHI: studiepunten = 3 (VAKKEN.md §1)", courses.find((c) => c.id === "CHI").studiepunten, 3);
+  check("PY: studiepunten = 3 (VAKKEN.md §1)", courses.find((c) => c.id === "PY").studiepunten, 3);
+  check("PSY: studiepunten blijft ONBEKEND (VAKKEN.md §1 geeft geen waarde)", courses.find((c) => c.id === "PSY").studiepunten, null);
+  check("AGTECH: studiepunten blijft ONBEKEND", courses.find((c) => c.id === "AGTECH").studiepunten, null);
+  check("RTE: studiepunten blijft ONBEKEND", courses.find((c) => c.id === "RTE").studiepunten, null);
+}
+
+// RTE termproject: beschrijvende tekst die er nog niet stond
+{
+  const rte = projects.find((p) => p.id === "RTE_TERMPROJECT");
+  check("RTE_TERMPROJECT: heeft nu een beschrijvende tekst", typeof rte.tekst === "string" && rte.tekst.length > 0, true);
+  check("RTE_TERMPROJECT: tekst noemt groepen van 5", rte.tekst.includes("5 personen"), true);
+  check("RTE_TERMPROJECT: tekst noemt de 15/10-verdeling", rte.tekst.includes("15%") && rte.tekst.includes("10%"), true);
+}
+
+// PSY: de expliciete "syllabus noemt geen wekelijkse opdrachten"-waarschuwing
+// uit VAKKEN.md §3 mag nooit alsnog wekelijkse PSY-deadlines opleveren
+{
+  const psyGerelateerdeDeadlines = academicDeadlines.filter((d) => d.label?.toLowerCase().includes("psychol"));
+  check("Geen verzonnen wekelijkse PSY-opdrachten in academicDeadlines (VAKKEN.md §3 waarschuwing)", psyGerelateerdeDeadlines.length, 0);
 }
 
 console.log(`\n${passed} geslaagd, ${failures} mislukt.`);

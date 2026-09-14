@@ -13,6 +13,7 @@ export const projects = [
     id: "RTE_TERMPROJECT",
     naam: "RTE termproject",
     vak: "RTE",
+    tekst: "Bachelorniveau: presentatie over de ontwikkeling van veiligheidsprocedures en -technologie in het spoor, groepen van 5 personen. 20 minuten Engelse presentatie (5 minuten per persoon) plus een Engels termverslag. Verdeling binnen de 25%: presentatie 15%, verslag 10%.",
     mijlpalen: [
       { datum: "2026-09-24", label: "Term project topic + groepen (5 pers.)" },
       { datum: "2026-10-15", label: "Term project draft PPT due" },

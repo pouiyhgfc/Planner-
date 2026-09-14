@@ -32,23 +32,26 @@ export const psyDates = [
   { date: "2026-12-23", week: 16, type: "tentamen", course: "PSY", label: "Final Exam (35%)", bron: BRON_PSY, zekerheid: "ZEKER" },
 ];
 
+// Sprekers uit VAKKEN.md §5 — daar staat ook een spreker-kolom die coursedates.js
+// eerder niet vastlegde. null waar VAKKEN.md zelf "ONBEKEND" zegt (uitgenodigde
+// sprekers bij "Invited talk") of geen spreker noemt (excursie, TBA).
 export const agtechDates = [
-  { date: "2026-09-10", week: 1, type: "les", course: "AGTECH", label: "Course introduction", bron: BRON_AGTECH, zekerheid: "ZEKER" },
-  { date: "2026-09-17", week: 2, type: "les", course: "AGTECH", label: "From domestication to design crops", bron: BRON_AGTECH, zekerheid: "ZEKER" },
-  { date: "2026-09-24", week: 3, type: "les", course: "AGTECH", label: "Invited talk", bron: BRON_AGTECH, zekerheid: "ZEKER" },
-  { date: "2026-10-01", week: 4, type: "les", course: "AGTECH", label: "Smart technologies in Taiwan Vanilla Lab", bron: BRON_AGTECH, zekerheid: "ZEKER" },
-  { date: "2026-10-08", week: 5, type: "les", course: "AGTECH", label: "Intelligent Circular Controlled Environment Agriculture", bron: BRON_AGTECH, zekerheid: "ZEKER" },
-  { date: "2026-10-15", week: 6, type: "les", course: "AGTECH", label: "Smart Agriculture: field monitoring → postharvest", bron: BRON_AGTECH, zekerheid: "ZEKER" },
-  { date: "2026-10-22", week: 7, type: "les", course: "AGTECH", label: "Invited talk", bron: BRON_AGTECH, zekerheid: "ZEKER" },
-  { date: "2026-10-29", week: 8, type: "les", course: "AGTECH", label: "Global Pest Management Technologies", bron: BRON_AGTECH, zekerheid: "ZEKER" },
-  { date: "2026-11-05", week: 9, type: "les", course: "AGTECH", label: "Pepper Breeding for Smallholder Farmers", bron: BRON_AGTECH, zekerheid: "ZEKER" },
-  { date: "2026-11-12", week: 10, type: "les", course: "AGTECH", label: "FarmiSpace / DATAYOO", bron: BRON_AGTECH, zekerheid: "ZEKER" },
-  { date: "2026-11-19", week: 11, type: "les", course: "AGTECH", label: "Plant-Microbe Interactions", bron: BRON_AGTECH, zekerheid: "ZEKER" },
-  { date: "2026-11-26", week: 12, type: "les", course: "AGTECH", label: "Invited talk", bron: BRON_AGTECH, zekerheid: "ZEKER" },
-  { date: "2026-12-03", week: 13, type: "les", course: "AGTECH", label: "Plant Phenology and Crop Modeling", bron: BRON_AGTECH, zekerheid: "ZEKER" },
-  { date: "2026-12-10", week: 14, type: "les", course: "AGTECH", label: "On-site visit", bron: BRON_AGTECH, zekerheid: "ZEKER" },
-  { date: "2026-12-17", week: 15, type: "les", course: "AGTECH", label: "Student presentations", bron: BRON_AGTECH, zekerheid: "ZEKER" },
-  { date: "2026-12-24", week: 16, type: "les", course: "AGTECH", label: "TBA", bron: BRON_AGTECH, zekerheid: "ZEKER" },
+  { date: "2026-09-10", week: 1, type: "les", course: "AGTECH", label: "Course introduction", spreker: "Chih-Wei Tung", bron: BRON_AGTECH, zekerheid: "ZEKER" },
+  { date: "2026-09-17", week: 2, type: "les", course: "AGTECH", label: "From domestication to design crops", spreker: "Chih-Wei Tung", bron: BRON_AGTECH, zekerheid: "ZEKER" },
+  { date: "2026-09-24", week: 3, type: "les", course: "AGTECH", label: "Invited talk", spreker: null, bron: BRON_AGTECH, zekerheid: "ZEKER" },
+  { date: "2026-10-01", week: 4, type: "les", course: "AGTECH", label: "Smart technologies in Taiwan Vanilla Lab", spreker: "George Lin / Li-Yu Liu", bron: BRON_AGTECH, zekerheid: "ZEKER" },
+  { date: "2026-10-08", week: 5, type: "les", course: "AGTECH", label: "Intelligent Circular Controlled Environment Agriculture", spreker: "Kuan-Chong Ting", bron: BRON_AGTECH, zekerheid: "ZEKER" },
+  { date: "2026-10-15", week: 6, type: "les", course: "AGTECH", label: "Smart Agriculture: field monitoring to postharvest quality evaluation", spreker: "Shih-Fang Chen", bron: BRON_AGTECH, zekerheid: "ZEKER" },
+  { date: "2026-10-22", week: 7, type: "les", course: "AGTECH", label: "Invited talk", spreker: null, bron: BRON_AGTECH, zekerheid: "ZEKER" },
+  { date: "2026-10-29", week: 8, type: "les", course: "AGTECH", label: "Global Pest Management Technologies and Trends", spreker: "Yu-Hsien Lin", bron: BRON_AGTECH, zekerheid: "ZEKER" },
+  { date: "2026-11-05", week: 9, type: "les", course: "AGTECH", label: "Pepper Breeding for Smallholder Farmers", spreker: "Derek Barchenger", bron: BRON_AGTECH, zekerheid: "ZEKER" },
+  { date: "2026-11-12", week: 10, type: "les", course: "AGTECH", label: "Unlocking the Infinite Possibilities of Agriculture using FarmiSpace", spreker: "DATAYOO Company", bron: BRON_AGTECH, zekerheid: "ZEKER" },
+  { date: "2026-11-19", week: 11, type: "les", course: "AGTECH", label: "Plant-Microbe Interactions and Green Biotechnology", spreker: "Chiu-Ping Cheng", bron: BRON_AGTECH, zekerheid: "ZEKER" },
+  { date: "2026-11-26", week: 12, type: "les", course: "AGTECH", label: "Invited talk", spreker: null, bron: BRON_AGTECH, zekerheid: "ZEKER" },
+  { date: "2026-12-03", week: 13, type: "les", course: "AGTECH", label: "Applications of Plant Phenology and Crop Modeling", spreker: "Li-Yu Liu", bron: BRON_AGTECH, zekerheid: "ZEKER" },
+  { date: "2026-12-10", week: 14, type: "les", course: "AGTECH", label: "On-site visit", spreker: null, bron: BRON_AGTECH, zekerheid: "ZEKER" },
+  { date: "2026-12-17", week: 15, type: "les", course: "AGTECH", label: "Student presentations", spreker: null, bron: BRON_AGTECH, zekerheid: "ZEKER" },
+  { date: "2026-12-24", week: 16, type: "les", course: "AGTECH", label: "TBA", spreker: null, bron: BRON_AGTECH, zekerheid: "ZEKER" },
 ];
 
 export const rteDates = [
@@ -86,8 +89,8 @@ export const pythonDates = [
   { date: "2026-10-21", week: 7, type: "les", course: "PY", label: "Control Flow", bron: BRON_PY, zekerheid: "ZEKER" },
   { date: "2026-10-28", week: 8, type: "les", course: "PY", label: "Text Processing", bron: BRON_PY, zekerheid: "ZEKER" },
   { date: "2026-11-04", week: 9, type: "les", course: "PY", label: "Nested Structure", bron: BRON_PY, zekerheid: "ZEKER" },
-  { date: "2026-11-11", week: 10, type: "les", course: "PY", label: "NumPy", bron: BRON_PY, zekerheid: "ZEKER" },
-  { date: "2026-11-18", week: 11, type: "les", course: "PY", label: "Pandas", bron: BRON_PY, zekerheid: "ZEKER" },
+  { date: "2026-11-11", week: 10, type: "les", course: "PY", label: "Something just like vectors and matrices: NumPy", bron: BRON_PY, zekerheid: "ZEKER" },
+  { date: "2026-11-18", week: 11, type: "les", course: "PY", label: "Something just like spreadsheets: Pandas", bron: BRON_PY, zekerheid: "ZEKER" },
   { date: "2026-11-25", week: 12, type: "les", course: "PY", label: "Invited Speaker (TBD)", bron: BRON_PY, zekerheid: "ZEKER" },
   { date: "2026-12-02", week: 13, type: "les", course: "PY", label: "Invited Speaker (TBD)", bron: BRON_PY, zekerheid: "ZEKER" },
   { date: "2026-12-09", week: 14, type: "les", course: "PY", label: "Project Presentation", bron: BRON_PY, zekerheid: "ZEKER" },
