@@ -7,7 +7,16 @@ import { trips } from "../src/data/trips.js";
 import { chinaVisaFreeDeadline, flexWeekAnnouncementDeadline, academicDeadlines } from "../src/data/deadlines.js";
 import { dayStatus, genereerKalenderDagen } from "../src/lib/dayStatus.js";
 import { isFree, freeBlocks, blocksWithCost, costOfRange } from "../src/lib/blocks.js";
-import { leegState, migrate, valideerItem, valideerProject, CURRENT_SCHEMA_VERSION, SCHERMEN, PERIODES } from "../src/state/schema.js";
+import {
+  leegState,
+  migrate,
+  valideerItem,
+  valideerProject,
+  CURRENT_SCHEMA_VERSION,
+  SCHERMEN,
+  PERIODES,
+  PYTHON_INSCHRIJVING_WAARDEN,
+} from "../src/state/schema.js";
 import {
   voegItemToe,
   verwijderItem,
@@ -15,6 +24,8 @@ import {
   zetMijlpaalAfgevinkt,
   voegProjectToe,
   verwijderProject,
+  zetPythonInschrijving,
+  zetVakVeld,
   huidigeYMD,
   bereidExportVoor,
   bereidSamenvoegingVoor,
@@ -27,6 +38,7 @@ import { maandWeken, isStipMoment } from "../src/ui/maandGrid.js";
 import { deadlineSleutel } from "../src/ui/dagblad.js";
 import { maandagVan, weekAantal, weekStarts, verschuifVenster, dagdelenMetKleur } from "../src/ui/wekenGrid.js";
 import { projects } from "../src/data/projects.js";
+import { lesoverzicht, gemisteSessies, chineseAbsentieStand } from "../src/ui/vakkenData.js";
 import {
   volgendeTentamenOfPresentatie,
   aantalOpenstaandeDeadlines,
@@ -210,6 +222,12 @@ for (const c of courses) {
   checkBronZekerheid(`courses: ${c.id}.beoordeling`, c.beoordeling);
   check(`courses: ${c.id}.start is HH:MM`, /^\d{2}:\d{2}$/.test(c.start), true);
   check(`courses: ${c.id}.end is HH:MM`, /^\d{2}:\d{2}$/.test(c.end), true);
+  check(`courses: ${c.id}.beoordeling.weging is niet leeg`, c.beoordeling.weging.length > 0, true);
+  check(
+    `courses: ${c.id}.beoordeling.weging elk onderdeel heeft label + numerieke percentage`,
+    c.beoordeling.weging.every((w) => typeof w.label === "string" && w.label.length > 0 && typeof w.percentage === "number"),
+    true
+  );
   if (c.absentieregels) {
     if (c.absentieregels.bron) {
       checkBronZekerheid(`courses: ${c.id}.absentieregels`, c.absentieregels);
@@ -237,7 +255,7 @@ for (const c of courses) {
 {
   const agtech = courses.find((c) => c.id === "AGTECH");
   check("AGTECH: code is null (was foutief 946 U0060)", agtech.code, null);
-  check("AGTECH: onbekendeVelden bevat code en room", [...agtech.onbekendeVelden].sort().join(","), "code,room");
+  check("AGTECH: onbekendeVelden bevat code, room en docent", [...agtech.onbekendeVelden].sort().join(","), "code,docent,room");
 
   const py = courses.find((c) => c.id === "PY");
   check("PY: vak bestaat", Boolean(py), true);
@@ -846,7 +864,7 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
 
 // Geen title-attributen in de nieuwe UI-laag van fase 8B
 {
-  for (const bestand of ["src/ui/main.js", "src/ui/nav.js", "src/ui/schermen.js", "src/ui/datumlabels.js", "src/ui/planner.js"]) {
+  for (const bestand of ["src/ui/main.js", "src/ui/nav.js", "src/ui/datumlabels.js", "src/ui/planner.js"]) {
     const bron = readFileSync(join(PROJECT_ROOT, bestand), "utf8");
     check(`${bestand}: geen title-attributen`, /\.title\s*=|setAttribute\(\s*["']title["']/.test(bron), false);
   }
@@ -866,7 +884,7 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   const swBron = readFileSync(join(PROJECT_ROOT, "sw.js"), "utf8");
   check("sw.js: render.js niet meer gecachet (vervangen in 8B)", swBron.includes("render.js"), false);
   check("sw.js: overzicht.js (oud) niet meer gecachet (vervangen in 8B)", swBron.includes("ui/overzicht.js"), false);
-  for (const bestand of ["nav.js", "schermen.js", "datumlabels.js"]) {
+  for (const bestand of ["nav.js", "datumlabels.js"]) {
     check(`sw.js: APP_SHELL bevat ui/${bestand}`, swBron.includes(`ui/${bestand}`), true);
   }
 }
@@ -1156,6 +1174,148 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
 // Geen title-attributen in de fase 8E-bestanden
 {
   for (const bestand of ["src/ui/schermOverzicht.js", "src/ui/overzichtData.js", "src/data/projects.js"]) {
+    const bron = readFileSync(join(PROJECT_ROOT, bestand), "utf8");
+    check(`${bestand}: geen title-attributen`, /\.title\s*=|setAttribute\(\s*["']title["']/.test(bron), false);
+  }
+}
+
+// =====================================================================
+// Fase 8F — scherm "Vakken" (laatste subfase)
+// =====================================================================
+
+// courses.js: ontdekte ONBEKEND-gaten (docentnamen) zijn zichtbaar gemarkeerd,
+// niet verzonnen
+{
+  const psy = courses.find((c) => c.id === "PSY");
+  check("PSY: docent is null (niet genoemd in DATA.md §3.1)", psy.docent, null);
+  check("PSY: onbekendeVelden bevat docent", psy.onbekendeVelden.includes("docent"), true);
+
+  const agtech = courses.find((c) => c.id === "AGTECH");
+  check("AGTECH: docent is null (niet genoemd in DATA.md §3.2)", agtech.docent, null);
+  check("AGTECH: onbekendeVelden bevat docent", agtech.onbekendeVelden.includes("docent"), true);
+}
+
+// dayStatus()/blocks.js: pythonAfgewezen=true sluit Python uit, zonder de
+// bestaande (default false) uitkomst te veranderen — 2026-09-09 is de eerste
+// woensdag van het semester met alle drie de vakken.
+{
+  const metPython = dayStatus("2026-09-09");
+  const zonderPython = dayStatus("2026-09-09", true);
+  check("dayStatus(2026-09-09): default heeft 3 lessen", metPython.vakken.filter((v) => v.type === "les").length, 3);
+  check("dayStatus(2026-09-09, pythonAfgewezen): nog maar 2 lessen", zonderPython.vakken.filter((v) => v.type === "les").length, 2);
+  check("dayStatus(2026-09-09, pythonAfgewezen): PY niet meer aanwezig", zonderPython.vakken.some((v) => v.course === "PY"), false);
+  check("dayStatus(2026-09-09, pythonAfgewezen): PSY blijft aanwezig", zonderPython.vakken.some((v) => v.course === "PSY"), true);
+
+  const kostenMet = costOfRange("2026-09-09", "2026-09-09");
+  const kostenZonder = costOfRange("2026-09-09", "2026-09-09", true);
+  check("costOfRange: default telt PY mee", kostenMet.perVak.PY, 1);
+  check("costOfRange: pythonAfgewezen telt PY niet mee", kostenZonder.perVak.PY, undefined);
+}
+
+// lib/overzicht.js: pythonAfgewezen-parameter is optioneel en verandert het
+// default gedrag niet
+{
+  const vandaag = "2026-10-01";
+  check(
+    "resterendeBlokken: met/zonder expliciete pythonAfgewezen=false is identiek",
+    JSON.stringify(resterendeBlokken(vandaag)),
+    JSON.stringify(resterendeBlokken(vandaag, false))
+  );
+  const items = [{ start: "2026-09-09", end: "2026-09-09", status: "vast" }];
+  check(
+    "absentieTotaal: pythonAfgewezen=true telt PY niet mee",
+    absentieTotaal(items, true).PY,
+    undefined
+  );
+}
+
+// vakkenData.js: lesoverzicht() per vak klopt met de tellingen die validate.mjs
+// elders al bevestigt (16 per typed vak, 30 gegenereerde Chinese lessen)
+{
+  check("lesoverzicht(PSY): 16 lesmomenten", lesoverzicht("PSY").length, 16);
+  check("lesoverzicht(AGTECH): 16 lesmomenten", lesoverzicht("AGTECH").length, 16);
+  check("lesoverzicht(RTE): 16 lesmomenten", lesoverzicht("RTE").length, 16);
+  check("lesoverzicht(PY): 16 lesmomenten", lesoverzicht("PY").length, 16);
+  check("lesoverzicht(CHI): 30 gegenereerde lessen", lesoverzicht("CHI").length, 30);
+  check("lesoverzicht: chronologisch gesorteerd", lesoverzicht("PSY").every((l, i, arr) => i === 0 || arr[i - 1].date <= l.date), true);
+}
+
+// gemisteSessies(): telt alleen "vast" items, per vak apart
+{
+  const items = [
+    { start: "2026-09-09", end: "2026-09-09", status: "vast" }, // PSY + PY + CHI die woensdag
+    { start: "2026-09-10", end: "2026-09-10", status: "idee" }, // telt niet mee (geen "vast")
+  ];
+  const psyGemist = gemisteSessies("PSY", items);
+  check("gemisteSessies(PSY): 1 sessie gemist door het vast-item", psyGemist.length, 1);
+  check("gemisteSessies(PSY): datum klopt", psyGemist[0]?.date, "2026-09-09");
+  check("gemisteSessies(AGTECH): 0 — het idee-item op 09-10 telt niet mee", gemisteSessies("AGTECH", items).length, 0);
+  check("gemisteSessies(PY, pythonAfgewezen): PY telt niet mee als afgewezen", gemisteSessies("PY", items, true).length, 0);
+}
+
+// chineseAbsentieStand(): twee onafhankelijke grenzen, niet met elkaar verrekend
+{
+  const geenAbsenties = chineseAbsentieStand([]);
+  check("chineseAbsentieStand: 0 absenties -> 0 uur gebruikt", geenAbsenties.urenGebruikt, 0);
+  check("chineseAbsentieStand: 0 absenties -> geen aftrek", geenAbsenties.aftrek, 0);
+  check("chineseAbsentieStand: 0 absenties -> drempel niet bereikt", geenAbsenties.drempelBereikt, false);
+
+  // 3 gemiste Chinese sessies (ma 07-09, wo 09-09, ma 14-09) = 9 uur, 3 boven
+  // de 6-uursvrijstelling -> 1,5 punt aftrek. Nog ver onder de 1/3-drempel.
+  const items = [
+    { start: "2026-09-07", end: "2026-09-07", status: "vast" },
+    { start: "2026-09-09", end: "2026-09-09", status: "vast" },
+    { start: "2026-09-14", end: "2026-09-14", status: "vast" },
+  ];
+  const stand = chineseAbsentieStand(items);
+  check("chineseAbsentieStand: 3 sessies gemist", stand.gemisteSessies, 3);
+  check("chineseAbsentieStand: 9 uur gebruikt", stand.urenGebruikt, 9);
+  check("chineseAbsentieStand: 3 uur boven de vrijstelling", stand.urenBovenVrijstelling, 3);
+  check("chineseAbsentieStand: 1.5 punt aftrek", stand.aftrek, 1.5);
+  check("chineseAbsentieStand: fractie nog ver onder 1/3", stand.fractieGemist < 1 / 3, true);
+  check("chineseAbsentieStand: drempel niet bereikt bij 3 van 30", stand.drempelBereikt, false);
+}
+
+// migrate(): schemaVersion 6 -> 7 voegt pythonInschrijving/vakkenVeldwaarden toe
+{
+  const v6 = { ...leegState(), schemaVersion: 6 };
+  delete v6.pythonInschrijving;
+  delete v6.vakkenVeldwaarden;
+  const gemigreerd = migrate(v6);
+  check("migrate v6->v7: schemaVersion wordt de actuele versie", gemigreerd.schemaVersion, CURRENT_SCHEMA_VERSION);
+  check("migrate v6->v7: pythonInschrijving default onbevestigd", gemigreerd.pythonInschrijving, "onbevestigd");
+  check("migrate v6->v7: vakkenVeldwaarden default leeg object", Object.keys(gemigreerd.vakkenVeldwaarden).length, 0);
+
+  const ongeldigeWaarde = migrate({ ...leegState(), pythonInschrijving: "iets-anders" });
+  check("migrate: ongeldige pythonInschrijving valt terug op onbevestigd", ongeldigeWaarde.pythonInschrijving, "onbevestigd");
+}
+
+// zetPythonInschrijving() / zetVakVeld(): pure state-transformaties
+{
+  check("PYTHON_INSCHRIJVING_WAARDEN bevat de drie statussen", PYTHON_INSCHRIJVING_WAARDEN, ["onbevestigd", "bevestigd", "afgewezen"]);
+
+  let state = leegState();
+  state = zetPythonInschrijving(state, "afgewezen");
+  check("zetPythonInschrijving: status bijgewerkt", state.pythonInschrijving, "afgewezen");
+
+  state = zetVakVeld(state, "AGTECH.room", "博雅 305");
+  check("zetVakVeld: waarde opgeslagen", state.vakkenVeldwaarden["AGTECH.room"], "博雅 305");
+  state = zetVakVeld(state, "PY.opdrachtenIngeleverd", "3");
+  check("zetVakVeld: tweede sleutel blijft naast de eerste staan", Object.keys(state.vakkenVeldwaarden).length, 2);
+}
+
+// sw.js: de fase 8F-bestanden zitten in de app-shell, het oude schermen.js niet meer
+{
+  const swBron = readFileSync(join(PROJECT_ROOT, "sw.js"), "utf8");
+  check("sw.js: schermen.js niet meer gecachet (vervangen in 8F)", swBron.includes("ui/schermen.js"), false);
+  for (const bestand of ["schermVakken.js", "vakkenData.js"]) {
+    check(`sw.js: APP_SHELL bevat ui/${bestand}`, swBron.includes(`ui/${bestand}`), true);
+  }
+}
+
+// Geen title-attributen in de fase 8F-bestanden
+{
+  for (const bestand of ["src/ui/schermVakken.js", "src/ui/vakkenData.js"]) {
     const bron = readFileSync(join(PROJECT_ROOT, bestand), "utf8");
     check(`${bestand}: geen title-attributen`, /\.title\s*=|setAttribute\(\s*["']title["']/.test(bron), false);
   }

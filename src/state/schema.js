@@ -20,16 +20,25 @@
  *     — mijlpalen in src/data/projects.js hebben zelf geen id. Ook
  *     eigenProjecten: door de gebruiker zelf toegevoegde projecten, met
  *     dezelfde vorm (naam, vak, mijlpalen) als src/data/projects.js.
+ * v7: state kreeg pythonInschrijving (fase 8F, scherm "Vakken"): de
+ *     bevestigd/afgewezen-status die de knop in de kop van Python zet — bij
+ *     "afgewezen" telt het vak niet meer mee (src/lib/dayStatus.js en
+ *     blocks.js kregen hiervoor een optionele pythonAfgewezen-parameter,
+ *     default false, dus geen gedragswijziging voor bestaande aanroepen).
+ *     Ook vakkenVeldwaarden: generieke gebruikersinvoer voor onbekende
+ *     velden (zaal, docent, groepsgrootte, ...) en tellers (bijv. Python
+ *     ingeleverde/totaal opdrachten), sleutel "VAKID.veldnaam".
  */
 
 import { parseYMD } from "../lib/date.js";
 
-export const CURRENT_SCHEMA_VERSION = 6;
+export const CURRENT_SCHEMA_VERSION = 7;
 
 const STATUS_WAARDEN = ["idee", "vast"];
 export const SCHERMEN = ["maand", "weken", "overzicht", "vakken"];
 const THEMA_WAARDEN = ["systeem", "licht", "donker"];
 export const PERIODES = ["1w", "2w", "4w", "1m", "3m", "alle", "eigen"];
+export const PYTHON_INSCHRIJVING_WAARDEN = ["onbevestigd", "bevestigd", "afgewezen"];
 
 /**
  * @returns {{activeScreen: string, scrollPositions: Record<string, number>, thema: string}}
@@ -62,6 +71,8 @@ export function leegState() {
     weekWeergave: legeWeekWeergave(),
     afgevinkteMijlpalen: [],
     eigenProjecten: [],
+    pythonInschrijving: "onbevestigd",
+    vakkenVeldwaarden: {},
   };
 }
 
@@ -139,6 +150,21 @@ export function migrate(state) {
     };
   }
 
+  if (s.schemaVersion === 6) {
+    s = {
+      schemaVersion: 7,
+      laatsteExport: s.laatsteExport ?? null,
+      items: s.items ?? [],
+      ui: geldigeUiState(s.ui),
+      afgevinkteDeadlines: s.afgevinkteDeadlines ?? [],
+      weekWeergave: geldigeWeekWeergave(s.weekWeergave),
+      afgevinkteMijlpalen: s.afgevinkteMijlpalen ?? [],
+      eigenProjecten: s.eigenProjecten ?? [],
+      pythonInschrijving: PYTHON_INSCHRIJVING_WAARDEN.includes(s.pythonInschrijving) ? s.pythonInschrijving : "onbevestigd",
+      vakkenVeldwaarden: s.vakkenVeldwaarden ?? {},
+    };
+  }
+
   if (s.schemaVersion === CURRENT_SCHEMA_VERSION) {
     return {
       ...s,
@@ -147,6 +173,8 @@ export function migrate(state) {
       weekWeergave: geldigeWeekWeergave(s.weekWeergave),
       afgevinkteMijlpalen: s.afgevinkteMijlpalen ?? [],
       eigenProjecten: s.eigenProjecten ?? [],
+      pythonInschrijving: PYTHON_INSCHRIJVING_WAARDEN.includes(s.pythonInschrijving) ? s.pythonInschrijving : "onbevestigd",
+      vakkenVeldwaarden: s.vakkenVeldwaarden ?? {},
     };
   }
   throw new Error(`onbekende schemaVersion: ${state.schemaVersion}`);

@@ -34,10 +34,11 @@ export function mijlpaalSleutel(project, mijlpaal) {
 
 /**
  * @param {string} vandaag
+ * @param {boolean} [pythonAfgewezen]
  * @returns {{datum: string, dagenResterend: number, inhoud: string}|null}
  */
-export function volgendeTentamenOfPresentatie(vandaag) {
-  const kandidaten = alleVakItems.filter((v) => v.date >= vandaag && isStipMoment(v));
+export function volgendeTentamenOfPresentatie(vandaag, pythonAfgewezen = false) {
+  const kandidaten = alleVakItems.filter((v) => v.date >= vandaag && isStipMoment(v) && !(pythonAfgewezen && v.course === "PY"));
   if (kandidaten.length === 0) return null;
   const eerstvolgende = kandidaten.reduce((a, b) => (a.date <= b.date ? a : b));
   return {
@@ -59,9 +60,9 @@ export function aantalOpenstaandeDeadlines(vandaag, afgevinkteDeadlines) {
   }).length;
 }
 
-/** @returns {{datum: string, inhoud: string}[]} */
-export function rijenSchooldagen() {
-  return genereerKalenderDagen()
+/** @param {boolean} [pythonAfgewezen] @returns {{datum: string, inhoud: string}[]} */
+export function rijenSchooldagen(pythonAfgewezen = false) {
+  return genereerKalenderDagen(pythonAfgewezen)
     .filter((d) => d.status === "les")
     .map((d) => ({
       datum: d.date,
@@ -69,10 +70,10 @@ export function rijenSchooldagen() {
     }));
 }
 
-/** @returns {{datum: string, inhoud: string}[]} */
-export function rijenTentamens() {
+/** @param {boolean} [pythonAfgewezen] @returns {{datum: string, inhoud: string}[]} */
+export function rijenTentamens(pythonAfgewezen = false) {
   return alleVakItems
-    .filter((v) => v.type === "tentamen")
+    .filter((v) => v.type === "tentamen" && !(pythonAfgewezen && v.course === "PY"))
     .map((v) => ({ datum: v.date, inhoud: `${courseNaam(v.course)} — ${v.label}` }));
 }
 
@@ -115,7 +116,7 @@ export function rijenEigenItems(items) {
   }));
 }
 
-/** @returns {{datum: string, inhoud: string}[]} */
-export function rijenVrijeBlokken() {
-  return freeBlocks().map((b) => ({ datum: b.start, inhoud: `${b.length} dagen vrij (t/m ${b.end})` }));
+/** @param {boolean} [pythonAfgewezen] @returns {{datum: string, inhoud: string}[]} */
+export function rijenVrijeBlokken(pythonAfgewezen = false) {
+  return freeBlocks(pythonAfgewezen).map((b) => ({ datum: b.start, inhoud: `${b.length} dagen vrij (t/m ${b.end})` }));
 }

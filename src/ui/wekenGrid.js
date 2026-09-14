@@ -143,12 +143,13 @@ function uitzonderingen(weekDagen) {
 /**
  * @param {HTMLElement} root
  * @param {string} weekMaandag
+ * @param {boolean} pythonAfgewezen
  * @param {(ymd: string) => void} onOpenWeek
  * @param {(weekMaandag: string) => void} onItemErbij
  */
-function renderWeekkaart(root, weekMaandag, onOpenWeek, onItemErbij) {
+function renderWeekkaart(root, weekMaandag, pythonAfgewezen, onOpenWeek, onItemErbij) {
   const dagen = [];
-  for (let i = 0; i < 7; i++) dagen.push(dayStatus(addDays(weekMaandag, i)));
+  for (let i = 0; i < 7; i++) dagen.push(dayStatus(addDays(weekMaandag, i), pythonAfgewezen));
 
   const kaart = document.createElement("div");
   kaart.className = "card weekkaart";
@@ -240,13 +241,13 @@ function renderWeekkaart(root, weekMaandag, onOpenWeek, onItemErbij) {
 
 /**
  * @param {HTMLElement} root
- * @param {{startWeeks: string[]}} data
+ * @param {{startWeeks: string[], pythonAfgewezen: boolean}} data
  * @param {(ymd: string) => void} onOpenWeek
  * @param {(weekMaandag: string) => void} onItemErbij
  */
-export function renderWeekstrips(root, { startWeeks }, onOpenWeek, onItemErbij) {
+export function renderWeekstrips(root, { startWeeks, pythonAfgewezen }, onOpenWeek, onItemErbij) {
   root.textContent = "";
   for (const weekMaandag of startWeeks) {
-    renderWeekkaart(root, weekMaandag, onOpenWeek, onItemErbij);
+    renderWeekkaart(root, weekMaandag, pythonAfgewezen, onOpenWeek, onItemErbij);
   }
 }

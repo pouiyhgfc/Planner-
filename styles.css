@@ -788,3 +788,117 @@ select {
   color: var(--text-muted);
   font-size: var(--fs-min);
 }
+
+/* fase 8F — scherm "Vakken" */
+
+.vakken-lijst {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.vak-kaart {
+  padding: 16px;
+  border-radius: var(--radius-card);
+  border: none;
+  text-align: left;
+  font-family: var(--ff-head);
+  font-size: 15px;
+}
+
+.vak-detail-kop {
+  margin-bottom: 16px;
+}
+.vak-detail-naam {
+  font-family: var(--ff-head);
+  font-size: 20px;
+  margin: 8px 0 12px;
+}
+.vak-detail-regels {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 0;
+  font-size: var(--fs-min);
+}
+.vak-detail-regels dt {
+  color: var(--text-muted);
+}
+.vak-detail-regels dd {
+  margin: 0;
+}
+.vak-detail-klein {
+  color: var(--text-muted);
+  font-size: var(--fs-min);
+}
+
+.onbekend-veld {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.onbekend-label {
+  color: var(--danger-text);
+}
+.onbekend-veld input {
+  padding: 4px 6px;
+  font-size: var(--fs-min);
+}
+
+.inschrijving-badge {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  background: var(--purple-bg);
+  color: var(--purple-text);
+  border-radius: var(--radius-control);
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  font-size: var(--fs-min);
+}
+.inschrijving-label {
+  font-weight: 600;
+}
+
+.vak-sectie-kop {
+  font-family: var(--ff-head);
+  font-size: 15px;
+  margin: 20px 0 8px;
+}
+
+.weging-rij {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 8px;
+  font-size: var(--fs-min);
+}
+.weging-balk-wrap {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--border-soft);
+  overflow: hidden;
+}
+.weging-balk {
+  height: 100%;
+  background: var(--accent);
+}
+
+.teller-rij {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.teller-rij input[type="number"] {
+  width: 64px;
+}
+
+.lesoverzicht-lijst {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--fs-min);
+}

@@ -14,11 +14,18 @@ export const courses = [
     start: "09:10",
     end: "12:10",
     room: "博雅 101",
-    onbekendeVelden: [],
+    docent: null,
+    onbekendeVelden: ["docent"],
     bron: "syllabus PSY1007-09",
     zekerheid: "ZEKER",
     beoordeling: {
       tekst: "Midterm 35%, final 35%, 4 opdrachten 20%, participatie 10%. Te laat inleveren: −10% per dag inclusief weekend, na 1 week geen punten. Tentamens niet cumulatief. Gemist tentamen zonder documentatie = 0.",
+      weging: [
+        { label: "Midterm", percentage: 35 },
+        { label: "Final", percentage: 35 },
+        { label: "Opdrachten (4x)", percentage: 20 },
+        { label: "Participatie", percentage: 10 },
+      ],
       bron: "syllabus PSY1007-09",
       zekerheid: "ZEKER",
     },
@@ -31,12 +38,18 @@ export const courses = [
     start: "09:10",
     end: "12:10",
     room: null,
-    onbekendeVelden: ["code", "room"],
+    docent: null,
+    onbekendeVelden: ["code", "room", "docent"],
     opmerking: "De eerder aangenomen code 946 U0060 (ser. 52089) bleek bij Computer Programming in Python te horen, niet bij AgTech — FASE-8-1.md 0B, correctie 1. AgTech's eigen code is ONBEKEND.",
     bron: "presentatie 20260910-_Global_AgTech_Foresight.pdf",
     zekerheid: "ZEKER",
     beoordeling: {
       tekst: "Aanwezigheid 30%, participatie 30%, presentatie/opdracht 40%. −15 punten per absentie. −5 punten bij 10–15 min te laat, −10 punten bij >15 min te laat. −10 punten per goedgekeurde (ziekte)verlofaanvraag via het online systeem. Participatie: vraag stellen = 5 punten/week, maximaal 30.",
+      weging: [
+        { label: "Aanwezigheid", percentage: 30 },
+        { label: "Participatie", percentage: 30 },
+        { label: "Presentatie/opdracht", percentage: 40 },
+      ],
       bron: "presentatie 20260910-_Global_AgTech_Foresight.pdf",
       zekerheid: "ZEKER",
     },
@@ -55,6 +68,15 @@ export const courses = [
     zekerheid: "ZEKER",
     beoordeling: {
       tekst: "Huiswerk 30% (beste 5 van 7, geen uitstel), term project 25%, 2 quizzes 20%, comprehensive exam 25%, participatie 5%. Klasregels: geen laat huiswerk, geen telefoon, geen eten.",
+      // Telt op tot 105%, niet 100% — letterlijk overgenomen uit de syllabus-tekst
+      // (CLAUDE.md §5: niets "verbeteren"). Niet herschaald.
+      weging: [
+        { label: "Huiswerk (beste 5 van 7)", percentage: 30 },
+        { label: "Term project", percentage: 25 },
+        { label: "Quizzes (2x)", percentage: 20 },
+        { label: "Comprehensive exam", percentage: 25 },
+        { label: "Participatie", percentage: 5 },
+      ],
       bron: "2026-NTU_RTE_Syllabus_ver_1.docx",
       zekerheid: "ZEKER",
     },
@@ -74,6 +96,13 @@ export const courses = [
     zekerheid: "ZEKER",
     beoordeling: {
       tekst: "Aanwezigheid/participatie 15%, huiswerk 20%, quizzen/toetsen 20%, midterm 20%, final 25%. Huiswerk te laat: −10 punten, na 1 week 0. Dictee-quizzen geen herkansing, beste 15 tellen. Midterm+final (45%) geen ruime regeling: herkansing alleen met melding ≥1 dag vooraf, medische verklaring en afgeronde online verlofprocedure, dan binnen 3 dagen — anders 0 punten. Gedragsregels: vanaf de 4e waarschuwing −1 punt (telt onder aanwezigheid).",
+      weging: [
+        { label: "Aanwezigheid/participatie", percentage: 15 },
+        { label: "Huiswerk", percentage: 20 },
+        { label: "Quizzen/toetsen", percentage: 20 },
+        { label: "Midterm", percentage: 20 },
+        { label: "Final", percentage: 25 },
+      ],
       bron: "syllabus PTCSL7908-23",
       zekerheid: "ZEKER",
     },
@@ -111,6 +140,11 @@ export const courses = [
     zekerheid: "ZEKER",
     beoordeling: {
       tekst: "Aanwezigheid 10%, opdrachten 65% (ca. 10-12 stuks, programmeeropdrachten en online quizzes), groepsproject 25%.",
+      weging: [
+        { label: "Aanwezigheid", percentage: 10 },
+        { label: "Opdrachten (~10-12)", percentage: 65 },
+        { label: "Groepsproject", percentage: 25 },
+      ],
       bron: "NTU-cursuspagina",
       zekerheid: "ZEKER",
     },

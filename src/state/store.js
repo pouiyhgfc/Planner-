@@ -128,6 +128,25 @@ export function verwijderProject(state, id) {
 }
 
 /**
+ * @param {{pythonInschrijving: string}} state
+ * @param {"onbevestigd"|"bevestigd"|"afgewezen"} waarde
+ * @returns {{pythonInschrijving: string}}
+ */
+export function zetPythonInschrijving(state, waarde) {
+  return { ...state, pythonInschrijving: waarde };
+}
+
+/**
+ * @param {{vakkenVeldwaarden: Record<string, string>}} state
+ * @param {string} sleutel bijv. "AGTECH.room" of "PY.opdrachtenIngeleverd"
+ * @param {string} waarde
+ * @returns {{vakkenVeldwaarden: Record<string, string>}}
+ */
+export function zetVakVeld(state, sleutel, waarde) {
+  return { ...state, vakkenVeldwaarden: { ...state.vakkenVeldwaarden, [sleutel]: waarde } };
+}
+
+/**
  * Vraagt persistente opslag aan. Logt de uitkomst; de app werkt ongeacht
  * het antwoord (CLAUDE.md §4/§8).
  * @returns {Promise<boolean|null>} null als de API niet bestaat

@@ -8,6 +8,8 @@ import {
   zetMijlpaalAfgevinkt,
   voegProjectToe,
   verwijderProject,
+  zetPythonInschrijving,
+  zetVakVeld,
   vraagPersistentOpslagAan,
   bereidExportVoor,
   bereidSamenvoegingVoor,
@@ -19,7 +21,7 @@ import { initNavigatie, renderTopbar } from "./nav.js";
 import { initMaandScherm } from "./schermMaand.js";
 import { initWekenScherm } from "./schermWeken.js";
 import { initOverzichtScherm } from "./schermOverzicht.js";
-import { renderVakkenScherm } from "./schermen.js";
+import { initVakkenScherm } from "./schermVakken.js";
 import {
   renderThemaRegel,
   renderPersistRegel,
@@ -93,20 +95,29 @@ function instellingenWeergeven() {
   renderEigenItemsLijst(eigenItemsEl, state.items, (id) => verwijderItemEnHerteken(id));
 }
 
+function pythonAfgewezen() {
+  return state.pythonInschrijving === "afgewezen";
+}
+
 function topbarWeergeven() {
   renderTopbar(
     { weekEl: topbarWeekEl, absentieEl: topbarAbsentieEl },
-    { vandaag: huidigeYMD(), absenties: absentieTotaal(state.items) },
+    { vandaag: huidigeYMD(), absenties: absentieTotaal(state.items, pythonAfgewezen()) },
     () => navigatie.naarScherm("vakken")
   );
 }
 
 function maandWeergeven() {
-  maandScherm.render({ vandaag: huidigeYMD(), items: state.items, afgevinkteDeadlines: state.afgevinkteDeadlines });
+  maandScherm.render({
+    vandaag: huidigeYMD(),
+    items: state.items,
+    afgevinkteDeadlines: state.afgevinkteDeadlines,
+    pythonAfgewezen: pythonAfgewezen(),
+  });
 }
 
 function wekenWeergeven() {
-  wekenScherm.render({ weekWeergave: state.weekWeergave, vandaag: huidigeYMD() });
+  wekenScherm.render({ weekWeergave: state.weekWeergave, vandaag: huidigeYMD(), pythonAfgewezen: pythonAfgewezen() });
 }
 
 async function wijzigWeekWeergave(nieuweWeekWeergave) {
@@ -127,7 +138,33 @@ function overzichtWeergeven() {
     afgevinkteDeadlines: state.afgevinkteDeadlines,
     afgevinkteMijlpalen: state.afgevinkteMijlpalen,
     eigenProjecten: state.eigenProjecten,
+    pythonAfgewezen: pythonAfgewezen(),
   });
+}
+
+function vakkenWeergeven() {
+  vakkenScherm.render({
+    items: state.items,
+    afgevinkteDeadlines: state.afgevinkteDeadlines,
+    pythonInschrijving: state.pythonInschrijving,
+    vakkenVeldwaarden: state.vakkenVeldwaarden,
+  });
+}
+
+async function zetVakVeldEnHerteken(sleutel, waarde) {
+  state = zetVakVeld(state, sleutel, waarde);
+  await bewaarState(state);
+  vakkenWeergeven();
+}
+
+async function zetPythonInschrijvingEnHerteken(waarde) {
+  state = zetPythonInschrijving(state, waarde);
+  await bewaarState(state);
+  vakkenWeergeven();
+  topbarWeergeven();
+  maandWeergeven();
+  wekenWeergeven();
+  overzichtWeergeven();
 }
 
 async function voegProjectEnHerteken(veld) {
@@ -156,6 +193,7 @@ async function voegItemEnHerteken(veld) {
   maandWeergeven();
   wekenWeergeven();
   overzichtWeergeven();
+  vakkenWeergeven();
 }
 
 async function verwijderItemEnHerteken(id) {
@@ -166,6 +204,7 @@ async function verwijderItemEnHerteken(id) {
   maandWeergeven();
   wekenWeergeven();
   overzichtWeergeven();
+  vakkenWeergeven();
 }
 
 async function zetDeadlineEnHerteken(sleutel, afgevinkt) {
@@ -173,6 +212,7 @@ async function zetDeadlineEnHerteken(sleutel, afgevinkt) {
   await bewaarState(state);
   maandWeergeven();
   overzichtWeergeven();
+  vakkenWeergeven();
 }
 
 function downloadBestand(bestandsnaam, inhoud) {
@@ -205,6 +245,7 @@ async function importeerBestand(bestand) {
   maandWeergeven();
   wekenWeergeven();
   overzichtWeergeven();
+  vakkenWeergeven();
 }
 exportEl.addEventListener("import-bestand", (e) => importeerBestand(e.detail));
 
@@ -217,6 +258,7 @@ async function pasConflictenToe(keuzes) {
   maandWeergeven();
   wekenWeergeven();
   overzichtWeergeven();
+  vakkenWeergeven();
 }
 
 pasThemaToe(state.ui.thema);
@@ -250,13 +292,18 @@ const overzichtScherm = initOverzichtScherm(schermEls.overzicht, {
   onProjectVerwijderen: verwijderProjectEnHerteken,
 });
 
-renderVakkenScherm(schermEls.vakken);
+const vakkenScherm = initVakkenScherm(schermEls.vakken, {
+  onVeldWijzigen: zetVakVeldEnHerteken,
+  onInschrijvingWijzigen: zetPythonInschrijvingEnHerteken,
+  onDeadlineToggle: zetDeadlineEnHerteken,
+});
 
 topbarWeergeven();
 instellingenWeergeven();
 maandWeergeven();
 wekenWeergeven();
 overzichtWeergeven();
+vakkenWeergeven();
 
 vraagPersistentOpslagAan().then((toegekend) => {
   persistToegekend = toegekend;

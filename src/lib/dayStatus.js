@@ -47,14 +47,17 @@ function legeDagdelen() {
 
 /**
  * @param {string} ymd
+ * @param {boolean} [pythonAfgewezen] Python-inschrijving afgewezen op het scherm "Vakken"
+ *   (fase 8F) — het vak telt dan niet meer mee. Standaard false: geen gedragswijziging
+ *   voor bestaande aanroepen.
  * @returns {object} status van één dag
  */
-export function dayStatus(ymd) {
+export function dayStatus(ymd, pythonAfgewezen = false) {
   const weekday = dayOfWeek(ymd);
   const { isoYear, week } = isoWeek(ymd);
 
   const vasteBoekingen = trips.filter((t) => valtOpDatum(ymd, t));
-  const vakken = alleVakItems.filter((v) => valtOpDatum(ymd, v));
+  const vakken = alleVakItems.filter((v) => valtOpDatum(ymd, v) && !(pythonAfgewezen && v.course === "PY"));
   const deadlines = alleDeadlineItems.filter((d) => valtOpDatum(ymd, d));
   const feestdagen = holidays.filter((h) => valtOpDatum(ymd, h));
   const mogelijkeTentamens = chineseMogelijkeTentamens.filter((t) => valtOpDatum(ymd, t));
@@ -112,8 +115,9 @@ export function dayStatus(ymd) {
 }
 
 /**
+ * @param {boolean} [pythonAfgewezen]
  * @returns {ReturnType<typeof dayStatus>[]} status van alle 181 dagen in de app-periode
  */
-export function genereerKalenderDagen() {
-  return rangeDays(appPeriod.start, appPeriod.end).map(dayStatus);
+export function genereerKalenderDagen(pythonAfgewezen = false) {
+  return rangeDays(appPeriod.start, appPeriod.end).map((ymd) => dayStatus(ymd, pythonAfgewezen));
 }

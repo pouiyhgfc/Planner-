@@ -35,6 +35,7 @@ function kopSectie(titel) {
  *   dag: ReturnType<typeof import("../lib/dayStatus.js").dayStatus>,
  *   eigenItems: object[],
  *   afgevinkteDeadlines: string[],
+ *   pythonAfgewezen: boolean,
  * }} data
  * @param {{
  *   onSluiten: () => void,
@@ -45,7 +46,7 @@ function kopSectie(titel) {
  *   onDeadlineToggle: (sleutel: string, afgevinkt: boolean) => void,
  * }} acties
  */
-export function renderDagblad(root, { ymd, dag, eigenItems, afgevinkteDeadlines }, acties) {
+export function renderDagblad(root, { ymd, dag, eigenItems, afgevinkteDeadlines, pythonAfgewezen = false }, acties) {
   root.textContent = "";
 
   const kop = document.createElement("div");
@@ -137,7 +138,7 @@ export function renderDagblad(root, { ymd, dag, eigenItems, afgevinkteDeadlines 
   }
 
   // 7. Wat deze dag kost
-  const { perVak } = costOfRange(ymd, ymd);
+  const { perVak } = costOfRange(ymd, ymd, pythonAfgewezen);
   const vakken = Object.entries(perVak);
   if (vakken.length > 0) {
     root.appendChild(kopSectie("Wat deze dag kost"));

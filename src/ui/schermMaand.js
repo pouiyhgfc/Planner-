@@ -17,7 +17,7 @@ import { renderDagblad } from "./dagblad.js";
  *   onVerwijderItem: (id: string) => void,
  *   onDeadlineToggle: (sleutel: string, afgevinkt: boolean) => void,
  * }} callbacks
- * @returns {{render: (ctx: {vandaag: string, items: object[], afgevinkteDeadlines: string[]}) => void}}
+ * @returns {{render: (ctx: {vandaag: string, items: object[], afgevinkteDeadlines: string[], pythonAfgewezen: boolean}) => void}}
  */
 export function initMaandScherm(root, callbacks) {
   const gridEl = document.createElement("div");
@@ -51,16 +51,16 @@ export function initMaandScherm(root, callbacks) {
 
   function tekenen() {
     if (!laatsteCtx) return;
-    const { vandaag, items, afgevinkteDeadlines } = laatsteCtx;
+    const { vandaag, items, afgevinkteDeadlines, pythonAfgewezen } = laatsteCtx;
 
-    renderMaandGrid(gridEl, { jaar, maand, vandaag, geselecteerd, items }, toonDag, toonMaand);
+    renderMaandGrid(gridEl, { jaar, maand, vandaag, geselecteerd, items, pythonAfgewezen }, toonDag, toonMaand);
 
     dagbladEl.hidden = geselecteerd === null;
     if (geselecteerd !== null) {
       const eigenItems = items.filter((item) => item.start <= geselecteerd && geselecteerd <= item.end);
       renderDagblad(
         dagbladEl,
-        { ymd: geselecteerd, dag: dayStatus(geselecteerd), eigenItems, afgevinkteDeadlines },
+        { ymd: geselecteerd, dag: dayStatus(geselecteerd, pythonAfgewezen), eigenItems, afgevinkteDeadlines, pythonAfgewezen },
         {
           onSluiten: sluitDagblad,
           onItemToevoegen: callbacks.onItemToevoegen,

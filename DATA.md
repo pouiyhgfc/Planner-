@@ -495,8 +495,9 @@ op te bouwen.
 
 De app maakt hiervoor lege, gemarkeerde velden — géén aannames.
 
-1. Vakcode én zaalnummer Global AgTech Foresight (de eerder aangenomen code
-   bleek bij Python te horen — zie §1-correctie).
+1. Vakcode, zaalnummer én docentnaam Global AgTech Foresight (de eerder
+   aangenomen code bleek bij Python te horen — zie §1-correctie; §3.2 noemt
+   geen docentnaam).
 1b. General Chinese: exacte tentamendatum binnen week 9 (11-02 of 11-04) en
     binnen week 16 (12-21 of 12-23). Ook: uitkomst van het gesprek met docent
     何宣瑩 (HE, SYUAN-YING) over de afwezigheid tijdens week 9 door de
@@ -508,6 +509,9 @@ De app maakt hiervoor lege, gemarkeerde velden — géén aannames.
     groepsgrootte en vormingstermijn van het groepsproject; of de strengere
     cijfergrens voor programmeer-gerelateerde opleidingen op civiele techniek
     van toepassing is (zie §3.5).
+1d. General Psychology: naam van de docent — §3.1 noemt alleen "docent
+    behoudt recht op wijziging", geen naam. Ontdekt tijdens het bouwen van
+    het scherm "Vakken" (fase 8F), dat een docentveld voor elk vak toont.
 2. Of de docenten inhaallessen plannen in de flexibele week 2026-12-28 → 12-31.
    Aankondiging uiterlijk 2026-11-28 volgens de kalender.
 3. Datum en duur van de afstudeeropdracht in Nederland (februari 2027) — bepaalt

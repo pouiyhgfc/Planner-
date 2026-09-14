@@ -83,17 +83,17 @@ function gesorteerdOpTijd(vakken) {
  * @param {HTMLElement} root
  * @param {{
  *   jaar: number, maand: number, vandaag: string, geselecteerd: string|null,
- *   items: object[],
+ *   items: object[], pythonAfgewezen: boolean,
  * }} opts
  * @param {(ymd: string) => void} onDagKlik
  * @param {(jaar: number, maand: number) => void} onNavigeren
  */
 export function renderMaandScherm(root, opts, onDagKlik, onNavigeren) {
-  const { jaar, maand, vandaag, geselecteerd, items } = opts;
+  const { jaar, maand, vandaag, geselecteerd, items, pythonAfgewezen } = opts;
   root.textContent = "";
 
   root.appendChild(renderHeader(jaar, maand, vandaag, onNavigeren));
-  root.appendChild(renderGrid(jaar, maand, vandaag, geselecteerd, items, onDagKlik));
+  root.appendChild(renderGrid(jaar, maand, vandaag, geselecteerd, items, pythonAfgewezen, onDagKlik));
   root.appendChild(renderLegenda());
 }
 
@@ -144,7 +144,7 @@ function renderHeader(jaar, maand, vandaag, onNavigeren) {
   return wrap;
 }
 
-function renderGrid(jaar, maand, vandaag, geselecteerd, items, onDagKlik) {
+function renderGrid(jaar, maand, vandaag, geselecteerd, items, pythonAfgewezen, onDagKlik) {
   const weken = maandWeken(jaar, maand);
   const frag = document.createDocumentFragment();
 
@@ -169,7 +169,7 @@ function renderGrid(jaar, maand, vandaag, geselecteerd, items, onDagKlik) {
       const buitenPeriode = ymd < appPeriod.start || ymd > appPeriod.end;
       const buitenMaand = m !== maand;
       grid.appendChild(
-        renderDagvak(ymd, buitenPeriode, buitenMaand, vandaag, geselecteerd, items, onDagKlik, (dag) => {
+        renderDagvak(ymd, buitenPeriode, buitenMaand, vandaag, geselecteerd, items, pythonAfgewezen, onDagKlik, (dag) => {
           if (buitenMaand || buitenPeriode) return;
           lesmomenten += dag.vakken.filter((v) => v.type === "les").length;
           tentamens += dag.vakken.filter((v) => v.type === "tentamen").length;
@@ -181,7 +181,7 @@ function renderGrid(jaar, maand, vandaag, geselecteerd, items, onDagKlik) {
 
   const eersteDag = toYMD({ y: jaar, m: maand, d: 1 });
   const laatsteDag = laatsteDagVanMaand(jaar, maand);
-  const vrijeBlokken = freeBlocks().filter((b) => b.start >= eersteDag && b.start <= laatsteDag).length;
+  const vrijeBlokken = freeBlocks(pythonAfgewezen).filter((b) => b.start >= eersteDag && b.start <= laatsteDag).length;
 
   const telling = document.createElement("p");
   telling.className = "maand-telling";
@@ -191,7 +191,7 @@ function renderGrid(jaar, maand, vandaag, geselecteerd, items, onDagKlik) {
   return frag;
 }
 
-function renderDagvak(ymd, buitenPeriode, buitenMaand, vandaag, geselecteerd, items, onDagKlik, telMee) {
+function renderDagvak(ymd, buitenPeriode, buitenMaand, vandaag, geselecteerd, items, pythonAfgewezen, onDagKlik, telMee) {
   const { d } = parseYMD(ymd);
   const knop = document.createElement("button");
   knop.type = "button";
@@ -211,7 +211,7 @@ function renderDagvak(ymd, buitenPeriode, buitenMaand, vandaag, geselecteerd, it
     return knop;
   }
 
-  const dag = dayStatus(ymd);
+  const dag = dayStatus(ymd, pythonAfgewezen);
   telMee(dag);
 
   if (dag.status === "feestdag" || dag.status === "geen-les") knop.classList.add("status-gemarkeerd");

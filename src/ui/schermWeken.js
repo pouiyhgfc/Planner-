@@ -51,7 +51,7 @@ export function initWekenScherm(root, callbacks) {
     invoegEl.textContent = "";
 
     const starts = weekStarts(w.startWeek, w.periode, w.eigenStart, w.eigenEind);
-    renderWeekstrips(stripsEl, { startWeeks: starts }, callbacks.onOpenWeek, (weekMaandag) => {
+    renderWeekstrips(stripsEl, { startWeeks: starts, pythonAfgewezen: laatsteCtx.pythonAfgewezen }, callbacks.onOpenWeek, (weekMaandag) => {
       invoegEl.textContent = "";
       renderPlannerForm(
         invoegEl,
