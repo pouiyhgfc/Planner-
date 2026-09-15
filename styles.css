@@ -403,20 +403,25 @@ select {
   flex-shrink: 0;
   align-self: flex-start;
 }
+/* Geen rand: met een omrand vakje per regel liepen er tientallen kleine
+   dozen langs de rechterkant, die harder riepen dan de afspraken zelf. Het
+   raakvlak blijft even groot — dat zit in de padding, niet in de rand. */
 .rij-menu > summary {
   list-style: none;
   cursor: pointer;
-  padding: 2px 8px;
-  border: var(--border-width) solid var(--border-soft);
+  padding: 12px 10px;
+  border: var(--border-width) solid transparent;
   border-radius: 4px;
-  color: var(--text-muted);
-  line-height: 1.2;
+  color: var(--text-faint);
+  line-height: 1;
+  letter-spacing: 0.08em;
 }
 .rij-menu > summary::-webkit-details-marker {
   display: none;
 }
 .rij-menu[open] > summary {
-  border-color: var(--accent);
+  border-color: var(--accent-border);
+  background: var(--accent-bg);
   color: var(--accent-text);
 }
 .rij-menu-lijst {
@@ -442,6 +447,36 @@ select {
 .rij-menu-lijst button + button {
   border-top: var(--border-width) solid var(--border-soft);
 }
+/* Een knop die om bevestiging heeft gevraagd, staat in de waarschuwkleur tot
+   je kiest — anders zie je niet dat je nog een keer moet tikken. */
+.bevestig-actief {
+  color: var(--danger-text);
+  border-color: var(--danger-border);
+  background: var(--danger-bg);
+}
+.rij-knop-gevaar.bevestig-actief,
+.menu-knop-gevaar.bevestig-actief {
+  font-weight: 600;
+}
+
+#eigen-beheer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 20px;
+}
+.beheer-sectie {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: var(--border-width) solid var(--border-soft);
+}
+.beheer-sectie h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
 .overzicht-toevoegen {
   display: flex;
 }

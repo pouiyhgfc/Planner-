@@ -142,18 +142,6 @@ function instellingenWeergeven() {
   renderExportRegel(exportEl, state.laatsteExport, exporteer);
   renderConflictenPaneel(conflictenEl, openstaandeConflicten, pasConflictenToe);
   renderReisstatusPaneel(reisstatusEl, state.tripStatusOverrides, (variant, nieuweStatus) => zetTripStatusEnHerteken(variant, nieuweStatus));
-  const bewerkteReis = state.eigenReizen.find((r) => r.id === bewerkteReisId) ?? null;
-  renderReisForm(reisFormEl, (veld) => reisOpslaan(veld), bewerkteReis);
-  // Het formulier zit in een ingeklapt blok; bij bewerken moet het openstaan,
-  // anders lijkt "Bewerken" niets te doen.
-  zetUitklap(reisUitklapEl, Boolean(bewerkteReis), bewerkteReis ? "Reis bewerken" : "Reis toevoegen");
-  renderEigenReizenLijst(eigenReizenEl, state.eigenReizen, (id) => verwijderReisEnHerteken(id), (id) => startReisBewerken(id));
-
-  const bewerktItem = state.items.find((i) => i.id === bewerktItemId) ?? null;
-  renderPlannerForm(formEl, (veld) => itemOpslaan(veld), bewerktItem ? { item: bewerktItem } : undefined);
-  zetUitklap(itemUitklapEl, Boolean(bewerktItem), bewerktItem ? "Item bewerken" : "Item toevoegen");
-  renderEigenItemsLijst(eigenItemsEl, state.items, (id) => verwijderItemEnHerteken(id), (id) => startItemBewerken(id));
-
   renderVerborgenLijst(
     verborgenEl,
     state.verborgenItems.map((sleutel) => ({ sleutel, omschrijving: verborgenOmschrijving(sleutel) })),
@@ -217,12 +205,14 @@ function allesWeergeven() {
 
 function startItemBewerken(id) {
   bewerktItemId = id;
-  instellingenWeergeven();
+  overzichtWeergeven();
+  itemUitklapEl.scrollIntoView({ block: "nearest" });
 }
 
 function startReisBewerken(id) {
   bewerkteReisId = id;
-  instellingenWeergeven();
+  overzichtWeergeven();
+  reisUitklapEl.scrollIntoView({ block: "nearest" });
 }
 
 /** Opslaan is toevoegen óf bijwerken, afhankelijk van wat er in bewerking is. */
@@ -313,16 +303,26 @@ function dagKiezenVanuitOverzicht(ymd, opties) {
 }
 
 /**
- * Het bewerkformulier voor eigen items staat in Instellingen. Vanuit Overzicht
- * moet dat paneel dus ook opengaan, anders lijkt "Bewerken" niets te doen.
- * @param {string} id
+ * Je eigen items en reizen stonden onder Instellingen, waar je ze niet zoekt:
+ * het zijn geen instellingen maar inhoud. Ze staan nu onder de lijst op
+ * Overzicht, op het scherm waar je ze ook ziet staan.
  */
-function bewerkenVanuitOverzicht(id) {
-  startItemBewerken(id);
-  navigatie.openInstellingen();
+function eigenBeheerWeergeven() {
+  const bewerktItem = state.items.find((i) => i.id === bewerktItemId) ?? null;
+  renderPlannerForm(formEl, (veld) => itemOpslaan(veld), bewerktItem ? { item: bewerktItem } : undefined);
+  // Het formulier zit in een ingeklapt blok; bij bewerken moet het openstaan,
+  // anders lijkt "Bewerken" niets te doen.
+  zetUitklap(itemUitklapEl, Boolean(bewerktItem), bewerktItem ? "Item bewerken" : "Item toevoegen");
+  renderEigenItemsLijst(eigenItemsEl, state.items, (id) => verwijderItemEnHerteken(id), (id) => startItemBewerken(id));
+
+  const bewerkteReis = state.eigenReizen.find((r) => r.id === bewerkteReisId) ?? null;
+  renderReisForm(reisFormEl, (veld) => reisOpslaan(veld), bewerkteReis);
+  zetUitklap(reisUitklapEl, Boolean(bewerkteReis), bewerkteReis ? "Reis bewerken" : "Reis toevoegen");
+  renderEigenReizenLijst(eigenReizenEl, state.eigenReizen, (id) => verwijderReisEnHerteken(id), (id) => startReisBewerken(id));
 }
 
 function overzichtWeergeven() {
+  eigenBeheerWeergeven();
   overzichtScherm.render({
     vandaag: huidigeYMD(),
     items: state.items,
@@ -387,7 +387,6 @@ async function voegReisEnHerteken(veld) {
 async function verwijderReisEnHerteken(id) {
   state = verwijderReis(state, id);
   await bewaarState(state);
-  instellingenWeergeven();
   maandWeergeven();
   wekenWeergeven();
   overzichtWeergeven();
@@ -517,9 +516,14 @@ const overzichtScherm = initOverzichtScherm(schermEls.overzicht, {
   onOpleveringToggle: zetOpleveringEnHerteken,
   onVerbergen: (sleutel) => verbergEnHerteken(sleutel),
   onItemVerwijderen: verwijderItemEnHerteken,
-  onItemBewerken: bewerkenVanuitOverzicht,
+  onItemBewerken: startItemBewerken,
   onDagKiezen: dagKiezenVanuitOverzicht,
 });
+
+// #eigen-beheer staat in index.html binnen het overzichtscherm en zou dus
+// vóór de lijst komen; initOverzichtScherm hangt zijn eigen delen erachter.
+// Opnieuw aanhangen zet het blok onderaan, waar het hoort.
+schermEls.overzicht.appendChild(document.getElementById("eigen-beheer"));
 
 const vakkenScherm = initVakkenScherm(schermEls.vakken, {
   onVeldWijzigen: zetVakVeldEnHerteken,

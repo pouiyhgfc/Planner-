@@ -7,6 +7,7 @@
 import { volledigeDatum, kortDatum, collegeWeek } from "./datumlabels.js";
 import { meervoud } from "./tekst.js";
 import { courseVoor } from "../data/courses.js";
+import { bevestigKnop } from "./knoppen.js";
 
 import { projects } from "../data/projects.js";
 import { zichtbareOpleveringen } from "./overzichtData.js";
@@ -383,20 +384,7 @@ function renderLesBlok(les, week, deadlinesVandaag, onNaarVak) {
  * @returns {HTMLButtonElement}
  */
 export function verbergKnop(sleutel, onVerbergen) {
-  const knop = document.createElement("button");
-  knop.type = "button";
-  knop.className = "verberg-knop";
-  knop.textContent = "Verbergen";
-  let bevestigen = false;
-  knop.addEventListener("click", () => {
-    if (!bevestigen) {
-      bevestigen = true;
-      knop.textContent = "Zeker weten?";
-      return;
-    }
-    onVerbergen(sleutel);
-  });
-  return knop;
+  return bevestigKnop({ label: "Verbergen", className: "verberg-knop", onBevestigd: () => onVerbergen(sleutel) });
 }
 
 /**

@@ -8,6 +8,7 @@ import { conflictenVoorRange } from "../lib/blocks.js";
 import { diffDays } from "../lib/date.js";
 import { kortDatum } from "./datumlabels.js";
 import { meervoud, vakAfkorting } from "./tekst.js";
+import { bevestigKnop } from "./knoppen.js";
 import { huidigeYMD } from "../state/store.js";
 import { trips, effectieveTripStatus, TRIP_STATUSSEN } from "../data/trips.js";
 
@@ -529,12 +530,15 @@ function renderVerwijderbareLijst(root, rijen, onVerwijderen, onBewerken, legeTe
     bewerk.addEventListener("click", () => onBewerken(rij.id));
     li.appendChild(bewerk);
 
-    const verwijder = document.createElement("button");
-    verwijder.type = "button";
-    verwijder.className = "rij-knop";
-    verwijder.textContent = "×";
+    // Verwijderen is definitief en stond als naamloos kruisje direct naast
+    // "Bewerken" — één misgetikte tik en je item was weg, terwijl verbergen
+    // (dat je zo terugdraait) wél om bevestiging vroeg.
+    const verwijder = bevestigKnop({
+      label: "Verwijderen",
+      className: "rij-knop rij-knop-gevaar",
+      onBevestigd: () => onVerwijderen(rij.id),
+    });
     verwijder.setAttribute("aria-label", `Verwijder "${rij.naam}"`);
-    verwijder.addEventListener("click", () => onVerwijderen(rij.id));
     li.appendChild(verwijder);
 
     lijst.appendChild(li);
