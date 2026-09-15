@@ -11,6 +11,8 @@ import { holidayDates } from "./holidays.js";
 const BRON_PSY = "syllabus PSY1007-09";
 const BRON_AGTECH = "presentatie 20260910-_Global_AgTech_Foresight.pdf";
 const BRON_RTE = "2026-NTU_RTE_Syllabus_ver_1.docx";
+// De collegeslides van les 1 vullen week 9 in, die in de docx leeg stond.
+const BRON_RTE_COLLEGE = "01_RTE-Lecture-01_Syllabus_2026.09.10.pdf (collegeslides)";
 const BRON_PY = "NTU-cursuspagina (FASE-8-1.md 0B, correctie 2)";
 
 // lezen (FASE-9.md A3): alleen deze elf weken hebben een leeshoofdstuk uit de
@@ -76,7 +78,7 @@ export const rteDates = [
   { date: "2026-10-15", week: 6, type: "les", course: "RTE", label: "Station and Yard", vorm: "discussietijd", bron: BRON_RTE, zekerheid: "ZEKER" },
   { date: "2026-10-22", week: 7, type: "les", course: "RTE", label: "Rolling Stock – Car Types & Coupler", vorm: "in de les", bron: BRON_RTE, zekerheid: "ZEKER" },
   { date: "2026-10-29", week: 8, type: "les", course: "RTE", label: "Term Project Discussion I", vorm: "discussietijd", bron: BRON_RTE, zekerheid: "ZEKER" },
-  { date: "2026-11-05", week: 9, type: "les", course: "RTE", label: "Rolling Stock – Bogie & Brake", vorm: null, bron: BRON_RTE, zekerheid: "ZEKER" },
+  { date: "2026-11-05", week: 9, type: "les", course: "RTE", label: "Rolling Stock – Bogie & Brake", vorm: "in de les", bron: BRON_RTE_COLLEGE, zekerheid: "ZEKER" },
   { date: "2026-11-12", week: 10, type: "les", course: "RTE", label: "Signal & Train Control", vorm: "in de les", bron: BRON_RTE, zekerheid: "ZEKER" },
   { date: "2026-11-19", week: 11, type: "les", course: "RTE", label: "Technical Visit", vorm: null, bron: BRON_RTE, zekerheid: "ZEKER" },
   { date: "2026-11-26", week: 12, type: "les", course: "RTE", label: "Term Project Discussion II", vorm: "discussietijd", bron: BRON_RTE, zekerheid: "ZEKER" },

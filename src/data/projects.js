@@ -6,7 +6,7 @@
  */
 
 const BRON_RTE = "2026-NTU_RTE_Syllabus_ver_1.docx";
-const BRON_PY = "NTU-cursuspagina (FASE-8-1.md 0B, correctie 2)";
+const BRON_PY_COLLEGE = "Lecture00_CourseOverview_03.pdf (collegeslides)";
 
 export const projects = [
   {
@@ -28,16 +28,20 @@ export const projects = [
     id: "PY_GROEPSPROJECT",
     naam: "Python groepsproject",
     vak: "PY",
+    tekst: "Groepen van 4 tot 6 studenten. Verdeling binnen de 25%: groepsleden doorgeven 3%, voorstel + video 1%, creativiteit/haalbaarheid/breedte 3%, beoordeling van groepsgenoten 8%, verslag 10%. De presentatie is optioneel en levert maximaal 5% bonus op.",
     mijlpalen: [
-      { datum: "2026-12-09", label: "Project Presentation (week 14)" },
-      { datum: "2026-12-16", label: "Project Presentation (week 15)" },
-      { datum: "2026-12-23", label: "Project Presentation (week 16)" },
+      { datum: "2026-10-09", label: "Groepsleden doorgeven (per e-mail)" },
+      { datum: "2026-11-06", label: "Voorstel + video inleveren" },
+      { datum: "2026-12-09", label: "Presentatie week 14 (optioneel)" },
+      { datum: "2026-12-16", label: "Presentatie week 15 (optioneel)" },
+      { datum: "2026-12-25", label: "Verslag + beoordeling groepsgenoten" },
     ],
-    groepsgrootte: null,
-    vormingstermijn: null,
-    onbekendeVelden: ["groepsgrootte", "vormingstermijn"],
-    waarschuwing: "Geen groep vormen binnen de gestelde termijn betekent een F voor het hele vak. Idries heeft al een groepsgenoot, dus dat risico is afgedekt. Groepsgrootte en vormingstermijn zijn nog ONBEKEND — worden in de les aangekondigd. Presenteren is geen verplichting.",
-    bron: `${BRON_PY} + opgave Idries`,
-    zekerheid: "TE VERIFIËREN",
+    groepsgrootteMin: 4,
+    groepsgrootteMax: 6,
+    vormingstermijn: "2026-10-09",
+    onbekendeVelden: [],
+    waarschuwing: "Groep niet op tijd doorgeven kost meteen punten: 1% per halve dag te laat, tot 100% van dat onderdeel. Idries heeft al een groepsgenoot, maar de groep moet 4 tot 6 personen tellen.",
+    bron: BRON_PY_COLLEGE,
+    zekerheid: "ZEKER",
   },
 ];

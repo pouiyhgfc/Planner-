@@ -32,6 +32,7 @@ const FILTERS = [
   { id: "deadlines", label: "Deadlines" },
   { id: "projecten", label: "Projecten" },
   { id: "reizen", label: "Reizen" },
+  { id: "opdrachten", label: "Opdrachten" },
   { id: "presentaties", label: "Presentaties" },
   { id: "verslagen", label: "Verslagen" },
   { id: "feestdagen", label: "Feestdagen" },
@@ -311,6 +312,12 @@ export function initOverzichtScherm(root, callbacks) {
       }
     }
     if (actieveFilters.has("reizen")) rijen.push(...rijenReizen(tripStatusOverrides, eigenReizen).map((r) => ({ ...r, categorie: "reizen" })));
+    // Opleveringen van het soort "opdracht" vielen onder geen enkel filter en
+    // waren daardoor onzichtbaar op dit scherm — ook de vier Python-
+    // projectdeadlines met een harde datum.
+    if (actieveFilters.has("opdrachten")) {
+      rijen.push(...rijenOpleveringen(vakkenVeldwaarden, verborgenItems).filter((r) => r.oplevering.soort === "opdracht").map((r) => ({ ...r, categorie: "opdrachten" })));
+    }
     if (actieveFilters.has("presentaties")) {
       rijen.push(...rijenOpleveringen(vakkenVeldwaarden, verborgenItems).filter((r) => r.oplevering.soort === "presentatie").map((r) => ({ ...r, categorie: "presentaties" })));
     }
@@ -320,8 +327,15 @@ export function initOverzichtScherm(root, callbacks) {
     if (actieveFilters.has("feestdagen")) rijen.push(...rijenFeestdagen().map((r) => ({ ...r, categorie: "feestdagen" })));
     if (actieveFilters.has("eigenItems")) rijen.push(...rijenEigenItems(items).map((r) => ({ ...r, categorie: "eigenItems" })));
     if (actieveFilters.has("vrijeBlokken")) rijen.push(...rijenVrijeBlokken(pythonAfgewezen, tripStatusOverrides, eigenReizen).map((r) => ({ ...r, categorie: "vrijeBlokken" })));
-    rijen.sort((a, b) => a.datum.localeCompare(b.datum));
-    return rijen;
+    // Dezelfde ontdubbeling als op het vakkenscherm: een RTE-opdracht staat
+    // zowel als deadline (rteActionItems) als als oplevering in de data. Met
+    // beide filters aan kwam hij twee keer in de lijst. De oplevering wint —
+    // die noemt het onderwerp en de weging.
+    const dedupLabels = new Set(rijen.filter((r) => r.oplevering?.dedupLabel).map((r) => r.oplevering.dedupLabel));
+    const ontdubbeld = rijen.filter((r) => !(r.categorie === "deadlines" && dedupLabels.has(r.deadline?.label)));
+
+    ontdubbeld.sort((a, b) => a.datum.localeCompare(b.datum));
+    return ontdubbeld;
   }
 
   function renderRij(rij, toonVakChip = true) {
@@ -357,7 +371,7 @@ export function initOverzichtScherm(root, callbacks) {
       vinkje.addEventListener("change", () => callbacks.onMijlpaalToggle(sleutel, vinkje.checked));
       rechts.appendChild(vinkje);
     }
-    if ((rij.categorie === "presentaties" || rij.categorie === "verslagen") && rij.oplevering) {
+    if (rij.oplevering) {
       const vinkje = document.createElement("input");
       vinkje.type = "checkbox";
       vinkje.checked = laatsteCtx.afgevinkteOpleveringen.includes(rij.oplevering.id);

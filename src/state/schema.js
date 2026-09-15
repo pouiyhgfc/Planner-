@@ -66,13 +66,20 @@
  *     toont. Stond eerder alleen in het geheugen van het scherm, waardoor een
  *     uitgezette soort na een herlaad weer terugkwam — en dat is precies wat
  *     je niet wilt van een knop die "verberg alle vrije blokken" heet.
+ * v15: het filter "opdrachten" is erbij gekomen, en opdrachten, presentaties
+ *     en verslagen staan voortaan standaard aan. Opleveringen van het soort
+ *     "opdracht" vielen onder geen enkel filter en waren onzichtbaar op
+ *     Overzicht; presentaties en verslagen stonden standaard uit, waardoor
+ *     bijvoorbeeld het Python-verslag (10%) er niet bij stond. Wie al een
+ *     keuze had bewaard krijgt deze drie erbij — anders zou een bestaande
+ *     installatie zijn zwaarste inlevermomenten nooit te zien krijgen.
  */
 
 import { parseYMD } from "../lib/date.js";
 import { trips, TRIP_STATUSSEN } from "../data/trips.js";
 import { courseVoor } from "../data/courses.js";
 
-export const CURRENT_SCHEMA_VERSION = 14;
+export const CURRENT_SCHEMA_VERSION = 15;
 
 /** @returns {string} de inschrijvingsstand zoals src/data/courses.js die kent */
 function inschrijvingUitData() {
@@ -85,8 +92,8 @@ const THEMA_WAARDEN = ["systeem", "licht", "donker"];
 export const PERIODES = ["1w", "2w", "4w", "1m", "3m", "alle", "eigen"];
 export const PYTHON_INSCHRIJVING_WAARDEN = ["onbevestigd", "bevestigd", "afgewezen"];
 export const KALENDER_WEERGAVEN = ["compact", "uitgebreid"];
-export const OVERZICHT_FILTERS = ["schooldagen", "tentamens", "deadlines", "projecten", "reizen", "presentaties", "verslagen", "feestdagen", "eigenItems", "vrijeBlokken"];
-const OVERZICHT_FILTERS_STANDAARD = ["tentamens", "deadlines", "vrijeBlokken", "reizen"];
+export const OVERZICHT_FILTERS = ["schooldagen", "tentamens", "deadlines", "opdrachten", "projecten", "reizen", "presentaties", "verslagen", "feestdagen", "eigenItems", "vrijeBlokken"];
+const OVERZICHT_FILTERS_STANDAARD = ["tentamens", "deadlines", "opdrachten", "presentaties", "verslagen", "vrijeBlokken", "reizen"];
 
 /**
  * @param {unknown} lijst
@@ -319,6 +326,16 @@ export function migrate(state) {
       ...s,
       schemaVersion: 14,
       overzichtFilters: geldigeOverzichtFilters(s.overzichtFilters),
+    };
+  }
+
+  if (s.schemaVersion === 14) {
+    const filters = geldigeOverzichtFilters(s.overzichtFilters);
+    const erbij = ["opdrachten", "presentaties", "verslagen"].filter((f) => !filters.includes(f));
+    s = {
+      ...s,
+      schemaVersion: 15,
+      overzichtFilters: [...filters, ...erbij],
     };
   }
 

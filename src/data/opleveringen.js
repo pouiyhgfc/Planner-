@@ -24,21 +24,24 @@
 import { courseVoor } from "./courses.js";
 
 const BRON_RTE = "2026-NTU_RTE_Syllabus_ver_1.docx";
+const BRON_RTE_COLLEGE = "01_RTE-Lecture-01_Syllabus_2026.09.10.pdf (collegeslides)";
 const BRON_AGTECH = "presentatie 20260910-_Global_AgTech_Foresight.pdf";
 const BRON_PY = "NTU-cursuspagina (FASE-8-1.md 0B, correctie 2)";
+const BRON_PY_COLLEGE = "Lecture00_CourseOverview_03.pdf (collegeslides)";
 const BRON_PSY = "syllabus PSY1007-09";
 
 /**
- * Python heeft geen genummerde opdrachtenlijst in de cursuspagina — alleen
- * "ca. 10-12 stuks". Het aantal staat als schatting in courses.js en de regels
- * worden daaruit berekend, zodat het getal maar op één plek leeft (CLAUDE.md
- * §5: afgeleide feiten berekenen, niet invoeren). Geen enkele regel krijgt een
- * verzonnen datum of onderwerp: ze zijn er om te weten wat er aankomt, en
- * Idries vult datum en details zelf in zodra hij ze hoort.
+ * Python heeft geen genummerde opdrachtenlijst: de collegeslides zeggen
+ * "wekelijks of tweewekelijks, ongeveer 7 tot 11". De marge staat in
+ * courses.js en de regels worden daaruit berekend, zodat de getallen maar op
+ * één plek leven (CLAUDE.md §5: afgeleide feiten berekenen, niet invoeren).
+ * Er worden er zoveel getoond als het maximum: liever een regel te veel dan
+ * een opdracht die je niet ziet aankomen. Geen enkele regel krijgt een
+ * verzonnen datum of onderwerp — die vult Idries zelf in zodra hij ze hoort.
  */
 function pythonOpdrachten() {
-  const { aantal, aantalTelt, zekerheid } = courseVoor("PY").opdrachten;
-  return Array.from({ length: aantal }, (_, i) => ({
+  const { aantalMin, aantalMax, zekerheid } = courseVoor("PY").opdrachten;
+  return Array.from({ length: aantalMax }, (_, i) => ({
     id: `PY-OPDR-${i + 1}`,
     vak: "PY",
     naam: `Opdracht ${i + 1}`,
@@ -47,14 +50,18 @@ function pythonOpdrachten() {
     datum: null,
     mogelijkeData: null,
     onbekendeVelden: ["datum"],
-    opmerking: `Onderdeel van de 65% opdrachten; de beste ${aantalTelt} van de ${aantal} tellen mee. Aantal en datums staan niet in de cursuspagina — datum en onderwerp zelf invullen.`,
+    opmerking: `Onderdeel van de 65% opdrachten, wekelijks of tweewekelijks. De bron noemt ongeveer ${aantalMin} tot ${aantalMax} stuks; hier staan er ${aantalMax}, zodat je er geen mist. Elke opdracht telt mee (0-5 punten) — er vallen er geen af. Datum en onderwerp zelf invullen.`,
     dedupLabel: null,
-    bron: `${BRON_PY} + opgave Idries`,
+    bron: BRON_PY_COLLEGE,
     zekerheid,
   }));
 }
 
 const RTE_HUISWERK_OPMERKING = "Onderdeel van huiswerk 30% (beste 5 van 7 opdrachten tellen) — geen eigen percentage per opdracht in de syllabus.";
+
+// De onderwerpen achter de nummers (#2 Infrastructure & Special Track Work,
+// #3 WCML, #4 Station Evaluation, #5 Rolling Stock) staan alleen in de
+// collegeslides van les 1, niet in de docx-syllabus.
 
 export const opleveringen = [
   ...pythonOpdrachten(),
@@ -103,7 +110,7 @@ export const opleveringen = [
   {
     id: "RTE-OPDR-2",
     vak: "RTE",
-    naam: "Assignment #2",
+    naam: "Assignment #2 — Infrastructure & Special Track Work",
     soort: "opdracht",
     weging: null,
     datum: "2026-10-08",
@@ -111,13 +118,13 @@ export const opleveringen = [
     onbekendeVelden: [],
     opmerking: `Uitgegeven 2026-10-01, in op 2026-10-08. ${RTE_HUISWERK_OPMERKING}`,
     dedupLabel: "Assignment #2 due",
-    bron: BRON_RTE,
+    bron: `${BRON_RTE} + ${BRON_RTE_COLLEGE}`,
     zekerheid: "ZEKER",
   },
   {
     id: "RTE-OPDR-3",
     vak: "RTE",
-    naam: "Assignment #3",
+    naam: "Assignment #3 — WCML",
     soort: "opdracht",
     weging: null,
     datum: "2026-10-08",
@@ -125,13 +132,13 @@ export const opleveringen = [
     onbekendeVelden: [],
     opmerking: `In de les. ${RTE_HUISWERK_OPMERKING}`,
     dedupLabel: "Assignment #3 in-class",
-    bron: BRON_RTE,
+    bron: `${BRON_RTE} + ${BRON_RTE_COLLEGE}`,
     zekerheid: "ZEKER",
   },
   {
     id: "RTE-OPDR-4",
     vak: "RTE",
-    naam: "Assignment #4",
+    naam: "Assignment #4 — Station Evaluation",
     soort: "opdracht",
     weging: null,
     datum: "2026-10-22",
@@ -139,13 +146,13 @@ export const opleveringen = [
     onbekendeVelden: [],
     opmerking: `Uitgegeven 2026-10-15, in op 2026-10-22. ${RTE_HUISWERK_OPMERKING}`,
     dedupLabel: "Assignment #4 due",
-    bron: BRON_RTE,
+    bron: `${BRON_RTE} + ${BRON_RTE_COLLEGE}`,
     zekerheid: "ZEKER",
   },
   {
     id: "RTE-OPDR-5",
     vak: "RTE",
-    naam: "Assignment #5",
+    naam: "Assignment #5 — Rolling Stock",
     soort: "opdracht",
     weging: null,
     datum: "2026-11-05",
@@ -153,7 +160,7 @@ export const opleveringen = [
     onbekendeVelden: [],
     opmerking: `In de les. ${RTE_HUISWERK_OPMERKING}`,
     dedupLabel: "Assignment #5 in-class",
-    bron: BRON_RTE,
+    bron: `${BRON_RTE} + ${BRON_RTE_COLLEGE}`,
     zekerheid: "ZEKER",
   },
   {
@@ -199,17 +206,73 @@ export const opleveringen = [
     zekerheid: "ZEKER",
   },
   {
+    id: "PY-PROJECT-GROEP",
+    vak: "PY",
+    naam: "Projectgroep doorgeven",
+    soort: "opdracht",
+    weging: 3,
+    datum: "2026-10-09",
+    mogelijkeData: null,
+    onbekendeVelden: [],
+    opmerking: "Groepen van 4 tot 6 personen, vóór 23:59:59 (Taipei) per e-mail naar tseyu@ntu.edu.tw. Te laat kost 1% per halve dag, tot 100%.",
+    dedupLabel: null,
+    bron: BRON_PY_COLLEGE,
+    zekerheid: "ZEKER",
+  },
+  {
+    id: "PY-PROJECT-VOORSTEL",
+    vak: "PY",
+    naam: "Projectvoorstel + video",
+    soort: "opdracht",
+    weging: 1,
+    datum: "2026-11-06",
+    mogelijkeData: null,
+    onbekendeVelden: [],
+    opmerking: "Via een Google Form, vóór 23:59:59 (Taipei). Creativiteit, haalbaarheid en breedte van het onderwerp tellen los daarvan voor 3%.",
+    dedupLabel: null,
+    bron: BRON_PY_COLLEGE,
+    zekerheid: "ZEKER",
+  },
+  {
     id: "PY-PROJECTPRESENTATIE",
     vak: "PY",
-    naam: "Groepsprojectpresentatie",
+    naam: "Projectpresentatie (optioneel)",
     soort: "presentatie",
-    weging: 25,
+    weging: 5,
     datum: null,
-    mogelijkeData: ["2026-12-09", "2026-12-16", "2026-12-23"],
+    mogelijkeData: ["2026-12-09", "2026-12-16"],
     onbekendeVelden: ["datum"],
-    opmerking: "Presentaties verspreid over weken 14-16 (9, 16 en 23 december). Zelf presenteren is geen verplichting (opgave Idries) — daarom staat er geen datum vast. Het groepsproject zelf telt wel voor 25%.",
+    opmerking: "Optioneel: levert maximaal 5% bonus op, voor maximaal 8 groepen. In de weken 14 en 15. LET OP: de collegeslides noemen dinsdag 8 en 15 december, maar het college is op woensdag — die tegenspraak is niet opgelost, zie DATA.md §3.5.",
     dedupLabel: null,
-    bron: `${BRON_PY} + opgave Idries`,
+    bron: BRON_PY_COLLEGE,
+    zekerheid: "TE VERIFIËREN",
+  },
+  {
+    id: "PY-PROJECT-VERSLAG",
+    vak: "PY",
+    naam: "Projectverslag",
+    soort: "verslag",
+    weging: 10,
+    datum: "2026-12-25",
+    mogelijkeData: null,
+    onbekendeVelden: [],
+    opmerking: "Via een Google Form, vóór 23:59:59 (Taipei). Zwaarste onderdeel van het project. Valt op Constitution Day, een vrije dag.",
+    dedupLabel: null,
+    bron: BRON_PY_COLLEGE,
+    zekerheid: "ZEKER",
+  },
+  {
+    id: "PY-PROJECT-PEER",
+    vak: "PY",
+    naam: "Beoordeling groepsgenoten",
+    soort: "opdracht",
+    weging: 8,
+    datum: "2026-12-25",
+    mogelijkeData: null,
+    onbekendeVelden: [],
+    opmerking: "Via het Peer Assessment Form, vóór 23:59:59 (Taipei). Weegt zwaarder dan het voorstel en de presentatie samen — makkelijk te vergeten.",
+    dedupLabel: null,
+    bron: BRON_PY_COLLEGE,
     zekerheid: "ZEKER",
   },
   {

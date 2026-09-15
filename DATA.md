@@ -200,6 +200,15 @@ opdracht die per e-mail naar docent of TA gaat, krijgt een 0. De
 **inleverdatums van de vier opdrachten staan niet in de syllabus** en blijven
 ONBEKEND.
 
+**Extra credits — bron: collegeslides `PSY1007-09_090926.pdf`, zekerheid
+ZEKER.** Bovenop de 100% is **4% aan extra credits** te verdienen met deelname
+aan onderzoek en/of een onderzoekspaper. Dit staat niet in de syllabus-pdf en
+was hier nog niet opgenomen. Het is een bonus, geen verplicht onderdeel.
+
+**Wat de opdrachten zijn — zelfde bron, ZEKER:** reflectie-, toepassings- en
+kortantwoordopdrachten, in te leveren via NTU COOL. De inleverdatums staan nog
+steeds nergens.
+
 Contactgegevens (bron: syllabus, ZEKER): docent cpwchou@ntu.edu.tw, kamer
 Department of Psychology South Hall 118, spreekuur op afspraak; TA
 r13227124@ntu.edu.tw, ook op afspraak. Het vak wordt in het Engels gegeven en
@@ -289,11 +298,35 @@ Bron: `2026-NTU_RTE_Syllabus_ver_1.docx`. Docent Yung-Cheng (Rex) Lai. Zekerheid
 | 2026-12-17 | 15 | Term Project Presentations | — | in de les |
 | **2026-12-24** | 16 | **Comprehensive Exam (25%)** | — | in de les |
 
+**Onderwerpen van de opdrachten — bron: collegeslides
+`01_RTE-Lecture-01_Syllabus_2026.09.10.pdf`, zekerheid ZEKER.** De docx-syllabus
+nummerde de opdrachten alleen; de collegeslides noemen waar ze over gaan:
+
+| Opdracht | Onderwerp |
+|---|---|
+| #2 | Infrastructure & Special Track Work |
+| #3 | WCML |
+| #4 | Station Evaluation |
+| #5 | Rolling Stock (in de les) |
+
+Opdracht #1 (draft PPT), #6 (in de les) en #7 (technical visit) krijgen ook in
+de slides geen apart onderwerp.
+
+**Week 9 heeft wél een lesvorm — zelfde bron, ZEKER.** De docx liet de kolom
+"Lecture Style" voor week 9 leeg; in de collegeslides staat daar **In-Class**.
+Dat vervangt de ONBEKEND hieronder. **Week 11 (technical visit) blijft leeg in
+beide documenten** en dus ONBEKEND.
+
+Contactgegevens (zelfde bron, ZEKER): Yung-Cheng (Rex) Lai, Civil Engineering
+Building kamer 313, 02-3366-4243, rexlai.ntu@gmail.com, spreekuur op afspraak.
+Assistenten: Hsiang-Yuan Yang (楊翔元) en Shao-Wei Juan (阮紹瑋), kamer 319.
+
 **Lesvorm — correctie op de FASE-9.md A3-aanname, bron:
 `2026-NTU_RTE_Syllabus_ver_1.docx` (door Idries aangeleverd), zekerheid
 ZEKER.** Kolom "Lecture Style" uit de syllabus: "In-Class" → in de les,
-"Schedule Discussion Time" → discussietijd. Weken 9 en 11 staan leeg in de
-syllabus zelf — dat is ONBEKEND, niet ingevuld. (Eerdere versie van dit
+"Schedule Discussion Time" → discussietijd. Week 11 staat leeg in beide
+documenten — dat is ONBEKEND, niet ingevuld. (Week 9 stond hier eerder ook op
+ONBEKEND; de collegeslides vullen hem in, zie hierboven.) (Eerdere versie van dit
 document zette alle 15 lesdagen op ONBEKEND omdat de syllabus toen nog niet
 beschikbaar was — zie open punt §9-1h, nu opgelost.)
 
@@ -486,8 +519,10 @@ niet de volledige, letterlijke titel.
 
 → **Controlewaarde: 16 woensdagen, geen enkele op een feestdag.**
 
-**Beoordeling:** aanwezigheid 10%, opdrachten 65% (ca. 10–12 stuks,
-programmeeropdrachten en online quizzes), groepsproject 25%.
+**Beoordeling:** aanwezigheid 10%, opdrachten 65%, groepsproject 25%. (De
+cursuspagina noemde bij de opdrachten "ca. 10-12 stuks, programmeeropdrachten
+en online quizzes"; de collegeslides van de docent zijn specifieker — zie
+hieronder.)
 
 **Aanwezigheidsregels:** minstens drie presentiecontroles, mogelijk meer dan
 één per week. Verlof uitsluitend **vóór** de les aanvragen via MyNTU;
@@ -514,12 +549,59 @@ datum vast voor Idries binnen weken 14-16: de drie kandidaatdata blijven als
 `mogelijkeData` in de data staan, zonder er één van te kiezen. Het
 groepsproject zelf telt wel gewoon voor 25%.
 
-**Opdrachten — bron: opgave Idries, zekerheid TE VERIFIËREN.** Er zijn er
-ongeveer **12**, waarvan de beste **10** meetellen voor de 65%. De app maakt
-hiervan **twaalf genummerde regels** in de opleveringenlijst van Python, zonder
-datum en zonder onderwerp — puur zodat zichtbaar is wat er aankomt. Die regels
-worden **berekend** uit dit aantal, niet uitgeschreven: verandert het getal,
-dan verandert de lijst mee. Idries geeft
+**Opdrachten — correctie, bron: collegeslides `Lecture00_CourseOverview_03.pdf`,
+zekerheid ZEKER.** Dit vervangt de eerdere schatting van Idries (ongeveer 12,
+waarvan de beste 10 meetellen). De docent zegt:
+
+- **wekelijks of tweewekelijks, ongeveer 7 tot 11 opdrachten**;
+- elke opdracht wordt beoordeeld **van 0 tot 5** en telt even zwaar;
+- de **opgetelde score bepaalt dit onderdeel volledig — er vallen er géén af**.
+  Er is dus geen "beste N van M"-regeling zoals bij Chinees en RTE;
+- niet inleveren is een 0; plagiaat zonder bronvermelding ook;
+- AI gebruiken mag, mits je de bron noemt en je eigen begrip laat zien.
+
+De app maakt hiervan **elf genummerde regels** — het maximum uit de marge, niet
+het minimum: liever een regel te veel dan een opdracht die je niet ziet
+aankomen. Die regels worden **berekend** uit de marge in `courses.js`, niet
+uitgeschreven. De inleverdatums staan op NTU COOL en blijven ONBEKEND.
+
+**Het groepsproject, uitgesplitst — zelfde bron, zekerheid ZEKER.** Groepen van
+**4 tot 6** studenten, bij voorkeur uit verschillende richtingen. Dit was
+eerder volledig ONBEKEND.
+
+| Onderdeel | Deadline | Weegt | Hoe |
+|---|---|---|---|
+| Groepsleden doorgeven | 2026-10-09 (vr) 23:59:59 | 3% | e-mail naar tseyu@ntu.edu.tw |
+| Voorstel + video | 2026-11-06 (vr) 23:59:59 | 1% | Google Form |
+| Creativiteit, haalbaarheid, breedte | — | 3% | beoordeling door de docent |
+| Mondelinge presentatie | week 14 en 15, **zie conflict hieronder** | 5% **bonus** | in het lokaal, max. 8 groepen |
+| Verslag | 2026-12-25 (vr) 23:59:59 | 10% | Google Form |
+| Beoordeling groepsgenoten | 2026-12-25 (vr) 23:59:59 | 8% | Peer Assessment Form |
+
+De onderdelen met een datum tellen samen 22%; met de 3% voor creativiteit komt
+dat op de 25% van het project. De presentatie staat daar los van als bonus.
+**Te laat kost 1% per halve dag, tot 100% van dat onderdeel** — de
+groepsleden-deadline van 9 oktober is dus meteen puntenwerk.
+
+Afgeraden projectonderwerpen (te weinig origineel): weersvoorspelling,
+eetadvies, doelloos webscrapen, automatisch tickets boeken, en toepassingen van
+machine learning of deep learning.
+
+**Conflict 1 — niet opgelost: dinsdag of woensdag?** De slides zetten de
+mondelinge presentaties op **2026-12-08 (di)** en **2026-12-15 (di)**, met de
+toevoeging "@class room". Maar het college is op **woensdag** (13:20-16:20), en
+de weken 14 en 15 vallen op 2026-12-09 en 2026-12-16. Het document spreekt
+zichzelf tegen. In de data staan daarom de woensdagen als `mogelijkeData` met
+zekerheid TE VERIFIËREN — er is niets "gecorrigeerd" naar één van beide.
+
+**Conflict 2 — niet opgelost: wat gebeurt er in week 13 en 16?** De slides
+zeggen: week 12 invited speaker, **week 13 skip class**, week 14-15 project
+presentation, **week 16 skip class**. De NTU-cursuspagina (waar §3.5's
+weekindeling hieronder op gebaseerd is) zegt: week 12 én 13 invited speaker, en
+week 14, 15 én 16 project presentation. Dat scheelt **twee vrije
+woensdagmiddagen** (2026-12-02 en 2026-12-23) — te veel om zelf te kiezen. De
+weekindeling hieronder is **niet** gewijzigd; te verifiëren bij de docent of op
+NTU COOL. Idries geeft
 dit zelf aan met een slag om de arm ("dacht ik"), en de cursuspagina noemt
 alleen "ca. 10-12 stuks" — daarom TE VERIFIËREN en niet ZEKER. De
 inleverdatums staan op NTU COOL en blijven ONBEKEND.
@@ -839,6 +921,12 @@ meer als vraag aan hem voorgelegd.
     vluchten staan vast, bron boekingsbevestiging 838759427. Nog open: de
     **overnachtingen**, en de PNR's van de drie vluchten waarvoor de
     bevestiging "being issued" meldde.
+1k. **Python, twee tegenspraken uit de collegeslides (§3.5), niet opgelost:**
+    (a) vallen de projectpresentaties op dinsdag 8/15 december of op de
+    woensdagen 9/16 december waarop het college staat? (b) zijn week 13
+    (2026-12-02) en week 16 (2026-12-23) "skip class", zoals de slides zeggen,
+    of invited speaker respectievelijk projectpresentatie, zoals de
+    cursuspagina zegt? Punt (b) scheelt twee vrije woensdagmiddagen.
 2. Of de docenten inhaallessen plannen in de flexibele week 2026-12-28 → 12-31.
    Aankondiging uiterlijk 2026-11-28 volgens de kalender.
 3. Datum en duur van de afstudeeropdracht in Nederland (februari 2027) — bepaalt
@@ -856,10 +944,10 @@ meer als vraag aan hem voorgelegd.
 | Vak | Document |
 |---|---|
 | CHI | NTU Course-pagina PTCSL7908-23 + syllabus 國際生華語 (一) |
-| PSY | `115-1_Syllabus_PSY1007-09.pdf` |
-| PY | NTU Course-pagina Data5006, klas 03 |
+| PSY | `115-1_Syllabus_PSY1007-09.pdf` + collegeslides `PSY1007-09_090926.pdf` |
+| PY | NTU Course-pagina Data5006, klas 03 + collegeslides `Lecture00_CourseOverview_03.pdf` |
 | AGT | `20260910-_Global_AgTech_Foresight.pdf` |
-| RTE | `2026-NTU_RTE_Syllabus_ver_1.docx` |
+| RTE | `2026-NTU_RTE_Syllabus_ver_1.docx` + collegeslides `01_RTE-Lecture-01_Syllabus_2026.09.10.pdf` |
 | Kalender | `NTUcalendar115行事曆` (officieel, 3216e Administrative Meeting) |
 
 **VAKKEN.md** (aangeleverd door Idries) is de uitgebreide onderbouwing achter
