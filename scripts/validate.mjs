@@ -7,7 +7,7 @@ import { opleveringen } from "../src/data/opleveringen.js";
 import { trips, effectieveTripStatus, TRIP_STATUSSEN, eigenReisItems, alleTripItems } from "../src/data/trips.js";
 import { chinaVisaFreeDeadline, flexWeekAnnouncementDeadline, academicDeadlines, japanUitersteTerugkomstDeadline } from "../src/data/deadlines.js";
 import { dayStatus, genereerKalenderDagen } from "../src/lib/dayStatus.js";
-import { isFree, freeBlocks, blocksWithCost, costOfRange } from "../src/lib/blocks.js";
+import { isFree, freeBlocks, blocksWithCost, costOfRange, conflictenVoorRange } from "../src/lib/blocks.js";
 import {
   leegState,
   migrate,
@@ -2092,6 +2092,50 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   check("PY: zaal blijft ONBEKEND", courses.find((c) => c.id === "PY").room, null);
   const excursie = agtechDates.find((d) => d.week === 14);
   check("AGTECH: de excursie staat op 2026-12-10 zonder verzonnen tijd of locatie", excursie.date === "2026-12-10" && excursie.spreker === null, true);
+}
+
+// =====================================================================
+// conflictenVoorRange(): waar botst een periode mee?
+// =====================================================================
+
+{
+  // De harde controlewaarde uit DATA.md §3.6: de oorspronkelijke Japan-boeking
+  // raakt twee van de drie Chinees-midterm-onderdelen.
+  const oud = conflictenVoorRange("2026-10-30", "2026-11-09");
+  check("conflicten 30-10 → 09-11: niveau ernstig", oud.niveau, "ernstig");
+  check("conflicten 30-10 → 09-11: 2 tentamenonderdelen", oud.tentamens.length, 2);
+  check("conflicten 30-10 → 09-11: 3 Chinees-sessies", oud.lessenPerVak.CHI, 3);
+
+  // De omboeking raakt geen enkel tentamenonderdeel — dat was het doel — maar
+  // wel de RTE-draftdeadline van 12 november, dus nog steeds ernstig.
+  const nieuw = conflictenVoorRange("2026-11-06", "2026-11-16");
+  check("conflicten omboeking: 0 tentamenonderdelen", nieuw.tentamens.length, 0);
+  check("conflicten omboeking: 3 Chinees-sessies", nieuw.lessenPerVak.CHI, 3);
+  check("conflicten omboeking: de 2e draft PPT valt erbinnen", nieuw.hardeDeadlines.some((d) => d.datum === "2026-11-12"), true);
+  check("conflicten omboeking: daarom ernstig, niet let-op", nieuw.niveau, "ernstig");
+
+  // Een weekend zonder les is "vrij" en telt zijn vrije dagen.
+  const weekend = conflictenVoorRange("2026-10-02", "2026-10-04");
+  check("conflicten vrij weekend: niveau vrij", weekend.niveau, "vrij");
+  check("conflicten vrij weekend: 3 vrije dagen", weekend.vrijeDagen, 3);
+  check("conflicten vrij weekend: geen lessen", Object.keys(weekend.lessenPerVak).length, 0);
+
+  // Een gewone lesdag zonder tentamen of harde deadline is "let-op". Let op de
+  // keuze van de dag: 2026-10-08 lijkt zo'n dag maar heeft twee RTE-
+  // inleverdeadlines, en is dus terecht ernstig.
+  const lesdag = conflictenVoorRange("2026-09-16", "2026-09-16");
+  check("conflicten gewone woensdag: niveau let-op", lesdag.niveau, "let-op");
+  check("conflicten gewone woensdag: geen tentamens", lesdag.tentamens.length, 0);
+  check("conflicten gewone woensdag: wel lessen", Object.keys(lesdag.lessenPerVak).length > 0, true);
+  const metDeadline = conflictenVoorRange("2026-10-08", "2026-10-08");
+  check("conflicten 8 oktober: ernstig door twee RTE-inleverdeadlines", metDeadline.niveau, "ernstig");
+  check("conflicten 8 oktober: twee harde deadlines", metDeadline.hardeDeadlines.length, 2);
+
+  // Python uitgezet telt niet mee in de lessen.
+  const metPy = conflictenVoorRange("2026-09-30", "2026-09-30");
+  const zonderPy = conflictenVoorRange("2026-09-30", "2026-09-30", true);
+  check("conflicten: Python telt mee als het vak aanstaat", metPy.lessenPerVak.PY, 1);
+  check("conflicten: Python telt niet mee als het vak is afgewezen", zonderPy.lessenPerVak.PY, undefined);
 }
 
 console.log(`\n${passed} geslaagd, ${failures} mislukt.`);

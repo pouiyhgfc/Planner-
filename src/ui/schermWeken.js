@@ -8,6 +8,7 @@ import { addDays } from "../lib/date.js";
 import { appPeriod } from "../data/semester.js";
 import { PERIODES } from "../state/schema.js";
 import { maandagVan, weekStarts, verschuifVenster, PERIODE_LABELS, renderWeekstrips } from "./wekenGrid.js";
+import { renderLegenda } from "./legenda.js";
 
 /**
  * @param {HTMLElement} root
@@ -25,6 +26,9 @@ export function initWekenScherm(root, callbacks) {
   const stripsEl = document.createElement("div");
   root.appendChild(koppenEl);
   root.appendChild(stripsEl);
+  // De weekstrip is puur kleur plus afkorting; de legenda hoort er dus net zo
+  // goed onder als onder de maandkalender.
+  root.appendChild(renderLegenda());
 
   let laatsteCtx = null;
 

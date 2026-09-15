@@ -72,7 +72,13 @@ export function initNavigatie(opts) {
 
   toonScherm(ui.activeScreen);
 
-  return { naarScherm: wisselScherm };
+  // Het Overzicht opent dit paneel om het bewerkformulier voor eigen items te
+  // laten zien; dat formulier staat sinds fase 4 in Instellingen.
+  function openInstellingen() {
+    instellingenPaneelEl.hidden = false;
+  }
+
+  return { naarScherm: wisselScherm, openInstellingen };
 }
 
 /**

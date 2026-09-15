@@ -42,6 +42,7 @@ import {
   renderPlannerForm,
   renderEigenItemsLijst,
   renderVerborgenLijst,
+  renderInstallRegel,
 } from "./planner.js";
 
 const foutEl = document.getElementById("fout-melding");
@@ -60,6 +61,7 @@ const instellingenPaneelEl = document.getElementById("instellingen-paneel");
 const instellingenSluitEl = document.getElementById("instellingen-sluit");
 const themaEl = document.getElementById("thema-regel");
 const persistEl = document.getElementById("persist-regel");
+const installEl = document.getElementById("install-regel");
 const exportEl = document.getElementById("export-regel");
 const conflictenEl = document.getElementById("conflicten-paneel");
 const reisstatusEl = document.getElementById("reisstatus-paneel");
@@ -77,6 +79,26 @@ const navKnopEls = [...document.querySelectorAll(".navknop")];
 let state = await laadState();
 let openstaandeConflicten = [];
 let persistToegekend = null;
+// Chrome bewaart het installatie-aanbod niet: je moet het event vasthouden en
+// later zelf prompt() aanroepen, anders is de kans verkeken.
+let installPrompt = null;
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  installPrompt = e;
+  instellingenWeergeven();
+});
+window.addEventListener("appinstalled", () => {
+  installPrompt = null;
+  instellingenWeergeven();
+});
+
+async function installeren() {
+  if (!installPrompt) return;
+  installPrompt.prompt();
+  await installPrompt.userChoice;
+  installPrompt = null;
+  instellingenWeergeven();
+}
 // Welk eigen item of welke eigen reis op dit moment bewerkt wordt; null =
 // het formulier staat in "toevoegen"-stand.
 let bewerktItemId = null;
@@ -111,6 +133,11 @@ function themaWeergeven() {
 
 function instellingenWeergeven() {
   themaWeergeven();
+  renderInstallRegel(
+    installEl,
+    { beschikbaar: installPrompt !== null, geinstalleerd: window.matchMedia("(display-mode: standalone)").matches },
+    installeren
+  );
   renderPersistRegel(persistEl, persistToegekend);
   renderExportRegel(exportEl, state.laatsteExport, exporteer);
   renderConflictenPaneel(conflictenEl, openstaandeConflicten, pasConflictenToe);
@@ -272,6 +299,27 @@ function naarVak(vakId) {
 function dagKiezenVanuitWeken(ymd, opties) {
   navigatie.naarScherm("maand");
   maandScherm.openDag(ymd, { formOpenen: opties.formOpenen, terugNaarScherm: "weken" });
+}
+
+/**
+ * Hetzelfde vanuit Overzicht: het ⋯-menu en de knop "Item toevoegen" openen
+ * het dagblad van die dag en komen bij sluiten terug op Overzicht.
+ * @param {string} ymd
+ * @param {{formOpenen: boolean}} opties
+ */
+function dagKiezenVanuitOverzicht(ymd, opties) {
+  navigatie.naarScherm("maand");
+  maandScherm.openDag(ymd, { formOpenen: opties.formOpenen, terugNaarScherm: "overzicht" });
+}
+
+/**
+ * Het bewerkformulier voor eigen items staat in Instellingen. Vanuit Overzicht
+ * moet dat paneel dus ook opengaan, anders lijkt "Bewerken" niets te doen.
+ * @param {string} id
+ */
+function bewerkenVanuitOverzicht(id) {
+  startItemBewerken(id);
+  navigatie.openInstellingen();
 }
 
 function overzichtWeergeven() {
@@ -467,6 +515,10 @@ const overzichtScherm = initOverzichtScherm(schermEls.overzicht, {
   onProjectToevoegen: voegProjectEnHerteken,
   onProjectVerwijderen: verwijderProjectEnHerteken,
   onOpleveringToggle: zetOpleveringEnHerteken,
+  onVerbergen: (sleutel) => verbergEnHerteken(sleutel),
+  onItemVerwijderen: verwijderItemEnHerteken,
+  onItemBewerken: bewerkenVanuitOverzicht,
+  onDagKiezen: dagKiezenVanuitOverzicht,
 });
 
 const vakkenScherm = initVakkenScherm(schermEls.vakken, {

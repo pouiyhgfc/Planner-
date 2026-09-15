@@ -61,6 +61,8 @@
   --danger-bg: #fdf3f2;
   --danger-border: #f3d2cf;
   --danger-text: #c0392f;
+  --waarschuwing-bg: #fdf6e7;
+  --waarschuwing-text: #8a5a06;
   --purple-bg: #f5f3ff;
   --purple-border: #ddd6fe;
   --purple-text: #6d28d9;
@@ -98,6 +100,8 @@
     --accent-text: #5fd6a0;
     --sel-bg: #13271d;
     --danger-bg: #2a1614;
+  --waarschuwing-bg: #2b2008;
+  --waarschuwing-text: #f0c47a;
     --danger-border: #4a2521;
     --danger-text: #f0867c;
     --purple-bg: #1c1830;
@@ -137,6 +141,8 @@
   --accent-text: #5fd6a0;
   --sel-bg: #13271d;
   --danger-bg: #2a1614;
+  --waarschuwing-bg: #2b2008;
+  --waarschuwing-text: #f0c47a;
   --danger-border: #4a2521;
   --danger-text: #f0867c;
   --purple-bg: #1c1830;
@@ -183,6 +189,9 @@ body {
   color: var(--text);
   display: flex;
   flex-direction: column;
+  /* Geen pull-to-refresh en geen doorveren aan de randen: in een
+     geïnstalleerde app hoort een lijst te stoppen waar hij stopt. */
+  overscroll-behavior: none;
 }
 
 h1,
@@ -252,12 +261,16 @@ select {
   --leesbreedte: 880px;
 }
 
+/* Geïnstalleerd op een telefoon loopt de balk onder de statusbalk/notch door
+   en de tabbalk onder de home-indicator. De insets tellen daarom op bij de
+   eigen padding; op desktop zijn ze 0 en verandert er niets. */
 #topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   padding: 8px max(12px, calc((100% - var(--leesbreedte)) / 2));
+  padding-top: calc(8px + env(safe-area-inset-top, 0px));
   border-bottom: var(--border-width) solid var(--border);
   background: var(--card);
   flex-shrink: 0;
@@ -315,6 +328,7 @@ select {
   background: var(--card);
   flex-shrink: 0;
   padding-inline: max(0px, calc((100% - var(--leesbreedte)) / 2));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 .navknop {
   flex: 1;
@@ -381,6 +395,57 @@ select {
   margin-top: 0;
   border-top: none;
 }
+/* ⋯-menu achter een regel in Overzicht. <details> in plaats van eigen
+   open/dicht-logica: werkt met toetsenbord en heeft geen JS nodig. */
+.rij-menu {
+  position: relative;
+  margin-left: auto;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+.rij-menu > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 2px 8px;
+  border: var(--border-width) solid var(--border-soft);
+  border-radius: 4px;
+  color: var(--text-muted);
+  line-height: 1.2;
+}
+.rij-menu > summary::-webkit-details-marker {
+  display: none;
+}
+.rij-menu[open] > summary {
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+.rij-menu-lijst {
+  position: absolute;
+  right: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  min-width: 10rem;
+  background: var(--card);
+  border: var(--border-width) solid var(--border);
+  border-radius: 4px;
+  box-shadow: 0 2px 6px var(--shadow);
+}
+.rij-menu-lijst button {
+  text-align: left;
+  border: none;
+  border-radius: 0;
+  background: none;
+  padding: 8px 10px;
+  font-size: var(--fs-min);
+}
+.rij-menu-lijst button + button {
+  border-top: var(--border-width) solid var(--border-soft);
+}
+.overzicht-toevoegen {
+  display: flex;
+}
+
 .oplevering-notitie {
   display: block;
   width: 100%;
@@ -446,12 +511,31 @@ select {
   min-width: 0;
   flex: 1;
 }
+/* Drie niveaus in plaats van altijd rood: rood als er een tentamen, een
+   presentatie of een harde deadline in de periode valt, geel als het alleen
+   lessen kost, groen als de dagen vrij zijn. */
 .kosten-waarschuwing {
-  background: var(--danger-bg);
-  color: var(--danger-text);
   border-radius: var(--radius-control);
   padding: 8px 10px;
   font-size: var(--fs-min);
+  background: var(--danger-bg);
+  color: var(--danger-text);
+}
+.kosten-waarschuwing ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+.kosten-waarschuwing.niveau-vrij {
+  background: var(--accent-bg);
+  color: var(--accent-text);
+}
+.kosten-waarschuwing.niveau-let-op {
+  background: var(--waarschuwing-bg);
+  color: var(--waarschuwing-text);
+}
+.kosten-waarschuwing.niveau-ernstig {
+  background: var(--danger-bg);
+  color: var(--danger-text);
 }
 .conflict-rij {
   display: flex;
@@ -1003,9 +1087,18 @@ select {
   text-transform: uppercase;
 }
 .weekkaart-cel {
-  height: 14px;
+  min-height: 16px;
   border-radius: 3px;
   background: var(--border-soft);
+}
+.weekkaart-cel-vak {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--card);
+  font-family: var(--ff-display);
+  font-size: 10px;
+  letter-spacing: 0.02em;
 }
 .weekkaart-reis-cel {
   height: 6px;
@@ -1150,10 +1243,34 @@ select {
   color: var(--accent-text);
 }
 
+/* Vakblok in Overzicht: zelfde kleurscheiding als de lesblokken in het
+   dagblad — een balk in de vakkleur langs het hele blok, niet alleen een
+   gekleurde kop. */
+.overzicht-vakblok {
+  border-left: 4px solid var(--vakblok-kleur);
+  padding-left: 10px;
+  margin-bottom: 14px;
+}
 .overzicht-vak-kop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  list-style: none;
   font-family: var(--ff-head);
   font-size: 15px;
-  margin: 16px 0 8px;
+  margin: 0 0 8px;
+}
+.overzicht-vak-kop::-webkit-details-marker {
+  display: none;
+}
+.overzicht-vak-telling {
+  flex-shrink: 0;
+  font-family: var(--ff-display);
+  font-size: var(--fs-min);
+  font-weight: normal;
+  color: var(--text-muted);
 }
 .vak-chip {
   flex-shrink: 0;
@@ -1175,19 +1292,20 @@ select {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
 }
+/* De scheidingslijn doet het werk dat eerst een gat van 8px deed; met een
+   tapbare ⋯-knop erin werd elke regel anders 60px hoog. */
 .overzicht-rij {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
-  padding-bottom: 8px;
+  padding: 2px 0;
   border-bottom: var(--border-width) solid var(--border-soft);
   font-size: var(--fs-min);
 }
 .overzicht-rij-datum {
   flex-shrink: 0;
-  width: 56px;
+  width: 66px;
   color: var(--text-muted);
   font-family: var(--ff-display);
 }
@@ -1195,6 +1313,8 @@ select {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex: 1;
+  min-width: 0;
 }
 .overzicht-leeg {
   color: var(--text-muted);

@@ -10,6 +10,7 @@ import { appPeriod } from "../data/semester.js";
 import { courseVoor } from "../data/courses.js";
 import { dayStatus, dagdeelVoorTijd, DAGDEEL_NAMEN } from "../lib/dayStatus.js";
 import { WEEKDAGEN, collegeWeek, kortDatum } from "./datumlabels.js";
+import { vakAfkorting } from "./tekst.js";
 
 export const PERIODE_LABELS = {
   "1w": "1 week",
@@ -93,7 +94,7 @@ export function dagdelenMetKleur(dag) {
   for (const vak of dag.vakken) {
     const course = courseVoor(vak.course);
     const naam = dagdeelVoorTijd(course.start);
-    resultaat[naam] = { kleurVar: `--vak-${vak.course.toLowerCase()}-text`, tekst: `${course.name}: ${vak.label}` };
+    resultaat[naam] = { vak: vak.course, kleurVar: `--vak-${vak.course.toLowerCase()}-text`, tekst: `${course.name}: ${vak.label}` };
   }
   return resultaat;
 }
@@ -217,7 +218,16 @@ function renderWeekkaart(root, weekMaandag, pythonAfgewezen, tripStatusOverrides
       const cel = document.createElement("span");
       cel.className = "weekkaart-cel";
       const info = dagdelenMetKleur(dag)[dagdeelNaam];
-      if (info) cel.style.backgroundColor = `var(${info.kleurVar})`;
+      if (info) {
+        // Zonder afkorting in het blokje zag je alleen gekleurde vlakjes en
+        // moest je de kleur uit je hoofd kennen. De tekstkleur is die van de
+        // kaart zelf: wit op donker in de lichte stand, donker op licht in de
+        // donkere stand — in beide standen leesbaar zonder aparte regel.
+        cel.style.backgroundColor = `var(${info.kleurVar})`;
+        cel.classList.add("weekkaart-cel-vak");
+        cel.textContent = vakAfkorting(info.vak);
+        cel.setAttribute("aria-label", info.tekst);
+      }
       grid.appendChild(cel);
     }
   }
