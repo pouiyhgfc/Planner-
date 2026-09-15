@@ -13,19 +13,51 @@
  * deadline niet nogmaals te tonen in "Opdrachten en deadlines" — hetzelfde
  * onderdeel hoort daar maar één keer te staan.
  *
+ * De Python-opdrachten worden berekend uit het aantal in courses.js in plaats
+ * van hier uitgeschreven — zie pythonOpdrachten() hieronder.
+ *
  * mogelijkeData: bekende kandidaatdata waarop dit item kan vallen, als het
  * niet vaststaat welke van toepassing is op Idries' groep — nooit geraden
  * tot één datum. onbekendeVelden noemt welke velden hierop ONBEKEND zijn.
  */
+
+import { courseVoor } from "./courses.js";
 
 const BRON_RTE = "2026-NTU_RTE_Syllabus_ver_1.docx";
 const BRON_AGTECH = "presentatie 20260910-_Global_AgTech_Foresight.pdf";
 const BRON_PY = "NTU-cursuspagina (FASE-8-1.md 0B, correctie 2)";
 const BRON_PSY = "syllabus PSY1007-09";
 
+/**
+ * Python heeft geen genummerde opdrachtenlijst in de cursuspagina — alleen
+ * "ca. 10-12 stuks". Het aantal staat als schatting in courses.js en de regels
+ * worden daaruit berekend, zodat het getal maar op één plek leeft (CLAUDE.md
+ * §5: afgeleide feiten berekenen, niet invoeren). Geen enkele regel krijgt een
+ * verzonnen datum of onderwerp: ze zijn er om te weten wat er aankomt, en
+ * Idries vult datum en details zelf in zodra hij ze hoort.
+ */
+function pythonOpdrachten() {
+  const { aantal, aantalTelt, zekerheid } = courseVoor("PY").opdrachten;
+  return Array.from({ length: aantal }, (_, i) => ({
+    id: `PY-OPDR-${i + 1}`,
+    vak: "PY",
+    naam: `Opdracht ${i + 1}`,
+    soort: "opdracht",
+    weging: null,
+    datum: null,
+    mogelijkeData: null,
+    onbekendeVelden: ["datum"],
+    opmerking: `Onderdeel van de 65% opdrachten; de beste ${aantalTelt} van de ${aantal} tellen mee. Aantal en datums staan niet in de cursuspagina — datum en onderwerp zelf invullen.`,
+    dedupLabel: null,
+    bron: `${BRON_PY} + opgave Idries`,
+    zekerheid,
+  }));
+}
+
 const RTE_HUISWERK_OPMERKING = "Onderdeel van huiswerk 30% (beste 5 van 7 opdrachten tellen) — geen eigen percentage per opdracht in de syllabus.";
 
 export const opleveringen = [
+  ...pythonOpdrachten(),
   {
     id: "RTE-TERMPROJECT-PRESENTATIE",
     vak: "RTE",

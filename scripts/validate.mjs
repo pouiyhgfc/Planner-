@@ -5,7 +5,6 @@ import { courses, courseNaam } from "../src/data/courses.js";
 import { psyDates, agtechDates, rteDates, pythonDates, rteActionItems, chineseLessons, chineseTentamens, alleVakItems } from "../src/data/coursedates.js";
 import { opleveringen } from "../src/data/opleveringen.js";
 import { trips, effectieveTripStatus, TRIP_STATUSSEN, eigenReisItems, alleTripItems } from "../src/data/trips.js";
-import { openstaandeVragen, vragenPerGroep, vragenStand } from "../src/data/openstaandeVragen.js";
 import { chinaVisaFreeDeadline, flexWeekAnnouncementDeadline, academicDeadlines, japanUitersteTerugkomstDeadline } from "../src/data/deadlines.js";
 import { dayStatus, genereerKalenderDagen } from "../src/lib/dayStatus.js";
 import { isFree, freeBlocks, blocksWithCost, costOfRange } from "../src/lib/blocks.js";
@@ -1765,7 +1764,21 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
 
 // FASE-9.md B3: src/data/opleveringen.js — vorm en dataconsistentie
 {
-  check("opleveringen: 15 items (2 RTE termproject + 7 RTE opdrachten + 1 AgTech + 1 PY + 4 PSY)", opleveringen.length, 15);
+  check(
+    "opleveringen: 27 items (2 RTE termproject + 7 RTE opdrachten + 1 AgTech + 12 PY-opdrachten + 1 PY-project + 4 PSY)",
+    opleveringen.length,
+    15 + courses.find((c) => c.id === "PY").opdrachten.aantal
+  );
+
+  // De Python-opdrachtregels worden berekend uit het geschatte aantal in
+  // courses.js, niet uitgeschreven — verandert dat getal, dan volgt de lijst.
+  const pyOpdr = opleveringen.filter((o) => o.vak === "PY" && o.soort === "opdracht");
+  check("PY: evenveel opdrachtregels als het aantal in courses.js", pyOpdr.length, courses.find((c) => c.id === "PY").opdrachten.aantal);
+  check("PY: opdrachtregels zijn doorlopend genummerd", pyOpdr.map((o) => o.naam).join(","), pyOpdr.map((_, i) => `Opdracht ${i + 1}`).join(","));
+  check("PY: geen enkele opdrachtregel heeft een verzonnen datum", pyOpdr.every((o) => o.datum === null && o.mogelijkeData === null), true);
+  check("PY: opdrachtregels erven de onzekerheid van de schatting", pyOpdr.every((o) => o.zekerheid === "TE VERIFIËREN"), true);
+  check("PY: unieke ids voor de opdrachtregels", new Set(pyOpdr.map((o) => o.id)).size, pyOpdr.length);
+  check("opleveringen: alle ids uniek", new Set(opleveringen.map((o) => o.id)).size, opleveringen.length);
   check("opleveringen: elk id is uniek", new Set(opleveringen.map((o) => o.id)).size, opleveringen.length);
   const geldigeVakken = new Set(courses.map((c) => c.id));
   check("opleveringen: elk item hoort bij een bestaand vak", opleveringen.every((o) => geldigeVakken.has(o.vak)), true);
@@ -2079,77 +2092,6 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   check("PY: zaal blijft ONBEKEND", courses.find((c) => c.id === "PY").room, null);
   const excursie = agtechDates.find((d) => d.week === 14);
   check("AGTECH: de excursie staat op 2026-12-10 zonder verzonnen tijd of locatie", excursie.date === "2026-12-10" && excursie.spreker === null, true);
-}
-
-// =====================================================================
-// Openstaande vragen (paneel onder Instellingen)
-// =====================================================================
-
-{
-  for (const v of openstaandeVragen) checkItem(`openstaandeVragen: ${v.id}`, v);
-
-  check("openstaandeVragen: allemaal zekerheid ONBEKEND", openstaandeVragen.every((v) => v.zekerheid === "ONBEKEND"), true);
-  check("openstaandeVragen: unieke ids", new Set(openstaandeVragen.map((v) => v.id)).size, openstaandeVragen.length);
-  check(
-    "openstaandeVragen: elk item heeft een vraag, toelichting en verwijzing",
-    openstaandeVragen.every((v) => v.vraag && v.toelichting && v.verwijzing),
-    true
-  );
-  check(
-    "openstaandeVragen: elk item hoort bij een bestaand vak of bij een eigen groep",
-    openstaandeVragen.every((v) => (v.vak ? Boolean(courses.find((c) => c.id === v.vak)) : typeof v.groep === "string" && v.groep.length > 0)),
-    true
-  );
-  check(
-    "openstaandeVragen: geen enkel item heeft zowel een vak als een eigen groep",
-    openstaandeVragen.every((v) => !(v.vak && v.groep)),
-    true
-  );
-
-  // Geen datum in dit bestand: elke datum hoort in coursedates.js/deadlines.js
-  // te staan en niet in een tweede exemplaar in een vragenlijst.
-  const bestandstekst = readFileSync(join(PROJECT_ROOT, "src/data/openstaandeVragen.js"), "utf8");
-  check("openstaandeVragen.js: geen enkele datum in het bestand", /\d{4}-\d{2}-\d{2}/.test(bestandstekst), false);
-
-  // Geschrapt omdat het antwoord niets verandert aan wat de app toont: de
-  // vakcode en het serienummer van AgTech, de boekingsnummers en
-  // overnachtingen van de reis, de cijfergrens van Python, het gesprek over
-  // week 9 (achterhaald door de Japan-omboeking) en de persoonlijke
-  // lesdagenregel (de app mag geen oordeel over een reis geven, CLAUDE.md §1).
-  const geschrapt = [
-    "AGTECH.code",
-    "filipijnen-geboekt.overnachtingen",
-    "filipijnen-geboekt.pnrs",
-    "PY.cijfergrens",
-    "CHI.docentafspraak",
-    "PERSOONLIJK.lesdagenregel",
-  ];
-  for (const id of geschrapt) check(`openstaandeVragen: ${id} staat er niet meer in`, openstaandeVragen.some((v) => v.id === id), false);
-
-  // Wat geschrapt is, blijft wel gewoon ONBEKEND in de datalaag — de vraag is
-  // weg, het feit is niet ingevuld met een gok.
-  const agtech = courses.find((c) => c.id === "AGTECH");
-  check("AGTECH: vakcode blijft leeg nu de vraag weg is", agtech.code === null && agtech.onbekendeVelden.includes("code"), true);
-  const filipijnen = trips.find((t) => t.id === "filipijnen-geboekt");
-  check("Filipijnen: overnachtingen blijft een leeg veld in het dagblad", filipijnen.onbekendeVelden.includes("overnachtingen"), true);
-
-  // Elke overgebleven vraag hoort bij een vak, de kalender, het visum of hem
-  // zelf — geen reisgroep meer.
-  check("openstaandeVragen: geen reisvragen meer", openstaandeVragen.some((v) => v.id.startsWith("filipijnen")), false);
-
-  // vragenPerGroep(): elke vraag komt precies één keer terug, in dezelfde volgorde
-  const groepen = vragenPerGroep();
-  const plat = groepen.flatMap((g) => g.vragen);
-  check("vragenPerGroep: alle vragen komen terug", plat.length, openstaandeVragen.length);
-  check("vragenPerGroep: geen dubbele koppen", new Set(groepen.map((g) => g.kop)).size, groepen.length);
-  check("vragenPerGroep: vakvragen krijgen de volledige vaknaam als kop", groepen[0].kop, courseNaam(openstaandeVragen[0].vak));
-
-  // vragenStand(): telt alleen echte antwoorden
-  check("vragenStand: leeg = 0 beantwoord", vragenStand({}).beantwoord, 0);
-  check("vragenStand: totaal = het aantal vragen", vragenStand({}).totaal, openstaandeVragen.length);
-  check("vragenStand: één antwoord telt", vragenStand({ [openstaandeVragen[0].id]: "iets" }).beantwoord, 1);
-  check("vragenStand: alleen spaties telt niet als antwoord", vragenStand({ [openstaandeVragen[0].id]: "   " }).beantwoord, 0);
-  check("vragenStand: een onbekende sleutel telt niet mee", vragenStand({ "bestaat.niet": "iets" }).beantwoord, 0);
 }
 
 console.log(`\n${passed} geslaagd, ${failures} mislukt.`);

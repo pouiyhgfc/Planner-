@@ -263,6 +263,22 @@ function renderOpleveringenSectie(vakId, afgevinkteOpleveringen, veldwaarden, ve
 
   const wrap = document.createElement("div");
   wrap.appendChild(sectieKop("Opleveringen"));
+
+  // Een toelichting die bij meer dan één regel hoort — zoals de tekst onder de
+  // twaalf Python-opdrachten — staat één keer boven de lijst in plaats van
+  // onder elke regel. Dat scheelt hier elf herhalingen van dezelfde drie zinnen.
+  const aantalPerOpmerking = new Map();
+  for (const o of relevant) {
+    if (o.opmerking) aantalPerOpmerking.set(o.opmerking, (aantalPerOpmerking.get(o.opmerking) ?? 0) + 1);
+  }
+  const gedeeldeOpmerkingen = new Set([...aantalPerOpmerking].filter(([, n]) => n > 1).map(([tekst]) => tekst));
+  for (const tekst of gedeeldeOpmerkingen) {
+    const uitleg = document.createElement("p");
+    uitleg.className = "vak-detail-klein";
+    uitleg.textContent = tekst;
+    wrap.appendChild(uitleg);
+  }
+
   const lijst = document.createElement("ul");
   for (const item of relevant) {
     const li = document.createElement("li");
@@ -302,7 +318,19 @@ function renderOpleveringenSectie(vakId, afgevinkteOpleveringen, veldwaarden, ve
       li.appendChild(veldWrap);
     }
 
-    if (item.opmerking) {
+    // Eigen aantekening per oplevering: de bron zegt vaak niet wát je inlevert
+    // (Python-opdrachten, PSY-opdrachten, de AgTech-presentatie). Zodra Idries
+    // het hoort, schrijft hij het hier bij — het staat dan op de regel zelf.
+    const notitieSleutel = `${item.id}.notitie`;
+    const notitie = document.createElement("input");
+    notitie.type = "text";
+    notitie.className = "oplevering-notitie";
+    notitie.value = veldwaarden[notitieSleutel] ?? "";
+    notitie.placeholder = "onderwerp of details";
+    notitie.addEventListener("change", () => onVeldWijzigen(notitieSleutel, notitie.value));
+    li.appendChild(notitie);
+
+    if (item.opmerking && !gedeeldeOpmerkingen.has(item.opmerking)) {
       const opmerking = document.createElement("p");
       opmerking.className = "vak-detail-klein";
       opmerking.textContent = item.opmerking;
