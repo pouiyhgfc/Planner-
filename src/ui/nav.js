@@ -110,11 +110,15 @@ export function renderTopbar({ weekEl, absentieEl }, { vandaag, absenties }, onA
   const entries = Object.entries(absenties).filter(([, n]) => n > 0);
   if (entries.length === 0) return;
 
+  // Alleen het totaal: de uitsplitsing per vak liep bij absenties over meer
+  // dan twee vakken buiten het scherm en duwde de Instellingen-knop weg. Wélke
+  // lessen je mist staat op Overzicht en per vak op het vakkenscherm; de balk
+  // hoort alleen te zeggen dát er iets staat.
   const totaal = entries.reduce((som, [, n]) => som + n, 0);
   const knop = document.createElement("button");
   knop.type = "button";
   knop.className = "tap-target absentie-knop";
-  knop.textContent = `${entries.map(([vak, n]) => `${vak} ${n}`).join(" · ")} · totaal ${totaal}`;
+  knop.textContent = `${totaal} ${totaal === 1 ? "les" : "lessen"} gemist`;
   knop.addEventListener("click", onAbsentieTik);
   absentieEl.appendChild(knop);
 }

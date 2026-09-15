@@ -293,10 +293,16 @@ select {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
+  flex-shrink: 1;
 }
 .absentie-knop {
   font-size: var(--fs-min);
   padding: 6px 10px;
+  white-space: nowrap;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -387,6 +393,14 @@ select {
   gap: 8px;
   padding-top: 12px;
   border-top: var(--border-width) solid var(--border-soft);
+}
+.vak-meetellen-regel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: var(--fs-min);
 }
 .instellingen-sectie h3 {
   font-size: 15px;
@@ -1326,6 +1340,27 @@ select {
 }
 .overzicht-vak-kop::-webkit-details-marker {
   display: none;
+}
+.overzicht-gemist {
+  padding: 8px 10px;
+  border-radius: var(--radius-control);
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  font-size: var(--fs-min);
+}
+.overzicht-gemist h3 {
+  margin: 0 0 4px;
+  font-size: var(--fs-min);
+}
+.overzicht-gemist ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.overzicht-gemist li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 .overzicht-vak-telling {
   flex-shrink: 0;

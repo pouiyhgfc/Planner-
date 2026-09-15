@@ -220,6 +220,35 @@ export function renderPersistRegel(root, toegekend) {
 }
 
 /**
+ * De inschrijvingsstand van Python stond als badge boven het vak zelf, terwijl
+ * de loting allang beslist is (DATA.md §3.5: Idries was al lid). Wat overblijft
+ * is niet een feit om te tonen maar een schakelaar: telt dit vak mee in alle
+ * berekeningen of niet — bruikbaar als hij het vak laat vallen vóór de
+ * withdrawal-deadline. Die hoort bij de instellingen, niet bij het vak.
+ * @param {HTMLElement} root
+ * @param {string} stand
+ * @param {(waarde: string) => void} onWijzigen
+ */
+export function renderVakMeetellenRegel(root, stand, onWijzigen) {
+  root.className = "vak-meetellen-regel";
+  root.textContent = "";
+
+  const tekst = document.createElement("span");
+  tekst.textContent =
+    stand === "afgewezen"
+      ? "Computer Programming in Python telt niet mee in de berekeningen."
+      : "Computer Programming in Python telt mee in de berekeningen.";
+  root.appendChild(tekst);
+
+  const knop = document.createElement("button");
+  knop.type = "button";
+  knop.className = "tap-target";
+  knop.textContent = stand === "afgewezen" ? "Weer meetellen" : "Niet meer meetellen";
+  knop.addEventListener("click", () => onWijzigen(stand === "afgewezen" ? "bevestigd" : "afgewezen"));
+  root.appendChild(knop);
+}
+
+/**
  * Installeerregel. Chrome geeft het beforeinstallprompt-event pas als de app
  * installeerbaar is én nog niet geïnstalleerd; is er geen event, dan staat er
  * uitleg in plaats van een knop die niets doet.

@@ -5,7 +5,6 @@
  */
 
 import { courses, courseVoor } from "../data/courses.js";
-import { PYTHON_INSCHRIJVING_WAARDEN } from "../state/schema.js";
 import { alleVakItems } from "../data/coursedates.js";
 import { WEEKDAGEN, kortDatum } from "./datumlabels.js";
 import { meervoud } from "./tekst.js";
@@ -47,36 +46,10 @@ function renderOnbekendVeld(sleutel, label, huidigeWaarde, onWijzigen) {
   return wrap;
 }
 
-/**
- * Sinds de loting bekend is (DATA.md §3.5) begint deze stand op "bevestigd" in
- * plaats van "onbevestigd". Daarom een knop voor elke andere stand: vanuit
- * "bevestigd" naar "afgewezen" kostte anders twee klikken via "onbevestigd".
- */
-function renderInschrijvingBadge(pythonInschrijving, onWijzigen) {
-  const wrap = document.createElement("div");
-  wrap.className = "inschrijving-badge";
-  const label = document.createElement("span");
-  label.className = "inschrijving-label";
-  label.textContent = `Inschrijving ${pythonInschrijving}`;
-  wrap.appendChild(label);
-
-  for (const waarde of PYTHON_INSCHRIJVING_WAARDEN.filter((w) => w !== pythonInschrijving)) {
-    const knop = document.createElement("button");
-    knop.type = "button";
-    knop.textContent = `Zet op ${waarde}`;
-    knop.addEventListener("click", () => onWijzigen(waarde));
-    wrap.appendChild(knop);
-  }
-  return wrap;
-}
 
 function renderKopSectie(course, veldwaarden, ctx, callbacks) {
   const wrap = document.createElement("div");
   wrap.className = "vak-detail-kop";
-
-  if (course.id === "PY") {
-    wrap.appendChild(renderInschrijvingBadge(ctx.pythonInschrijving, callbacks.onInschrijvingWijzigen));
-  }
 
   const regels = document.createElement("dl");
   regels.className = "vak-detail-regels";
@@ -524,7 +497,6 @@ function renderVakKaart(course, onKlik) {
  * @param {HTMLElement} root
  * @param {{
  *   onVeldWijzigen: (sleutel: string, waarde: string) => void,
- *   onInschrijvingWijzigen: (waarde: string) => void,
  *   onDeadlineToggle: (sleutel: string, afgevinkt: boolean) => void,
  *   onOpleveringToggle: (id: string, afgevinkt: boolean) => void,
  * }} callbacks
@@ -562,7 +534,6 @@ export function initVakkenScherm(root, callbacks) {
       renderDetail(detailEl, courseVoor(geselecteerd), laatsteCtx, {
         onSluiten: sluit,
         onVeldWijzigen: callbacks.onVeldWijzigen,
-        onInschrijvingWijzigen: callbacks.onInschrijvingWijzigen,
         onDeadlineToggle: callbacks.onDeadlineToggle,
         onOpleveringToggle: callbacks.onOpleveringToggle,
         onVerbergen: callbacks.onVerbergen,

@@ -44,6 +44,7 @@ import {
   renderEigenItemsLijst,
   renderVerborgenLijst,
   renderInstallRegel,
+  renderVakMeetellenRegel,
 } from "./planner.js";
 
 const foutEl = document.getElementById("fout-melding");
@@ -63,6 +64,7 @@ const instellingenSluitEl = document.getElementById("instellingen-sluit");
 const themaEl = document.getElementById("thema-regel");
 const persistEl = document.getElementById("persist-regel");
 const installEl = document.getElementById("install-regel");
+const vakMeetellenEl = document.getElementById("vak-meetellen-regel");
 const exportEl = document.getElementById("export-regel");
 const conflictenEl = document.getElementById("conflicten-paneel");
 const reisstatusEl = document.getElementById("reisstatus-paneel");
@@ -139,6 +141,7 @@ function instellingenWeergeven() {
     { beschikbaar: installPrompt !== null, geinstalleerd: window.matchMedia("(display-mode: standalone)").matches },
     installeren
   );
+  renderVakMeetellenRegel(vakMeetellenEl, state.pythonInschrijving, zetPythonInschrijvingEnHerteken);
   renderPersistRegel(persistEl, persistToegekend);
   renderExportRegel(exportEl, state.laatsteExport, exporteer);
   renderConflictenPaneel(conflictenEl, openstaandeConflicten, pasConflictenToe);
@@ -397,6 +400,7 @@ async function verwijderReisEnHerteken(id) {
 async function zetPythonInschrijvingEnHerteken(waarde) {
   state = zetPythonInschrijving(state, waarde);
   await bewaarState(state);
+  instellingenWeergeven();
   vakkenWeergeven();
   topbarWeergeven();
   maandWeergeven();
@@ -541,7 +545,6 @@ schermEls.overzicht.appendChild(document.getElementById("eigen-beheer"));
 
 const vakkenScherm = initVakkenScherm(schermEls.vakken, {
   onVeldWijzigen: zetVakVeldEnHerteken,
-  onInschrijvingWijzigen: zetPythonInschrijvingEnHerteken,
   onDeadlineToggle: zetDeadlineEnHerteken,
   onOpleveringToggle: zetOpleveringEnHerteken,
   onVerbergen: (sleutel) => verbergEnHerteken(sleutel),
