@@ -244,12 +244,20 @@ select {
   font-size: var(--fs-min);
 }
 
+/* Op een breed scherm rekte alles mee: dagvakjes van bijna 200px met een
+   datumcijfer en drie streepjes erin. De inhoud houdt nu een leesbare
+   kolombreedte aan en staat gecentreerd; op een telefoon verandert er niets,
+   want daar wint de ondergrens van de padding. */
+:root {
+  --leesbreedte: 880px;
+}
+
 #topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 8px 12px;
+  padding: 8px max(12px, calc((100% - var(--leesbreedte)) / 2));
   border-bottom: var(--border-width) solid var(--border);
   background: var(--card);
   flex-shrink: 0;
@@ -286,7 +294,7 @@ select {
 .scherm {
   height: 100%;
   overflow-y: auto;
-  padding: 16px;
+  padding: 16px max(16px, calc((100% - var(--leesbreedte)) / 2));
   position: relative;
 }
 
@@ -306,6 +314,7 @@ select {
   border-top: var(--border-width) solid var(--border);
   background: var(--card);
   flex-shrink: 0;
+  padding-inline: max(0px, calc((100% - var(--leesbreedte)) / 2));
 }
 .navknop {
   flex: 1;
@@ -339,6 +348,8 @@ select {
   box-shadow: 0 1px 3px var(--shadow);
   padding: 16px;
   width: 100%;
+  max-width: var(--leesbreedte);
+  margin: 0 auto;
   max-height: 85vh;
   overflow-y: auto;
   display: flex;
@@ -755,7 +766,7 @@ select {
   inset: 0;
   background: var(--bg);
   overflow-y: auto;
-  padding: 16px;
+  padding: 16px max(16px, calc((100% - var(--leesbreedte)) / 2));
 }
 .dagblad-kop-rij {
   display: flex;
@@ -767,9 +778,23 @@ select {
 .dagblad-kop-rij > button {
   flex-shrink: 0;
 }
+.dagblad-bladeren {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+.dagblad-pijl {
+  font-family: var(--ff-display);
+  padding: 8px 10px;
+}
+.dagblad-pijl:disabled {
+  color: var(--text-faint);
+  cursor: default;
+}
 .dagblad-datum {
   font-family: var(--ff-head);
-  font-size: 18px;
+  font-size: 17px;
+  line-height: 1.2;
   margin: 0;
   min-width: 0;
 }

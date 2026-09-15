@@ -9,6 +9,7 @@ import { meervoud } from "./tekst.js";
 import { courseVoor } from "../data/courses.js";
 import { opleveringen } from "../data/opleveringen.js";
 import { projects } from "../data/projects.js";
+import { appPeriod } from "../data/semester.js";
 import { costOfRange } from "../lib/blocks.js";
 import { renderPlannerForm } from "./planner.js";
 
@@ -61,6 +62,7 @@ function kopSectie(titel) {
  *   onMijlpaalToggle: (sleutel: string, afgevinkt: boolean) => void,
  *   onVeldWijzigen: (sleutel: string, waarde: string) => void,
  *   onNaarVak: (vakId: string) => void,
+ *   onDagVerschuiven: (dagen: number) => void,
  * }} acties
  */
 export function renderDagblad(
@@ -81,6 +83,29 @@ export function renderDagblad(
   datumEl.className = "dagblad-datum";
   datumEl.textContent = week ? `${volledigeDatum(ymd)} · week ${week.week}` : volledigeDatum(ymd);
   kop.appendChild(datumEl);
+
+  // Een dag verder kijken kostte eerst sluiten, de juiste maand zoeken en een
+  // nieuw vakje aantikken. De pijlen lopen door over maandgrenzen heen en
+  // stoppen bij de randen van de app-periode.
+  const bladeren = document.createElement("div");
+  bladeren.className = "dagblad-bladeren";
+  const vorige = document.createElement("button");
+  vorige.type = "button";
+  vorige.className = "tap-target dagblad-pijl";
+  vorige.textContent = "‹";
+  vorige.setAttribute("aria-label", "Vorige dag");
+  vorige.disabled = ymd <= appPeriod.start;
+  vorige.addEventListener("click", () => acties.onDagVerschuiven(-1));
+  const volgende = document.createElement("button");
+  volgende.type = "button";
+  volgende.className = "tap-target dagblad-pijl";
+  volgende.textContent = "›";
+  volgende.setAttribute("aria-label", "Volgende dag");
+  volgende.disabled = ymd >= appPeriod.end;
+  volgende.addEventListener("click", () => acties.onDagVerschuiven(1));
+  bladeren.appendChild(vorige);
+  bladeren.appendChild(volgende);
+  kop.appendChild(bladeren);
 
   const sluit = document.createElement("button");
   sluit.type = "button";

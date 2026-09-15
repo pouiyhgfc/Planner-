@@ -5,11 +5,13 @@
  * tussen de maandkalender en het dagblad.
  */
 
-import { parseYMD } from "../lib/date.js";
+import { parseYMD, addDays } from "../lib/date.js";
+import { appPeriod } from "../data/semester.js";
 import { dayStatus } from "../lib/dayStatus.js";
 import { weekgewicht } from "../lib/weekgewicht.js";
 import { renderMaandScherm as renderMaandGrid } from "./maandGrid.js";
 import { maandagVan } from "./wekenGrid.js";
+import { meervoud } from "./tekst.js";
 import { renderDagblad } from "./dagblad.js";
 
 /**
@@ -54,6 +56,22 @@ export function initMaandScherm(root, callbacks) {
 
   function toonDag(ymd) {
     geselecteerd = ymd;
+    tekenen();
+  }
+
+  /**
+   * Bladeren binnen het dagblad. Loopt de nieuwe dag in een andere maand,
+   * dan schuift de kalender eronder mee, zodat sluiten je op de juiste maand
+   * achterlaat.
+   * @param {number} dagen
+   */
+  function verschuifDag(dagen) {
+    const nieuw = addDays(geselecteerd, dagen);
+    if (nieuw < appPeriod.start || nieuw > appPeriod.end) return;
+    const { y, m } = parseYMD(nieuw);
+    jaar = y;
+    maand = m;
+    geselecteerd = nieuw;
     tekenen();
   }
 
@@ -132,6 +150,7 @@ export function initMaandScherm(root, callbacks) {
           onMijlpaalToggle: callbacks.onMijlpaalToggle,
           onVeldWijzigen: callbacks.onVeldWijzigen,
           onNaarVak: callbacks.onNaarVak,
+          onDagVerschuiven: verschuifDag,
         }
       );
     }
@@ -188,9 +207,9 @@ function renderWeekbalk(el, ankerYmd, pythonAfgewezen, tripStatusOverrides, eige
   el.hidden = false;
 
   const delen = [];
-  if (gewicht.tentamens > 0) delen.push(`${gewicht.tentamens} tentamen${gewicht.tentamens === 1 ? "" : "s"}`);
-  if (gewicht.presentaties > 0) delen.push(`${gewicht.presentaties} presentatie${gewicht.presentaties === 1 ? "" : "s"}`);
-  if (gewicht.deadlines > 0) delen.push(`${gewicht.deadlines} deadline${gewicht.deadlines === 1 ? "" : "s"}`);
+  if (gewicht.tentamens > 0) delen.push(meervoud(gewicht.tentamens, "tentamen", "tentamens"));
+  if (gewicht.presentaties > 0) delen.push(meervoud(gewicht.presentaties, "presentatie", "presentaties"));
+  if (gewicht.deadlines > 0) delen.push(meervoud(gewicht.deadlines, "deadline", "deadlines"));
   const opsomming = delen.length > 0 ? delen.join(", ") : "geen zware momenten";
 
   el.textContent = `Week ${gewicht.week} — ${opsomming}`;
