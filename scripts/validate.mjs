@@ -2111,18 +2111,31 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   const bestandstekst = readFileSync(join(PROJECT_ROOT, "src/data/openstaandeVragen.js"), "utf8");
   check("openstaandeVragen.js: geen enkele datum in het bestand", /\d{4}-\d{2}-\d{2}/.test(bestandstekst), false);
 
-  // De sleutels van twee vragen moeten gelijk zijn aan velden die elders in de
-  // app al een invoervakje hebben, anders staat hetzelfde antwoord straks op
-  // twee plekken los van elkaar.
+  // Geschrapt omdat het antwoord niets verandert aan wat de app toont: de
+  // vakcode en het serienummer van AgTech, de boekingsnummers en
+  // overnachtingen van de reis, de cijfergrens van Python, het gesprek over
+  // week 9 (achterhaald door de Japan-omboeking) en de persoonlijke
+  // lesdagenregel (de app mag geen oordeel over een reis geven, CLAUDE.md §1).
+  const geschrapt = [
+    "AGTECH.code",
+    "filipijnen-geboekt.overnachtingen",
+    "filipijnen-geboekt.pnrs",
+    "PY.cijfergrens",
+    "CHI.docentafspraak",
+    "PERSOONLIJK.lesdagenregel",
+  ];
+  for (const id of geschrapt) check(`openstaandeVragen: ${id} staat er niet meer in`, openstaandeVragen.some((v) => v.id === id), false);
+
+  // Wat geschrapt is, blijft wel gewoon ONBEKEND in de datalaag — de vraag is
+  // weg, het feit is niet ingevuld met een gok.
   const agtech = courses.find((c) => c.id === "AGTECH");
-  check("openstaandeVragen: AGTECH.code hoort bij een veld dat echt leeg is", agtech.code === null && agtech.onbekendeVelden.includes("code"), true);
-  check("openstaandeVragen: AGTECH.code gebruikt de sleutel van het vakkenscherm", openstaandeVragen.some((v) => v.id === "AGTECH.code"), true);
+  check("AGTECH: vakcode blijft leeg nu de vraag weg is", agtech.code === null && agtech.onbekendeVelden.includes("code"), true);
   const filipijnen = trips.find((t) => t.id === "filipijnen-geboekt");
-  check(
-    "openstaandeVragen: overnachtingen gebruikt de sleutel van het dagblad",
-    openstaandeVragen.some((v) => v.id === `${filipijnen.variant}.${filipijnen.onbekendeVelden[0]}`),
-    true
-  );
+  check("Filipijnen: overnachtingen blijft een leeg veld in het dagblad", filipijnen.onbekendeVelden.includes("overnachtingen"), true);
+
+  // Elke overgebleven vraag hoort bij een vak, de kalender, het visum of hem
+  // zelf — geen reisgroep meer.
+  check("openstaandeVragen: geen reisvragen meer", openstaandeVragen.some((v) => v.id.startsWith("filipijnen")), false);
 
   // vragenPerGroep(): elke vraag komt precies één keer terug, in dezelfde volgorde
   const groepen = vragenPerGroep();

@@ -726,6 +726,21 @@ een verwijzing terug naar de paragraaf hieronder. De lijst zelf staat in
 `src/data/openstaandeVragen.js`; wordt een punt hieronder opgelost, dan gaat
 het daar ook weg.
 
+**Niet elk gat is een vraag (opgave Idries, 2026-09-15).** Een punt komt alleen
+in dat paneel als het antwoord verandert wát de app laat zien: een datum, een
+tijd, een belasting of een grens. Zes gaten zijn om die reden geschrapt als
+vraag — ze blijven hieronder staan als feit dat ONBEKEND is, maar Idries hoeft
+ze niet uit te zoeken:
+
+| Geschrapt | Waarom |
+|---|---|
+| Overnachtingen Filipijnen-reis | Accommodatie is voor de planning niet van belang (opgave Idries). |
+| Boekingsnummers (PNR) van de reis | Administratief; komen vanzelf per e-mail (opgave Idries). |
+| Vakcode en serienummer AgTech | Administratief, net als de zaalnummers. |
+| Strengere cijfergrens Python | Gaat alleen over het cijfer. De app doet geen cijferadministratie (FASE-9.md). |
+| Gesprek met docent 何宣瑩 over week 9 | Achterhaald: de Japan-omboeking (06-11 → 16-11) valt ná de week 9-onderdelen van 02-11 en 04-11, zie §4.1. |
+| Persoonlijke regel "hoeveel lesdagen mag een reis kosten" | De app zou er niets mee mogen doen — hij oordeelt niet over een reis, hij toont alleen de kosten (CLAUDE.md §1). |
+
 **Idries heeft op 2026-09-15 een reeks van deze punten beantwoord.** Wat
 daarmee is komen te vervallen, staat hieronder doorgestreept met de vindplaats
 van het antwoord. Wat nog open is, staat gewoon in de lijst.
@@ -793,7 +808,10 @@ van het antwoord. Wat nog open is, staat gewoon in de lijst.
 3. Datum en duur van de afstudeeropdracht in Nederland (februari 2027) — bepaalt
    de harde einddatum van het reisvenster.
 4. Primaire bron voor de Chinese visumvrije regeling.
-5. Persoonlijke regel: hoeveel lesdagen mag een reis kosten? (0, 1 of meer)
+5. ~~Persoonlijke regel: hoeveel lesdagen mag een reis kosten?~~ — **geen
+   vraag in de app.** Een antwoord zou de app een oordeel over een reis laten
+   vellen, en dat mag hij niet (CLAUDE.md §1). Hij toont alleen wat een dagdeel
+   kost; de afweging blijft aan Idries.
 
 ---
 

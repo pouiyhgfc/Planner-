@@ -4,11 +4,13 @@
  * in de app tot hij ze invult — er wordt hier niets gegokt (CLAUDE.md §5).
  *
  * `id` is tegelijk de opslagsleutel in state.vakkenVeldwaarden, met dezelfde
- * vorm als elders in de app (`${vakId}.${veldnaam}`, of `${reisvariant}.${veld}`
- * voor een reis). Waar een veld al ergens anders een invoervakje heeft —
- * AGTECH.code op het vakkenscherm, filipijnen-geboekt.overnachtingen in het
- * dagblad — is de sleutel bewust gelijk, zodat één antwoord op beide plekken
- * verschijnt.
+ * vorm als elders in de app (`${vakId}.${veldnaam}`).
+ *
+ * Een punt staat hier alleen als het antwoord verandert wat de app laat zien:
+ * een datum, een tijd, een belasting of een grens. Gaten die dat niet doen
+ * horen hier niet — administratieve nummers (vakcode, boekingsnummer), keuzes
+ * die alleen over cijfers gaan, en velden waar de app niets mee mag doen.
+ * Zie DATA.md §9 voor wat om die reden is geschrapt.
  *
  * Geen enkele datum in dit bestand: waar een vraag over een bekende dag gaat,
  * staat het weeknummer in de tekst. De datum zelf staat al in coursedates.js
@@ -21,7 +23,6 @@ const BRON = "DATA.md §9";
 
 /** Groepen zonder vak — vakken krijgen hun naam uit courses.js. */
 const OVERIG = {
-  REIS: "Filipijnen-reis",
   KALENDER: "NTU-kalender",
   CHINA: "China — visumvrij",
   PERSOONLIJK: "Persoonlijk",
@@ -33,15 +34,6 @@ export const openstaandeVragen = [
     vak: "CHI",
     vraag: "Verdeling van de 20% (midterm) en 25% (final) over de onderdelen",
     toelichting: "De syllabus noemt vier onderdelen — schriftelijk, luistertoets, mondeling en individuele presentatie — maar geen percentages per onderdeel.",
-    verwijzing: "DATA.md §3.4",
-    bron: BRON,
-    zekerheid: "ONBEKEND",
-  },
-  {
-    id: "CHI.docentafspraak",
-    vak: "CHI",
-    vraag: "Uitkomst van het gesprek met docent 何宣瑩 over week 9",
-    toelichting: "Wat is afgesproken over de afwezigheid in week 9, en of een herkansing zonder medische verklaring mogelijk is.",
     verwijzing: "DATA.md §3.4",
     bron: BRON,
     zekerheid: "ONBEKEND",
@@ -74,24 +66,6 @@ export const openstaandeVragen = [
     zekerheid: "ONBEKEND",
   },
   {
-    id: "PY.cijfergrens",
-    vak: "PY",
-    vraag: "Geldt de strengere cijfergrens voor civiele techniek?",
-    toelichting: "Studenten van een afdeling die zelf programmeervakken aanbiedt, hebben 95+ nodig voor een A+ in plaats van 90+. Of civiele techniek daaronder valt, is niet vastgesteld.",
-    verwijzing: "DATA.md §3.5",
-    bron: BRON,
-    zekerheid: "ONBEKEND",
-  },
-  {
-    id: "AGTECH.code",
-    vak: "AGTECH",
-    vraag: "Vakcode en serienummer",
-    toelichting: "De eerder aangenomen code bleek bij Python te horen. Dit veld staat ook op het vakkenscherm.",
-    verwijzing: "DATA.md §1",
-    bron: BRON,
-    zekerheid: "ONBEKEND",
-  },
-  {
     id: "AGTECH.presentatieopdracht",
     vak: "AGTECH",
     vraag: "Onderwerp, vorm, lengte en verslagplicht van de studentpresentatie (week 15)",
@@ -119,24 +93,6 @@ export const openstaandeVragen = [
     zekerheid: "ONBEKEND",
   },
   {
-    id: "filipijnen-geboekt.overnachtingen",
-    groep: OVERIG.REIS,
-    vraag: "Overnachtingen",
-    toelichting: "De boekingsbevestiging gaat alleen over vluchten. Dit veld staat ook in het dagblad bij de reis zelf.",
-    verwijzing: "DATA.md §4.0",
-    bron: BRON,
-    zekerheid: "ONBEKEND",
-  },
-  {
-    id: "filipijnen-geboekt.pnrs",
-    groep: OVERIG.REIS,
-    vraag: "Boekingsnummers (PNR) van de drie resterende vluchten",
-    toelichting: 'Alleen de nachtvlucht uit Davao had er al een. Bij de andere drie stond "being issued".',
-    verwijzing: "DATA.md §4.0",
-    bron: BRON,
-    zekerheid: "ONBEKEND",
-  },
-  {
     id: "KALENDER.flexibeleweek",
     groep: OVERIG.KALENDER,
     vraag: "Plannen de docenten iets in de flexibele week?",
@@ -159,15 +115,6 @@ export const openstaandeVragen = [
     groep: OVERIG.PERSOONLIJK,
     vraag: "Datum en duur van de afstudeeropdracht in Nederland",
     toelichting: "Bepaalt de harde einddatum van het reisvenster.",
-    verwijzing: "DATA.md §9",
-    bron: BRON,
-    zekerheid: "ONBEKEND",
-  },
-  {
-    id: "PERSOONLIJK.lesdagenregel",
-    groep: OVERIG.PERSOONLIJK,
-    vraag: "Hoeveel lesdagen mag een reis kosten?",
-    toelichting: "0, 1 of meer. Zolang dit niet vastligt, oordeelt de app niet over een reis — hij laat alleen zien wat hij kost.",
     verwijzing: "DATA.md §9",
     bron: BRON,
     zekerheid: "ONBEKEND",
