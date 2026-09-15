@@ -43,7 +43,6 @@ import {
   renderEigenItemsLijst,
   renderVerborgenLijst,
 } from "./planner.js";
-import { renderOpenstaandeVragen } from "./openstaandeVragen.js";
 
 const foutEl = document.getElementById("fout-melding");
 window.addEventListener("error", (e) => toonFout(e.error ?? e.message));
@@ -69,7 +68,6 @@ const eigenReizenEl = document.getElementById("eigen-reizen-lijst");
 const formEl = document.getElementById("planner-form");
 const eigenItemsEl = document.getElementById("eigen-items-lijst");
 const verborgenEl = document.getElementById("verborgen-lijst");
-const vragenEl = document.getElementById("vragen-paneel");
 const reisUitklapEl = document.getElementById("reis-uitklap");
 const itemUitklapEl = document.getElementById("item-uitklap");
 
@@ -113,7 +111,6 @@ function themaWeergeven() {
 
 function instellingenWeergeven() {
   themaWeergeven();
-  renderOpenstaandeVragen(vragenEl, state.vakkenVeldwaarden, zetVakVeldEnHerteken);
   renderPersistRegel(persistEl, persistToegekend);
   renderExportRegel(exportEl, state.laatsteExport, exporteer);
   renderConflictenPaneel(conflictenEl, openstaandeConflicten, pasConflictenToe);

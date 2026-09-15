@@ -381,52 +381,11 @@ select {
   margin-top: 0;
   border-top: none;
 }
-/* Openstaande vragen (Instellingen): dicht, één regel per punt, met de
-   toelichting eronder zodat duidelijk is waarom het veld leeg staat. */
-.vragen-stand {
-  color: var(--text-muted);
-  font-size: var(--fs-min);
-  margin: 0;
-}
-.vragen-groep {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding-top: 8px;
-}
-.vragen-groep h4 {
-  margin: 0;
-  font-size: var(--fs-min);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-muted);
-}
-.vraag-rij {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding-left: 8px;
-  border-left: 2px solid var(--border-soft);
-}
-.vraag-rij.vraag-beantwoord {
-  border-left-color: var(--accent);
-}
-.vraag-rij label {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.vraag-tekst {
-  font-size: var(--fs-min);
-}
-.vraag-rij input {
+.oplevering-notitie {
+  display: block;
   width: 100%;
   min-width: 0;
-}
-.vraag-toelichting {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: var(--fs-min);
+  margin-top: 4px;
 }
 
 .eigen-items-lijst ul {

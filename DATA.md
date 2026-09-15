@@ -138,6 +138,20 @@ weekdagen of in de flexibele week (week 16+1). Docenten moeten dit **uiterlijk a
 het eind van week 12** aankondigen. Week 12 = 2026-11-22 t/m 2026-11-28.
 → De app moet 2026-11-28 als harde deadline tonen: "flexibele week bevestigd?"
 
+**Opgave Idries (2026-09-15), zekerheid TE VERIFIËREN:** zijn docenten plannen
+niets in de flexibele week (2026-12-28 → 12-31). De deadline van 2026-11-28
+blijft staan tot de docenten het formeel bevestigd hebben — pas dan is dit
+ZEKER. De flexibele week blijft tot die tijd als risicoperiode in de kalender.
+
+**Openstaand punt, niet verwerkt — conflict met §3.** Idries denkt dat "de
+laatste toets of iets" op **2026-12-26** valt. Geen enkele syllabus noemt die
+datum: de laatste tentamens in §3 staan op 2026-12-23 (PSY final, CHI
+presentatie, PY projectpresentatie) en 2026-12-24 (RTE comprehensive exam,
+AgTech TBA). 2026-12-26 is bovendien een zaterdag, valt buiten de officiële
+tentamenperiode (12-21 → 12-25) en buiten de flexibele week (12-28 → 12-31).
+Dit is **niet** in de data gezet — het is een vermoeden, niet een bron
+(CLAUDE.md §5). Te verifiëren bij de docenten.
+
 **Kalender-opmerking 2:** lesuitval door natuurramp (tyfoon) volgt de aankondiging
 van de gemeente Taipei; of er wordt ingehaald bepaalt elke docent zelf.
 
@@ -386,6 +400,13 @@ standen naast elkaar.
 van het eindcijfer). Eén lessessie = 3 uur (periodes A/B/C). Meer dan 20
 minuten te laat, of meer dan 20 minuten te vroeg weg = 1 uur absentie.
 
+**Bevestigd (opgave Idries, 2026-09-15):** de twee grenzen hieronder tellen
+**los van elkaar**, er is geen volgorde en ze worden niet verrekend. Dat is
+precies wat de app al deed; het was alleen nog niet bevestigd. Idries merkt
+daarbij op dat de docent soepel is en een paar gemiste lessen geen probleem
+zijn — dat is zijn eigen inschatting, geen regel, en staat daarom **niet** in
+de datalaag. De puntenaftrek bij a) blijft onverkort getoond.
+
 **b) Faaldrempel** — bron: hetzelfde "Course Description"-blok dat de
 onjuiste dag/zaal noemde, zekerheid **TE VERIFIËREN**: meer dan 1/3 van de
 sessies missen kan betekenen niet halen; 5 of meer ongeoorloofde absenties
@@ -494,7 +515,11 @@ datum vast voor Idries binnen weken 14-16: de drie kandidaatdata blijven als
 groepsproject zelf telt wel gewoon voor 25%.
 
 **Opdrachten — bron: opgave Idries, zekerheid TE VERIFIËREN.** Er zijn er
-ongeveer **12**, waarvan de beste **10** meetellen voor de 65%. Idries geeft
+ongeveer **12**, waarvan de beste **10** meetellen voor de 65%. De app maakt
+hiervan **twaalf genummerde regels** in de opleveringenlijst van Python, zonder
+datum en zonder onderwerp — puur zodat zichtbaar is wat er aankomt. Die regels
+worden **berekend** uit dit aantal, niet uitgeschreven: verandert het getal,
+dan verandert de lijst mee. Idries geeft
 dit zelf aan met een slag om de arm ("dacht ik"), en de cursuspagina noemt
 alleen "ca. 10-12 stuks" — daarom TE VERIFIËREN en niet ZEKER. De
 inleverdatums staan op NTU COOL en blijven ONBEKEND.
@@ -720,30 +745,41 @@ op te bouwen.
 
 De app maakt hiervoor lege, gemarkeerde velden — géén aannames.
 
-**Waar dit in de app staat:** Instellingen → *Openstaande vragen*. Dat paneel
-toont elk punt uit deze paragraaf dat nog echt open is, met een invoerveld en
-een verwijzing terug naar de paragraaf hieronder. De lijst zelf staat in
-`src/data/openstaandeVragen.js`; wordt een punt hieronder opgelost, dan gaat
-het daar ook weg.
+**Waar dit in de app staat:** niet meer als aparte vragenlijst — zie hieronder.
+Wat nog ONBEKEND is, staat als leeg, invulbaar veld op de plek waar het
+hoort: bij het vak, bij de oplevering of bij de reis.
 
-**Niet elk gat is een vraag (opgave Idries, 2026-09-15).** Een punt komt alleen
-in dat paneel als het antwoord verandert wát de app laat zien: een datum, een
-tijd, een belasting of een grens. Zes gaten zijn om die reden geschrapt als
-vraag — ze blijven hieronder staan als feit dat ONBEKEND is, maar Idries hoeft
-ze niet uit te zoeken:
+**Het vragenpaneel is weer verwijderd (opgave Idries, 2026-09-15).** Idries
+heeft de lijst langsgelopen en er bleef niets over dat hij wilde uitzoeken: wat
+hij wist heeft hij beantwoord, de rest hoort hij vanzelf of vindt hij niet van
+belang voor de planning. Een paneel met vragen die niemand gaat beantwoorden is
+dode ballast, dus het is eruit — inclusief `src/data/openstaandeVragen.js` en
+`src/ui/openstaandeVragen.js`.
 
-| Geschrapt | Waarom |
+**Wat ervoor in de plaats komt:** per vak een lijst met wat er aankomt, op het
+vakkenscherm onder *Opleveringen*. Elke regel heeft een invulbare datum en een
+invulbaar veld voor onderwerp/details, zodat Idries het aanvult zodra hij het
+hoort. Zijn eis was: "zolang ik maar weet wat me te wachten staat". De
+onderstaande gaten blijven dus ONBEKEND in de datalaag, maar ze worden niet
+meer als vraag aan hem voorgelegd.
+
+| Gat | Wat Idries erover zei |
 |---|---|
-| Overnachtingen Filipijnen-reis | Accommodatie is voor de planning niet van belang (opgave Idries). |
-| Boekingsnummers (PNR) van de reis | Administratief; komen vanzelf per e-mail (opgave Idries). |
+| Verdeling van de 20% en 25% (CHI) | Niet belangrijk. |
+| 1/3-faaldrempel vs. vrijstelling (CHI) | Beantwoord: ze tellen los van elkaar — zie §3.4. |
+| Inleverdatums PSY-opdrachten | Hoort hij nog; staan niet in de syllabus (gecontroleerd). Vult hij zelf in. |
+| Inleverdatums Python-opdrachten | Niet belangrijk; vult hij zelf in als het zover is. |
+| Onderwerp/vorm/lengte AgTech-presentatie | Weet hij nog niet; vult hij zelf in. |
+| Tijd AgTech-excursie (week 14) | Weet hij niet. |
+| Tijd RTE technical visit (week 11) | Weet hij niet. |
+| Flexibele week | Beantwoord: docenten plannen niets — zie §2. |
+| Overnachtingen en boekingsnummers reis | Niet van belang voor de planning. |
 | Vakcode en serienummer AgTech | Administratief, net als de zaalnummers. |
-| Strengere cijfergrens Python | Gaat alleen over het cijfer. De app doet geen cijferadministratie (FASE-9.md). |
+| Strengere cijfergrens Python | Gaat alleen over het cijfer; de app doet geen cijferadministratie. |
 | Gesprek met docent 何宣瑩 over week 9 | Achterhaald: de Japan-omboeking (06-11 → 16-11) valt ná de week 9-onderdelen van 02-11 en 04-11, zie §4.1. |
-| Persoonlijke regel "hoeveel lesdagen mag een reis kosten" | De app zou er niets mee mogen doen — hij oordeelt niet over een reis, hij toont alleen de kosten (CLAUDE.md §1). |
-
-**Idries heeft op 2026-09-15 een reeks van deze punten beantwoord.** Wat
-daarmee is komen te vervallen, staat hieronder doorgestreept met de vindplaats
-van het antwoord. Wat nog open is, staat gewoon in de lijst.
+| Primaire bron China-visum | Niet van belang: Idries gaat er tijdens zijn studieperiode heen. |
+| Datum en duur afstudeeropdracht | Niet van belang voor de planner. |
+| Persoonlijke regel "hoeveel lesdagen mag een reis kosten" | De app zou er niets mee mogen doen — hij oordeelt niet over een reis (CLAUDE.md §1). |
 
 1. ~~Vakcode en~~ zaalnummer Global AgTech Foresight — **zaalnummers vervallen
    als open punt** (§1: locaties zijn voor de planning niet van belang; het

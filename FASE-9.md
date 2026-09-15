@@ -320,18 +320,13 @@ van het semester. **STOP.**
 Blijven `ONBEKEND` in de app. Zet ze bij elkaar in een paneel onder
 instellingen, met een invoerveld per punt.
 
-**Gebouwd, en daarna teruggesnoeid tot 10 punten.** Instellingen →
-*Openstaande vragen*, gevuld uit `src/data/openstaandeVragen.js`. Een punt
-staat er alleen in als het antwoord verandert wat de app toont; zes gaten zijn
-om die reden geen vraag meer (zie de tabel in DATA.md §9). Elk punt heeft een invoerveld, een
-toelichting waarom het leeg staat en een verwijzing naar de plek in DATA.md.
-Een antwoord wordt opgeslagen onder dezelfde sleutel als het losse invulveld
-dat er elders al voor bestond, dus wie hier de AgTech-vakcode invult, ziet hem
-ook op het vakkenscherm staan. Bovenaan staat hoeveel er beantwoord zijn.
-
-**Stand op 2026-09-15: Idries heeft er acht beantwoord.** De antwoorden staan
-in DATA.md (§1, §3.1, §3.2, §3.4, §3.5, §4.0) en in `src/data/`. Hieronder de
-oorspronkelijke twaalf, met wat er nog van over is.
+**Gebouwd en weer verwijderd (2026-09-15).** Het paneel stond er, Idries liep
+de lijst langs, en er bleef niets over dat hij wilde uitzoeken: wat hij wist
+heeft hij beantwoord, de rest hoort hij vanzelf of is niet van belang voor de
+planning. In plaats daarvan staat nu per vak op het vakkenscherm een lijst met
+wat er aankomt, met per regel een invulbare datum en een invulbaar veld voor
+onderwerp en details. Zie de tabel in DATA.md §9 voor wat er per punt is
+besloten.
 
 1. Verdeling van de 20% en 25% over mondeling, schriftelijk en presentatie
    (CHI) — **open.** De syllabus noemt vier onderdelen (schriftelijk,
