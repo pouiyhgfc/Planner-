@@ -1138,6 +1138,16 @@ select {
   font-size: 15px;
   margin: 16px 0 8px;
 }
+.vak-chip {
+  flex-shrink: 0;
+  min-width: 32px;
+  text-align: center;
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
 .overzicht-vak-kop:first-child {
   margin-top: 0;
 }

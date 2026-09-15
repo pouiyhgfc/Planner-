@@ -85,7 +85,9 @@ export function rijenReizen(tripStatusOverrides = {}, eigenReizen = []) {
 export function rijenTentamens(pythonAfgewezen = false) {
   return alleVakItems
     .filter((v) => v.type === "tentamen" && !(pythonAfgewezen && v.course === "PY"))
-    .map((v) => ({ datum: v.date, inhoud: `${courseNaam(v.course)} — ${v.label}`, vak: v.course }));
+    // De vaknaam zat vroeger in de tekst; hij staat nu als gekleurde chip
+    // voor de rij, en in de per-vak-weergave ook al in het kopje erboven.
+    .map((v) => ({ datum: v.date, inhoud: v.label, vak: v.course }));
 }
 
 /** @returns {{datum: string, inhoud: string, deadline: object, vak: string|null}[]} */
@@ -123,7 +125,7 @@ export function rijenOpleveringen(vakkenVeldwaarden = {}) {
     .filter(({ datum }) => datum !== null)
     .map(({ o, datum }) => ({
       datum,
-      inhoud: o.weging !== null ? `${courseNaam(o.vak)} — ${o.naam} (${o.weging}%)` : `${courseNaam(o.vak)} — ${o.naam}`,
+      inhoud: o.weging !== null ? `${o.naam} (${o.weging}%)` : o.naam,
       oplevering: o,
       vak: o.vak,
     }));

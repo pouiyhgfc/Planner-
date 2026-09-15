@@ -7,7 +7,8 @@ import { resterendeBlokken, chinaAftelling } from "../lib/overzicht.js";
 import { deadlineSleutel } from "./dagblad.js";
 import { kortDatum } from "./datumlabels.js";
 import { projects } from "../data/projects.js";
-import { courses } from "../data/courses.js";
+import { courses, courseVoor } from "../data/courses.js";
+import { vakAfkorting, vakKleuren } from "./tekst.js";
 import {
   volgendeTentamenOfPresentatie,
   aantalOpenstaandeDeadlines,
@@ -277,7 +278,7 @@ export function initOverzichtScherm(root, callbacks) {
     return rijen;
   }
 
-  function renderRij(rij) {
+  function renderRij(rij, toonVakChip = true) {
     const li = document.createElement("li");
     li.className = "overzicht-rij";
 
@@ -288,6 +289,11 @@ export function initOverzichtScherm(root, callbacks) {
 
     const rechts = document.createElement("span");
     rechts.className = "overzicht-rij-inhoud";
+
+    // Zonder vakmarkering leest de chronologische lijst als één stapel: elke
+    // rij weet al bij welk vak hij hoort, maar dat was nergens te zien. In de
+    // per-vak-weergave zegt het kopje erboven het al, dan is de chip ruis.
+    if (rij.vak && toonVakChip) rechts.appendChild(vakChip(rij.vak));
 
     if (rij.categorie === "deadlines") {
       const sleutel = deadlineSleutel(rij.deadline);
@@ -319,6 +325,20 @@ export function initOverzichtScherm(root, callbacks) {
     li.appendChild(rechts);
 
     return li;
+  }
+
+  /**
+   * @param {string} vakId
+   * @returns {HTMLElement} klein gekleurd label met de vakafkorting
+   */
+  function vakChip(vakId) {
+    const { achtergrond, tekst } = vakKleuren(vakId);
+    const chip = document.createElement("span");
+    chip.className = "vak-chip";
+    chip.style.background = achtergrond;
+    chip.style.color = tekst;
+    chip.textContent = vakAfkorting(vakId);
+    return chip;
   }
 
   function renderWeergaveToggle() {
@@ -358,13 +378,16 @@ export function initOverzichtScherm(root, callbacks) {
     for (const vakId of volgorde) {
       const groep = groepen.get(vakId);
       if (!groep || groep.length === 0) continue;
+      // FASE-9.md B3 punt 3 vroeg kopjes in vakkleur; die waren tot nu toe
+      // zwart-wit, waardoor de groepen visueel niet uit elkaar liepen.
       const kop = document.createElement("h3");
       kop.className = "overzicht-vak-kop";
-      kop.textContent = vakId === "__overig__" ? "Overig" : courses.find((c) => c.id === vakId).name;
+      kop.textContent = vakId === "__overig__" ? "Overig" : courseVoor(vakId).name;
+      if (vakId !== "__overig__") kop.style.color = vakKleuren(vakId).tekst;
       container.appendChild(kop);
       const lijst = document.createElement("ul");
       lijst.className = "overzicht-lijst";
-      for (const rij of groep) lijst.appendChild(renderRij(rij));
+      for (const rij of groep) lijst.appendChild(renderRij(rij, false));
       container.appendChild(lijst);
     }
     return container;

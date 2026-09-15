@@ -11,8 +11,8 @@ import { zwareMomentenOpDag, weekgewicht } from "../lib/weekgewicht.js";
 import { appPeriod } from "../data/semester.js";
 import { courses, courseVoor } from "../data/courses.js";
 import { WEEKDAGEN, maandNaam } from "./datumlabels.js";
+import { vakAfkorting } from "./tekst.js";
 
-const AFKORTING = { PSY: "PSY", PY: "PY", AGTECH: "AGT", RTE: "RTE", CHI: "CHI" };
 const ZWAAR_DREMPEL = 3;
 const KALENDER_WEERGAVEN = [
   { id: "compact", label: "Compact" },
@@ -53,8 +53,8 @@ export function zwareRegelTekst(dag) {
   if (totaal === 0) return null;
   if (totaal === 1) {
     const item = tentamens[0] ?? presentaties[0];
-    if (item) return `${AFKORTING[item.course] ?? item.course} ${kortMomentType(item)}`;
-    return deadlines[0].course ? `${AFKORTING[deadlines[0].course] ?? deadlines[0].course} deadline` : "Deadline";
+    if (item) return `${vakAfkorting(item.course)} ${kortMomentType(item)}`;
+    return deadlines[0].course ? `${vakAfkorting(deadlines[0].course)} deadline` : "Deadline";
   }
   const woord =
     tentamens.length === totaal ? "tentamens" : presentaties.length === totaal ? "presentaties" : deadlines.length === totaal ? "deadlines" : "zware momenten";
@@ -71,7 +71,7 @@ export function zwareRegelTekst(dag) {
  * @returns {string[]} leeg als er die dag niets is
  */
 export function onderwerpenRegels(dag) {
-  return gesorteerdOpTijd(dag.vakken).map((v) => `${AFKORTING[v.course] ?? v.course} ${v.label}`);
+  return gesorteerdOpTijd(dag.vakken).map((v) => `${vakAfkorting(v.course)} ${v.label}`);
 }
 
 /**
@@ -428,7 +428,7 @@ function renderLegenda() {
 
     const tekst = document.createElement("span");
     const dagen = c.weekdays.map((w) => WEEKDAGEN[w]).join(" + ");
-    tekst.textContent = `${AFKORTING[c.id]} — ${c.name} — ${dagen} ${c.start}–${c.end}`;
+    tekst.textContent = `${vakAfkorting(c.id)} — ${c.name} — ${dagen} ${c.start}–${c.end}`;
     li.appendChild(tekst);
 
     lijst.appendChild(li);
