@@ -9,6 +9,7 @@ import { kortDatum } from "./datumlabels.js";
 import { projects } from "../data/projects.js";
 import { courses, courseVoor } from "../data/courses.js";
 import { vakAfkorting, vakKleuren, meervoud } from "./tekst.js";
+import { bevestigKnop } from "./knoppen.js";
 import {
   volgendeTentamenOfPresentatie,
   aantalOpenstaandeDeadlines,
@@ -371,19 +372,21 @@ export function initOverzichtScherm(root, callbacks) {
    * @returns {HTMLElement}
    */
   function rijMenu(rij) {
+    // bevestigen: eerst een vraag op de knop, en het menu blijft open tot je
+    // gekozen hebt. Alleen voor wat je niet kunt terugdraaien.
     const acties = [];
     if (rij.categorie === "eigenItems" && rij.item) {
-      acties.push(["Bewerken", () => callbacks.onItemBewerken(rij.item.id)]);
-      acties.push(["Verwijderen", () => callbacks.onItemVerwijderen(rij.item.id)]);
+      acties.push({ label: "Bewerken", actie: () => callbacks.onItemBewerken(rij.item.id) });
+      acties.push({ label: "Verwijderen", bevestigen: true, actie: () => callbacks.onItemVerwijderen(rij.item.id) });
     }
     if (rij.categorie === "deadlines" && rij.deadline) {
-      acties.push(["Verbergen", () => callbacks.onVerbergen(verborgenDeadlineSleutel(rij.deadline))]);
+      acties.push({ label: "Verbergen", actie: () => callbacks.onVerbergen(verborgenDeadlineSleutel(rij.deadline)) });
     }
     if (rij.oplevering) {
-      acties.push(["Verbergen", () => callbacks.onVerbergen(verborgenOpleveringSleutel(rij.oplevering.id))]);
+      acties.push({ label: "Verbergen", actie: () => callbacks.onVerbergen(verborgenOpleveringSleutel(rij.oplevering.id)) });
     }
-    acties.push(["Naar die dag", () => callbacks.onDagKiezen(rij.datum, { formOpenen: false })]);
-    acties.push(["Item op die dag", () => callbacks.onDagKiezen(rij.datum, { formOpenen: true })]);
+    acties.push({ label: "Naar die dag", actie: () => callbacks.onDagKiezen(rij.datum, { formOpenen: false }) });
+    acties.push({ label: "Item op die dag", actie: () => callbacks.onDagKiezen(rij.datum, { formOpenen: true }) });
 
     const menu = document.createElement("details");
     menu.className = "rij-menu";
@@ -395,7 +398,11 @@ export function initOverzichtScherm(root, callbacks) {
 
     const lijst = document.createElement("div");
     lijst.className = "rij-menu-lijst";
-    for (const [label, actie] of acties) {
+    for (const { label, actie, bevestigen } of acties) {
+      if (bevestigen) {
+        lijst.appendChild(bevestigKnop({ label, className: "menu-knop-gevaar", onBevestigd: actie }));
+        continue;
+      }
       const b = document.createElement("button");
       b.type = "button";
       b.textContent = label;

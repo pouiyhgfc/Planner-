@@ -24,7 +24,27 @@
 <main id="schermen">
   <section id="scherm-maand" class="scherm" data-scherm="maand"></section>
   <section id="scherm-weken" class="scherm" data-scherm="weken" hidden></section>
-  <section id="scherm-overzicht" class="scherm" data-scherm="overzicht" hidden></section>
+  <section id="scherm-overzicht" class="scherm" data-scherm="overzicht" hidden>
+    <div id="eigen-beheer">
+      <section class="beheer-sectie">
+        <h3>Eigen items</h3>
+        <div id="eigen-items-lijst"></div>
+        <details class="uitklap uitklap-actie" id="item-uitklap">
+          <summary class="tap-target">Item toevoegen</summary>
+          <div id="planner-form"></div>
+        </details>
+      </section>
+
+      <section class="beheer-sectie">
+        <h3>Eigen reizen</h3>
+        <div id="eigen-reizen-lijst"></div>
+        <details class="uitklap uitklap-actie" id="reis-uitklap">
+          <summary class="tap-target">Reis toevoegen</summary>
+          <div id="reis-form"></div>
+        </details>
+      </section>
+    </div>
+  </section>
   <section id="scherm-vakken" class="scherm" data-scherm="vakken" hidden></section>
 </main>
 
@@ -60,26 +80,8 @@
     </section>
 
     <section class="instellingen-sectie">
-      <h3>Eigen reizen</h3>
-      <div id="eigen-reizen-lijst"></div>
-      <details class="uitklap uitklap-actie" id="reis-uitklap">
-        <summary class="tap-target">Reis toevoegen</summary>
-        <div id="reis-form"></div>
-      </details>
-    </section>
-
-    <section class="instellingen-sectie">
       <h3>Verborgen</h3>
       <div id="verborgen-lijst"></div>
-    </section>
-
-    <section class="instellingen-sectie">
-      <h3>Eigen items</h3>
-      <div id="eigen-items-lijst"></div>
-      <details class="uitklap uitklap-actie" id="item-uitklap">
-        <summary class="tap-target">Item toevoegen</summary>
-        <div id="planner-form"></div>
-      </details>
     </section>
   </div>
 </div>
