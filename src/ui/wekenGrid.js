@@ -7,7 +7,7 @@
 
 import { addDays, dayOfWeek, diffDays, parseYMD } from "../lib/date.js";
 import { appPeriod } from "../data/semester.js";
-import { courses } from "../data/courses.js";
+import { courseVoor } from "../data/courses.js";
 import { dayStatus, dagdeelVoorTijd, DAGDEEL_NAMEN } from "../lib/dayStatus.js";
 import { WEEKDAGEN, collegeWeek, kortDatum } from "./datumlabels.js";
 
@@ -77,10 +77,6 @@ export function weekStarts(startWeek, periode, eigenStart, eigenEind) {
  */
 export function verschuifVenster(startWeek, periode, eigenStart, eigenEind, richting) {
   return addDays(startWeek, richting * weekAantal(periode, eigenStart, eigenEind) * 7);
-}
-
-function courseVoor(id) {
-  return courses.find((c) => c.id === id);
 }
 
 /**
@@ -178,8 +174,13 @@ function renderWeekkaart(root, weekMaandag, pythonAfgewezen, tripStatusOverrides
   }
   kop.appendChild(titel);
 
+  // De badge vat de week samen, de uitzonderingenlijst eronder geeft dezelfde
+  // dingen mét datum. Is er precies één uitzondering, dan zeggen ze letterlijk
+  // hetzelfde en staat het twee keer in dezelfde kaart; dan wint de lijst,
+  // want die noemt ook de dag.
+  const uitz = uitzonderingen(dagen);
   const feit = grootsteFeit(dagen);
-  if (feit) {
+  if (feit && uitz.length !== 1) {
     const badge = document.createElement("span");
     badge.className = "weekkaart-badge";
     badge.textContent = feit;
@@ -240,7 +241,6 @@ function renderWeekkaart(root, weekMaandag, pythonAfgewezen, tripStatusOverrides
   }
   kaart.appendChild(grid);
 
-  const uitz = uitzonderingen(dagen);
   if (uitz.length > 0) {
     const lijst = document.createElement("ul");
     lijst.className = "weekkaart-uitzonderingen";

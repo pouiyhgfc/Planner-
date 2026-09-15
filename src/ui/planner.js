@@ -6,6 +6,7 @@
 
 import { costOfRange } from "../lib/blocks.js";
 import { diffDays } from "../lib/date.js";
+import { kortDatum } from "./datumlabels.js";
 import { huidigeYMD } from "../state/store.js";
 import { trips, effectieveTripStatus, TRIP_STATUSSEN } from "../data/trips.js";
 
@@ -196,7 +197,7 @@ export function renderExportRegel(root, laatsteExport, onExporteren) {
     tekst.classList.add("export-waarschuwing");
   } else {
     const dagenGeleden = diffDays(laatsteExport, huidigeYMD());
-    tekst.textContent = `Laatste export: ${laatsteExport} (${dagenGeleden} dagen geleden)`;
+    tekst.textContent = `Laatste export: ${kortDatum(laatsteExport)} (${dagenGeleden} dagen geleden)`;
     if (dagenGeleden > EXPORT_WAARSCHUWING_DAGEN) tekst.classList.add("export-waarschuwing");
   }
   root.appendChild(tekst);
@@ -301,7 +302,7 @@ export function renderReisstatusPaneel(root, tripStatusOverrides, onWijzigen) {
     rij.className = "reisstatus-rij";
 
     const tekst = document.createElement("span");
-    tekst.textContent = `${item.label} (${item.start} → ${item.end}) — ${status}`;
+    tekst.textContent = `${item.label} (${kortDatum(item.start)} → ${kortDatum(item.end)}) — ${TRIP_STATUS_LABELS[status] ?? status}`;
     rij.appendChild(tekst);
 
     if (status !== "geboekt") {
@@ -401,37 +402,10 @@ export function renderReisForm(root, onToevoegen) {
  * @param {(id: string) => void} onVerwijderen
  */
 export function renderEigenReizenLijst(root, reizen, onVerwijderen) {
-  root.className = "eigen-items-lijst";
-  root.textContent = "";
-
-  if (reizen.length === 0) {
-    const leeg = document.createElement("p");
-    leeg.className = "eigen-items-leeg";
-    leeg.textContent = "Nog geen eigen reizen.";
-    root.appendChild(leeg);
-    return;
-  }
-
-  const lijst = document.createElement("ul");
-  for (const reis of [...reizen].sort((a, b) => a.start.localeCompare(b.start))) {
-    const li = document.createElement("li");
-    li.className = "eigen-item-rij";
-
-    const tekst = document.createElement("span");
-    const vluchtenTekst = reis.vluchten?.length > 0 ? ` — ${reis.vluchten.length} vlucht(en)` : "";
-    tekst.textContent = `${reis.start} → ${reis.end} — ${reis.naam} (${reis.status})${vluchtenTekst}`;
-    li.appendChild(tekst);
-
-    const verwijder = document.createElement("button");
-    verwijder.type = "button";
-    verwijder.textContent = "×";
-    verwijder.setAttribute("aria-label", `Verwijder "${reis.naam}"`);
-    verwijder.addEventListener("click", () => onVerwijderen(reis.id));
-    li.appendChild(verwijder);
-
-    lijst.appendChild(li);
-  }
-  root.appendChild(lijst);
+  renderVerwijderbareLijst(root, reizen, onVerwijderen, "Nog geen eigen reizen.", (reis) => {
+    const vluchten = reis.vluchten?.length > 0 ? ` — ${reis.vluchten.length} vlucht(en)` : "";
+    return `${kortDatum(reis.start)} → ${kortDatum(reis.end)} — ${reis.naam} (${TRIP_STATUS_LABELS[reis.status] ?? reis.status})${vluchten}`;
+  });
 }
 
 /**
@@ -440,32 +414,48 @@ export function renderEigenReizenLijst(root, reizen, onVerwijderen) {
  * @param {(id: string) => void} onVerwijderen
  */
 export function renderEigenItemsLijst(root, items, onVerwijderen) {
+  renderVerwijderbareLijst(root, items, onVerwijderen, "Nog geen eigen items.", (item) => {
+    const bereik = item.start === item.end ? kortDatum(item.start) : `${kortDatum(item.start)} → ${kortDatum(item.end)}`;
+    return `${bereik} — ${item.naam} (${item.status})`;
+  });
+}
+
+/**
+ * Eigen reizen en eigen items zijn dezelfde lijst met een andere regeltekst:
+ * op datum gesorteerd, per rij een kruisje om te verwijderen, en een zin als
+ * er nog niets is.
+ * @param {HTMLElement} root
+ * @param {{id: string, naam: string, start: string}[]} rijen
+ * @param {(id: string) => void} onVerwijderen
+ * @param {string} legeTekst
+ * @param {(rij: object) => string} regelTekst
+ */
+function renderVerwijderbareLijst(root, rijen, onVerwijderen, legeTekst, regelTekst) {
   root.className = "eigen-items-lijst";
   root.textContent = "";
 
-  if (items.length === 0) {
+  if (rijen.length === 0) {
     const leeg = document.createElement("p");
     leeg.className = "eigen-items-leeg";
-    leeg.textContent = "Nog geen eigen items.";
+    leeg.textContent = legeTekst;
     root.appendChild(leeg);
     return;
   }
 
   const lijst = document.createElement("ul");
-  for (const item of [...items].sort((a, b) => a.start.localeCompare(b.start))) {
+  for (const rij of [...rijen].sort((a, b) => a.start.localeCompare(b.start))) {
     const li = document.createElement("li");
     li.className = "eigen-item-rij";
 
     const tekst = document.createElement("span");
-    const bereik = item.start === item.end ? item.start : `${item.start} → ${item.end}`;
-    tekst.textContent = `${bereik} — ${item.naam} (${item.status})`;
+    tekst.textContent = regelTekst(rij);
     li.appendChild(tekst);
 
     const verwijder = document.createElement("button");
     verwijder.type = "button";
     verwijder.textContent = "×";
-    verwijder.setAttribute("aria-label", `Verwijder "${item.naam}"`);
-    verwijder.addEventListener("click", () => onVerwijderen(item.id));
+    verwijder.setAttribute("aria-label", `Verwijder "${rij.naam}"`);
+    verwijder.addEventListener("click", () => onVerwijderen(rij.id));
     li.appendChild(verwijder);
 
     lijst.appendChild(li);

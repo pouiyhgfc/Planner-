@@ -6,7 +6,8 @@
  */
 
 import { diffDays } from "../lib/date.js";
-import { courses } from "../data/courses.js";
+import { kortDatum } from "./datumlabels.js";
+import { courseNaam } from "../data/courses.js";
 import { alleVakItems, rteActionItems } from "../data/coursedates.js";
 import { holidays } from "../data/holidays.js";
 import { academicDeadlines, chinaVisaFreeDeadline, flexWeekAnnouncementDeadline } from "../data/deadlines.js";
@@ -20,10 +21,6 @@ import { deadlineSleutel, mijlpaalSleutel } from "./dagblad.js";
 
 export { mijlpaalSleutel };
 export const alleDeadlineItems = [...rteActionItems, ...academicDeadlines, chinaVisaFreeDeadline, flexWeekAnnouncementDeadline];
-
-function courseNaam(id) {
-  return courses.find((c) => c.id === id)?.name ?? id;
-}
 
 /**
  * @param {string} vandaag
@@ -78,7 +75,7 @@ export function rijenReizen(tripStatusOverrides = {}, eigenReizen = []) {
     .filter((t) => t.status !== "vervallen")
     .map((t) => ({
       datum: t.start,
-      inhoud: t.end !== t.start ? `${t.label} (${t.start} t/m ${t.end}) — ${t.status}` : `${t.label} — ${t.status}`,
+      inhoud: t.end !== t.start ? `${t.label} (${kortDatum(t.start)} t/m ${kortDatum(t.end)}) — ${t.status}` : `${t.label} — ${t.status}`,
       vak: null,
     }));
 }
@@ -94,7 +91,7 @@ export function rijenTentamens(pythonAfgewezen = false) {
 export function rijenDeadlines() {
   return alleDeadlineItems.map((d) => ({
     datum: d.date ?? d.start,
-    inhoud: d.end && d.end !== d.start ? `${d.label} (${d.start} t/m ${d.end})` : d.label,
+    inhoud: d.end && d.end !== d.start ? `${d.label} (${kortDatum(d.start)} t/m ${kortDatum(d.end)})` : d.label,
     deadline: d,
     vak: d.course ?? null,
   }));
@@ -137,7 +134,7 @@ export function rijenFeestdagen() {
     .filter((h) => h.type === "feestdag")
     .map((h) => ({
       datum: h.date ?? h.start,
-      inhoud: h.end && h.end !== h.start ? `${h.label} (${h.start} t/m ${h.end})` : h.label,
+      inhoud: h.end && h.end !== h.start ? `${h.label} (${kortDatum(h.start)} t/m ${kortDatum(h.end)})` : h.label,
       vak: null,
     }));
 }
@@ -146,7 +143,7 @@ export function rijenFeestdagen() {
 export function rijenEigenItems(items) {
   return items.map((item) => ({
     datum: item.start,
-    inhoud: `${item.naam} (${item.status})${item.start !== item.end ? ` t/m ${item.end}` : ""}`,
+    inhoud: `${item.naam} (${item.status})${item.start !== item.end ? ` t/m ${kortDatum(item.end)}` : ""}`,
     item,
     vak: null,
   }));
@@ -154,5 +151,5 @@ export function rijenEigenItems(items) {
 
 /** @param {boolean} [pythonAfgewezen] @param {Record<string, string>} [tripStatusOverrides] @param {object[]} [eigenReizen] @returns {{datum: string, inhoud: string, vak: null}[]} */
 export function rijenVrijeBlokken(pythonAfgewezen = false, tripStatusOverrides = {}, eigenReizen = []) {
-  return freeBlocks(pythonAfgewezen, tripStatusOverrides, eigenReizen).map((b) => ({ datum: b.start, inhoud: `${b.length} dagen vrij (t/m ${b.end})`, vak: null }));
+  return freeBlocks(pythonAfgewezen, tripStatusOverrides, eigenReizen).map((b) => ({ datum: b.start, inhoud: `${b.length} dagen vrij (t/m ${kortDatum(b.end)})`, vak: null }));
 }

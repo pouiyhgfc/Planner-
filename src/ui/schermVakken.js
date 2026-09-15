@@ -4,7 +4,7 @@
  * lesoverzicht.
  */
 
-import { courses } from "../data/courses.js";
+import { courses, courseVoor } from "../data/courses.js";
 import { alleVakItems } from "../data/coursedates.js";
 import { opleveringen } from "../data/opleveringen.js";
 import { WEEKDAGEN, kortDatum } from "./datumlabels.js";
@@ -16,10 +16,6 @@ function veldSleutel(vakId, veldnaam) {
   return `${vakId}.${veldnaam}`;
 }
 
-function courseVoor(id) {
-  return courses.find((c) => c.id === id);
-}
-
 function sectieKop(tekst) {
   const kop = document.createElement("h3");
   kop.className = "vak-sectie-kop";
@@ -27,12 +23,19 @@ function sectieKop(tekst) {
   return kop;
 }
 
+/**
+ * @param {string} sleutel
+ * @param {string|null} label null waar de naam van het veld er al naast staat
+ *   (in de definitielijst van de kop), anders stond die er twee keer
+ * @param {string|undefined} huidigeWaarde
+ * @param {(sleutel: string, waarde: string) => void} onWijzigen
+ */
 function renderOnbekendVeld(sleutel, label, huidigeWaarde, onWijzigen) {
   const wrap = document.createElement("span");
   wrap.className = "onbekend-veld";
   const labelEl = document.createElement("span");
   labelEl.className = "onbekend-label";
-  labelEl.textContent = `${label}: onbekend — `;
+  labelEl.textContent = label ? `${label}: onbekend` : "onbekend";
   const input = document.createElement("input");
   input.type = "text";
   input.placeholder = "zelf aanvullen";
@@ -96,7 +99,7 @@ function renderKopSectie(course, veldwaarden, ctx, callbacks) {
       dd.textContent = waarde;
     } else {
       const sleutel = veldSleutel(course.id, veldnaam);
-      dd.appendChild(renderOnbekendVeld(sleutel, label, veldwaarden[sleutel], callbacks.onVeldWijzigen));
+      dd.appendChild(renderOnbekendVeld(sleutel, null, veldwaarden[sleutel], callbacks.onVeldWijzigen));
     }
     regels.appendChild(dt);
     regels.appendChild(dd);
@@ -118,6 +121,12 @@ function renderKopSectie(course, veldwaarden, ctx, callbacks) {
   return wrap;
 }
 
+/**
+ * Weging: de balken plus de letterlijke beoordelingstekst eronder. Die tekst
+ * stond eerder in de Absentie-sectie, waar hij de percentages herhaalde die
+ * hier al als balk staan — dezelfde zin dus twee keer op één pagina. Hij is
+ * niet weggegooid maar verplaatst naar de plek waar hij over gaat.
+ */
 function renderWegingSectie(course) {
   const wrap = document.createElement("div");
   wrap.appendChild(sectieKop("Weging"));
@@ -137,6 +146,12 @@ function renderWegingSectie(course) {
     rij.appendChild(balkWrap);
     wrap.appendChild(rij);
   }
+
+  const tekst = document.createElement("p");
+  tekst.className = "vak-detail-klein";
+  tekst.textContent = course.beoordeling.tekst;
+  wrap.appendChild(tekst);
+
   return wrap;
 }
 
@@ -180,11 +195,15 @@ function renderAbsentieSectie(course, items, pythonAfgewezen) {
   const wrap = document.createElement("div");
   wrap.appendChild(sectieKop("Absentie"));
 
-  const regelsTekst = course.id === "PY" ? course.absentieregels.tekst : course.beoordeling.tekst;
-  const regels = document.createElement("p");
-  regels.className = "vak-detail-klein";
-  regels.textContent = regelsTekst;
-  wrap.appendChild(regels);
+  // Alleen vakken met eigen absentieregels hebben hier tekst. Voor de andere
+  // vakken staat het beleid in de beoordelingstekst onder Weging; dat hier
+  // herhalen leverde exact dezelfde alinea twee keer op dezelfde pagina op.
+  if (course.absentieregels?.tekst) {
+    const regels = document.createElement("p");
+    regels.className = "vak-detail-klein";
+    regels.textContent = course.absentieregels.tekst;
+    wrap.appendChild(regels);
+  }
 
   const gemist = gemisteSessies(course.id, items, pythonAfgewezen);
 

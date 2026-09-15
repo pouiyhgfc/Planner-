@@ -134,7 +134,7 @@ export function initOverzichtScherm(root, callbacks) {
     vinkje.addEventListener("change", () => callbacks.onMijlpaalToggle(sleutel, vinkje.checked));
     label.appendChild(vinkje);
     const tekst = document.createElement("span");
-    tekst.textContent = ` ${mijlpaal.datum} — ${mijlpaal.label}`;
+    tekst.textContent = ` ${kortDatum(mijlpaal.datum)} — ${mijlpaal.label}`;
     label.appendChild(tekst);
     li.appendChild(label);
     return li;

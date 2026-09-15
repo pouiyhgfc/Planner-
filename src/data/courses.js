@@ -5,6 +5,22 @@
  * (DATA.md §9) — die velden staan hieronder op `null`, nooit gegokt.
  */
 
+/**
+ * @param {string} id vak-id zoals "PSY"
+ * @returns {object|undefined}
+ */
+export function courseVoor(id) {
+  return courses.find((c) => c.id === id);
+}
+
+/**
+ * @param {string} id
+ * @returns {string} de volledige vaknaam, of het id zelf als het vak niet bestaat
+ */
+export function courseNaam(id) {
+  return courseVoor(id)?.name ?? id;
+}
+
 export const courses = [
   {
     id: "PSY",

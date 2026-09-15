@@ -4,8 +4,8 @@
  * weggelaten, niet leeg getoond (FASE-8.md 8C).
  */
 
-import { volledigeDatum, collegeWeek } from "./datumlabels.js";
-import { courses } from "../data/courses.js";
+import { volledigeDatum, kortDatum, collegeWeek } from "./datumlabels.js";
+import { courseVoor } from "../data/courses.js";
 import { opleveringen } from "../data/opleveringen.js";
 import { projects } from "../data/projects.js";
 import { costOfRange } from "../lib/blocks.js";
@@ -26,10 +26,6 @@ export function deadlineSleutel(deadline) {
  */
 export function mijlpaalSleutel(project, mijlpaal) {
   return `${project.id}::${mijlpaal.datum}::${mijlpaal.label}`;
-}
-
-function courseVoor(id) {
-  return courses.find((c) => c.id === id);
 }
 
 function kopSectie(titel) {
@@ -124,20 +120,29 @@ export function renderDagblad(
     root.appendChild(lijst);
   }
 
-  // 4. Tentamens en presentaties
+  // 4. Tentamens en presentaties. Alleen wat over dít moment gaat: de
+  // beoordelingsregels van het hele vak stonden hier eerder integraal onder
+  // elk tentamen — een grijze muur die zich per item herhaalde en die op de
+  // vakpagina thuishoort, één tik verderop.
   if (tentamens.length > 0) {
     root.appendChild(kopSectie("Tentamens en presentaties"));
     const lijst = document.createElement("ul");
     for (const t of tentamens) {
-      const course = courseVoor(t.course);
       const li = document.createElement("li");
+      li.className = "dagblad-moment";
+
       const naamRegel = document.createElement("div");
-      naamRegel.textContent = `${course.name} — ${t.label}`;
+      naamRegel.textContent = `${courseVoor(t.course).name} — ${t.label}`;
       li.appendChild(naamRegel);
-      const regelsRegel = document.createElement("div");
-      regelsRegel.className = "dagblad-klein";
-      regelsRegel.textContent = course.beoordeling.tekst;
-      li.appendChild(regelsRegel);
+
+      if (t.wegingToelichting) {
+        const toelichting = document.createElement("div");
+        toelichting.className = "dagblad-klein";
+        toelichting.textContent = t.wegingToelichting;
+        li.appendChild(toelichting);
+      }
+
+      li.appendChild(naarVakKnop(t.course, acties.onNaarVak));
       lijst.appendChild(li);
     }
     root.appendChild(lijst);
@@ -261,10 +266,15 @@ function renderLesBlok(les, week, deadlinesVandaag, onNaarVak) {
   metaRegel.textContent = week ? `${zaal} · week ${week.week}` : zaal;
   inhoud.appendChild(metaRegel);
 
-  const onderwerp = document.createElement("p");
-  onderwerp.className = "lesblok-onderwerp";
-  onderwerp.textContent = les.label;
-  inhoud.appendChild(onderwerp);
+  // Chinees heeft als onderwerp letterlijk de vaknaam ("General Chinese",
+  // waar het vak "General Chinese (國際生華語(一))" heet); die stond dan twee
+  // regels boven elkaar.
+  if (!course.name.startsWith(les.label)) {
+    const onderwerp = document.createElement("p");
+    onderwerp.className = "lesblok-onderwerp";
+    onderwerp.textContent = les.label;
+    inhoud.appendChild(onderwerp);
+  }
 
   function kleinRegel(tekst) {
     const p = document.createElement("p");
@@ -289,15 +299,24 @@ function renderLesBlok(les, week, deadlinesVandaag, onNaarVak) {
     inhoud.appendChild(lijst);
   }
 
-  const naarVak = document.createElement("button");
-  naarVak.type = "button";
-  naarVak.className = "lesblok-naar-vak";
-  naarVak.textContent = "Naar vak";
-  naarVak.addEventListener("click", () => onNaarVak(course.id));
-  inhoud.appendChild(naarVak);
+  inhoud.appendChild(naarVakKnop(course.id, onNaarVak));
 
   li.appendChild(inhoud);
   return li;
+}
+
+/**
+ * @param {string} vakId
+ * @param {(vakId: string) => void} onNaarVak
+ * @returns {HTMLButtonElement}
+ */
+function naarVakKnop(vakId, onNaarVak) {
+  const knop = document.createElement("button");
+  knop.type = "button";
+  knop.className = "lesblok-naar-vak";
+  knop.textContent = "Naar vak";
+  knop.addEventListener("click", () => onNaarVak(vakId));
+  return knop;
 }
 
 /**
@@ -407,7 +426,7 @@ function renderEigenItemRij(item, onVerwijderen) {
   li.className = "eigen-item-rij";
 
   const tekst = document.createElement("span");
-  const bereik = item.start === item.end ? "" : ` (${item.start} → ${item.end})`;
+  const bereik = item.start === item.end ? "" : ` (${kortDatum(item.start)} → ${kortDatum(item.end)})`;
   tekst.textContent = `${item.naam}${bereik} — ${item.status}${item.notitie ? ` — ${item.notitie}` : ""}`;
   li.appendChild(tekst);
 

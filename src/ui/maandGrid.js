@@ -9,7 +9,7 @@ import { dayStatus } from "../lib/dayStatus.js";
 import { freeBlocks } from "../lib/blocks.js";
 import { zwareMomentenOpDag, weekgewicht } from "../lib/weekgewicht.js";
 import { appPeriod } from "../data/semester.js";
-import { courses } from "../data/courses.js";
+import { courses, courseVoor } from "../data/courses.js";
 import { WEEKDAGEN, maandNaam } from "./datumlabels.js";
 
 const AFKORTING = { PSY: "PSY", PY: "PY", AGTECH: "AGT", RTE: "RTE", CHI: "CHI" };
@@ -71,10 +71,6 @@ export function onderwerpenTekst(dag) {
   const vakken = gesorteerdOpTijd(dag.vakken);
   if (vakken.length === 0) return null;
   return vakken.map((v) => v.label).join(" · ");
-}
-
-function courseVoor(id) {
-  return courses.find((c) => c.id === id);
 }
 
 /**

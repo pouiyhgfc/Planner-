@@ -779,6 +779,10 @@ select {
   font-size: var(--fs-min);
   padding: 4px 8px;
 }
+.dagblad-moment {
+  padding: 8px 0;
+  border-bottom: var(--border-width) solid var(--border-soft);
+}
 
 .dagblad-acties {
   display: flex;
