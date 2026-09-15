@@ -116,7 +116,21 @@ export function renderDagblad(
 
   root.appendChild(kop);
 
-  // 2. Reizen (fase 9 B1)
+  // 2. Vrij — feestdagen en geen-lesdagen stonden nergens in het dagblad:
+  // 10 oktober "National Day" was een leeg dagblad. Vakantie krijgt geen
+  // eigen regel: dat zijn 46 aaneengesloten dagen, de dagstatus zegt dat al.
+  if (dag.feestdagen.length > 0) {
+    root.appendChild(kopSectie("Vrij"));
+    const lijst = document.createElement("ul");
+    for (const vrij of dag.feestdagen) {
+      const li = document.createElement("li");
+      li.textContent = vrij.type === "geen-les" ? `${vrij.label} — geen lessen` : vrij.label;
+      lijst.appendChild(li);
+    }
+    root.appendChild(lijst);
+  }
+
+  // 3. Reizen (fase 9 B1)
   const reizen = dag.vasteBoekingen.filter((v) => v.type === "vaste-boeking");
   const vluchtenVandaag = dag.vasteBoekingen.filter((v) => v.type === "vlucht");
   if (reizen.length > 0 || vluchtenVandaag.length > 0) {
@@ -136,7 +150,7 @@ export function renderDagblad(
   const lessen = dag.vakken.filter((v) => v.type === "les");
   const tentamens = dag.vakken.filter((v) => v.type === "tentamen" || /presentat/i.test(v.label));
 
-  // 3. Lessen — elke les een blok (FASE-9.md B4), geen platte regel: alleen
+  // 4. Lessen — elke les een blok (FASE-9.md B4), geen platte regel: alleen
   // velden tonen die er zijn, en wat er die dag voor dat vak in- of
   // uitgegeven wordt (dag.deadlines gefilterd op vak) er meteen bij, zodat
   // je bij de les zelf ziet dat je iets mee moet nemen.
@@ -149,7 +163,7 @@ export function renderDagblad(
     root.appendChild(lijst);
   }
 
-  // 4. Tentamens en presentaties. Alleen wat over dít moment gaat: de
+  // 5. Tentamens en presentaties. Alleen wat over dít moment gaat: de
   // beoordelingsregels van het hele vak stonden hier eerder integraal onder
   // elk tentamen — een grijze muur die zich per item herhaalde en die op de
   // vakpagina thuishoort, één tik verderop.
@@ -177,7 +191,7 @@ export function renderDagblad(
     root.appendChild(lijst);
   }
 
-  // 5. Opleveringen (fase 9 B3) — items met een vaste of zelf ingevulde
+  // 6. Opleveringen (fase 9 B3) — items met een vaste of zelf ingevulde
   // datum die op deze dag valt.
   const opleveringenVandaag = opleveringen.filter((o) => (o.datum ?? vakkenVeldwaarden[`${o.id}.datum`]) === ymd);
   if (opleveringenVandaag.length > 0) {
@@ -189,7 +203,7 @@ export function renderDagblad(
     root.appendChild(lijst);
   }
 
-  // 6. Deadlines
+  // 7. Deadlines
   if (dag.deadlines.length > 0) {
     root.appendChild(kopSectie("Deadlines"));
     const lijst = document.createElement("ul");
@@ -211,7 +225,7 @@ export function renderDagblad(
     root.appendChild(lijst);
   }
 
-  // 7. Projecten — mijlpalen uit src/data/projects.js plus eigen projecten
+  // 8. Projecten — mijlpalen uit src/data/projects.js plus eigen projecten
   // uit de state, die op deze dag vallen.
   const alleProjecten = [...projects, ...eigenProjecten];
   const projectMijlpalenVandaag = alleProjecten.flatMap((project) => project.mijlpalen.filter((m) => m.datum === ymd).map((mijlpaal) => ({ project, mijlpaal })));
@@ -224,7 +238,7 @@ export function renderDagblad(
     root.appendChild(lijst);
   }
 
-  // 8. Eigen items
+  // 9. Eigen items
   if (eigenItems.length > 0) {
     root.appendChild(kopSectie("Eigen items"));
     const lijst = document.createElement("ul");
@@ -234,7 +248,7 @@ export function renderDagblad(
     root.appendChild(lijst);
   }
 
-  // 9. Wat deze dag kost
+  // 10. Wat deze dag kost
   const { perVak } = costOfRange(ymd, ymd, pythonAfgewezen);
   const vakken = Object.entries(perVak);
   if (vakken.length > 0) {

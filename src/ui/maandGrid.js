@@ -39,18 +39,22 @@ function kortMomentType(item) {
 }
 
 /**
- * FASE-9.md B5 punt 2: één regel tekst voor een dag, alleen bij een
- * tentamen, presentatie of harde deadline — anders null (geen tekst bij
- * gewone lesdagen). Bij precies één zwaar moment: vak-afkorting plus het
- * korte type ("PSY midterm"). Bij twee of meer: het aantal plus een generiek
- * woord, "specifiek" als alle zware momenten van hetzelfde soort zijn
- * (bijv. "2 tentamens"), anders "zware momenten".
+ * FASE-9.md B5 punt 2: één regel tekst voor een dag in de compacte stand.
+ * Alleen bij een tentamen, presentatie of harde deadline, of bij een vrije
+ * dag — anders null, want een gewone lesdag was juist de ruis die deze regel
+ * moest wegnemen. Bij precies één zwaar moment: vak-afkorting plus het korte
+ * type ("PSY midterm"). Bij twee of meer: het aantal plus een generiek woord,
+ * specifiek als alle zware momenten van hetzelfde soort zijn (bijv.
+ * "2 tentamens"), anders "zware momenten".
  * @param {ReturnType<typeof dayStatus>} dag
  * @returns {string|null}
  */
-export function zwareRegelTekst(dag) {
+export function dagRegelTekst(dag) {
   const { tentamens, presentaties, deadlines, totaal } = zwareMomentenOpDag(dag);
-  if (totaal === 0) return null;
+  // Een feestdag of geen-lesdag was in de kalender alleen een iets grijzer
+  // vakje: je zag pas wélke vrije dag het was door erop te tikken. De naam
+  // is hier belangrijker dan de zware momenten die er toch niet zijn.
+  if (totaal === 0) return vrijeDagTekst(dag);
   if (totaal === 1) {
     const item = tentamens[0] ?? presentaties[0];
     if (item) return `${vakAfkorting(item.course)} ${kortMomentType(item)}`;
@@ -59,6 +63,18 @@ export function zwareRegelTekst(dag) {
   const woord =
     tentamens.length === totaal ? "tentamens" : presentaties.length === totaal ? "presentaties" : deadlines.length === totaal ? "deadlines" : "zware momenten";
   return `${totaal} ${woord}`;
+}
+
+/**
+ * De naam van een vrije dag, kort genoeg voor een dagvakje. Vakantiedagen
+ * krijgen niets: dat zijn 46 aaneengesloten dagen en de dagstatus kleurt ze
+ * al — de naam op elke dag herhalen zou juist ruis zijn.
+ * @param {ReturnType<typeof dayStatus>} dag
+ * @returns {string|null}
+ */
+function vrijeDagTekst(dag) {
+  const vrij = dag.feestdagen[0];
+  return vrij ? vrij.label : null;
 }
 
 /**
@@ -71,7 +87,8 @@ export function zwareRegelTekst(dag) {
  * @returns {string[]} leeg als er die dag niets is
  */
 export function onderwerpenRegels(dag) {
-  return gesorteerdOpTijd(dag.vakken).map((v) => `${vakAfkorting(v.course)} ${v.label}`);
+  const vrij = vrijeDagTekst(dag);
+  return [...(vrij ? [vrij] : []), ...gesorteerdOpTijd(dag.vakken).map((v) => `${vakAfkorting(v.course)} ${v.label}`)];
 }
 
 /**
@@ -355,7 +372,7 @@ function renderDagvak(ymd, buitenPeriode, buitenMaand, vandaag, geselecteerd, it
       knop.appendChild(regel);
     }
   } else {
-    const regelTekst = zwareRegelTekst(dag);
+    const regelTekst = dagRegelTekst(dag);
     if (regelTekst) {
       const regel = document.createElement("span");
       regel.className = "dagvak-regel";

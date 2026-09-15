@@ -41,7 +41,7 @@ import {
 import { chinaAftelling, flexWeekStatus, cnyDrukte, resterendeBlokken, absentieTotaal } from "../src/lib/overzicht.js";
 import { seizoensdataLabel } from "../src/data/season.js";
 import { kortDatum, collegeWeek } from "../src/ui/datumlabels.js";
-import { maandWeken, isStipMoment, zwareRegelTekst, onderwerpenRegels } from "../src/ui/maandGrid.js";
+import { maandWeken, isStipMoment, dagRegelTekst, onderwerpenRegels } from "../src/ui/maandGrid.js";
 import { zwareMomentenOpDag, weekgewicht } from "../src/lib/weekgewicht.js";
 import { deadlineSleutel } from "../src/ui/dagblad.js";
 import { maandagVan, weekAantal, weekStarts, verschuifVenster, dagdelenMetKleur } from "../src/ui/wekenGrid.js";
@@ -1834,18 +1834,18 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   const dag20261104 = dayStatus("2026-11-04");
   const z1104 = zwareMomentenOpDag(dag20261104);
   check("2026-11-04: precies één zwaar moment (CHI-presentatietentamen)", z1104.totaal, 1);
-  check("2026-11-04: zwareRegelTekst is niet-leeg", zwareRegelTekst(dag20261104), "CHI presentatie");
+  check("2026-11-04: dagRegelTekst is niet-leeg", dagRegelTekst(dag20261104), "CHI presentatie");
 
   const dag20261118 = dayStatus("2026-11-18");
   check("2026-11-18: geen zwaar moment (gewone lesdag)", zwareMomentenOpDag(dag20261118).totaal, 0);
-  check("2026-11-18: zwareRegelTekst is null in compacte stand", zwareRegelTekst(dag20261118), null);
+  check("2026-11-18: dagRegelTekst is null in compacte stand", dagRegelTekst(dag20261118), null);
   check("2026-11-18: drie onderwerpen in uitgebreide stand", onderwerpenRegels(dag20261118).length, 3);
   check("2026-11-18: elke onderwerpregel begint met de vakafkorting", onderwerpenRegels(dag20261118)[0].startsWith("PSY "), true);
 
   const dag20261028 = dayStatus("2026-10-28");
   const z1028 = zwareMomentenOpDag(dag20261028);
   check("2026-10-28: twee tentamens (PSY-midterm + CHI-mondeling)", z1028.tentamens.length, 2);
-  check("2026-10-28: zwareRegelTekst noemt het aantal bij twee of meer", zwareRegelTekst(dag20261028), "2 tentamens");
+  check("2026-10-28: dagRegelTekst noemt het aantal bij twee of meer", dagRegelTekst(dag20261028), "2 tentamens");
 
   const week9 = weekgewicht("2026-11-02");
   check("weekgewicht: week 9 (maandag 2026-11-02) heeft 3 zware momenten", week9.totaal, 3);
@@ -1889,6 +1889,34 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   let state = leegState();
   state = zetKalenderWeergave(state, "uitgebreid");
   check("zetKalenderWeergave: waarde wordt overgenomen", state.kalenderWeergave, "uitgebreid");
+}
+
+// Vrije dagen moeten in de kalender te zien zijn, niet alleen in de data:
+// een feestdag was eerder een iets grijzer vakje zonder naam.
+{
+  const feestdag = dayStatus("2026-10-10");
+  check("2026-10-10: dagRegelTekst noemt de feestdag", dagRegelTekst(feestdag), "National Day");
+  check("2026-10-10: staat ook in de uitgebreide stand", onderwerpenRegels(feestdag).includes("National Day"), true);
+
+  const geenLes = dayStatus("2026-11-20");
+  check("2026-11-20: geen-lesdag wordt genoemd", dagRegelTekst(geenLes), "University Games — geen lessen");
+
+  // Een feestdag die onder een reis valt kreeg status "vaste-boeking" en was
+  // daardoor dubbel onzichtbaar; de regel leest dag.feestdagen los van de status.
+  const onderReis = dayStatus("2026-09-25");
+  check("2026-09-25: status is vaste-boeking (Filipijnen-reis)", onderReis.status, "vaste-boeking");
+  check("2026-09-25: Moon Festival wordt tóch genoemd", dagRegelTekst(onderReis), "Moon Festival");
+
+  // Vakantie krijgt bewust geen regel per dag: 46 aaneengesloten dagen.
+  const vakantiedag = dayStatus("2027-01-15");
+  check("2027-01-15: vakantiedag zonder feestdag krijgt geen regel", dagRegelTekst(vakantiedag), null);
+
+  // Een dag met een zwaar moment houdt voorrang op de naam van een vrije dag.
+  check("2026-12-25: tentamenperiode-feestdag valt niet weg tegen een zwaar moment", typeof dagRegelTekst(dayStatus("2026-12-25")), "string");
+
+  // Elke feestdag/geen-lesdag uit DATA.md §2 moet ergens in de app te zien zijn.
+  const vrijeDagen = holidays.flatMap((h) => (h.date ? [h.date] : rangeDays(h.start, h.end)));
+  check("alle vrije dagen uit DATA.md §2 tonen hun naam in de kalender", vrijeDagen.every((ymd) => dagRegelTekst(dayStatus(ymd)) !== null), true);
 }
 
 console.log(`\n${passed} geslaagd, ${failures} mislukt.`);
