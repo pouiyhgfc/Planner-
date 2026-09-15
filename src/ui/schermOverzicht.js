@@ -9,6 +9,7 @@ import { kortDatum } from "./datumlabels.js";
 import { projects } from "../data/projects.js";
 import { courses, courseVoor } from "../data/courses.js";
 import { vakAfkorting, vakKleuren, meervoud } from "./tekst.js";
+import { RUIMTE_BUDGETTEN } from "../state/schema.js";
 import { bevestigKnop } from "./knoppen.js";
 import { gemisteSessies } from "./vakkenData.js";
 import {
@@ -24,6 +25,8 @@ import {
   rijenVrijeBlokken,
   rijenReizen,
   rijenOpleveringen,
+  rijenRuimte,
+  RUIMTE_MINIMUM_DAGEN,
 } from "./overzichtData.js";
 
 const FILTERS = [
@@ -101,8 +104,14 @@ export function initOverzichtScherm(root, callbacks) {
   const gemistEl = document.createElement("div");
   gemistEl.className = "overzicht-gemist";
 
+  // Waar past iets, en wat kost het. blocksWithCost() rekende dit al uit maar
+  // stond nergens op het scherm; dit is de vraag waar de app voor bestaat.
+  const ruimteEl = document.createElement("div");
+  ruimteEl.className = "overzicht-ruimte";
+
   root.appendChild(toevoegenEl);
   root.appendChild(gemistEl);
+  root.appendChild(ruimteEl);
   root.appendChild(lijstEl);
   root.appendChild(filtersUitklap);
   root.appendChild(telkaartenUitklap);
@@ -612,11 +621,107 @@ export function initOverzichtScherm(root, callbacks) {
     gemistEl.appendChild(lijst);
   }
 
+  function tekenenRuimte() {
+    ruimteEl.textContent = "";
+
+    const kop = document.createElement("div");
+    kop.className = "ruimte-kop";
+    const titel = document.createElement("h3");
+    titel.textContent = "Waar is ruimte";
+    kop.appendChild(titel);
+
+    const keuze = document.createElement("div");
+    keuze.className = "ruimte-keuze";
+    const keuzeLabel = document.createElement("span");
+    keuzeLabel.textContent = "mag kosten:";
+    keuze.appendChild(keuzeLabel);
+    for (const budget of RUIMTE_BUDGETTEN) {
+      const knop = document.createElement("button");
+      knop.type = "button";
+      knop.className = "tap-target weergave-knop";
+      knop.textContent = budget === 0 ? "niets" : meervoud(budget, "lesdag", "lesdagen");
+      knop.setAttribute("aria-current", laatsteCtx.ruimteBudget === budget ? "true" : "false");
+      knop.addEventListener("click", () => callbacks.onRuimteBudgetWijzigen(budget));
+      keuze.appendChild(knop);
+    }
+    kop.appendChild(keuze);
+    ruimteEl.appendChild(kop);
+
+    const vensters = rijenRuimte(
+      laatsteCtx.ruimteBudget,
+      laatsteCtx.vandaag,
+      laatsteCtx.pythonAfgewezen,
+      laatsteCtx.tripStatusOverrides,
+      laatsteCtx.eigenReizen
+    );
+
+    if (vensters.length === 0) {
+      const leeg = document.createElement("p");
+      leeg.className = "overzicht-leeg";
+      leeg.textContent = `Geen aaneengesloten periode van ${RUIMTE_MINIMUM_DAGEN} dagen of meer die nog komt.`;
+      ruimteEl.appendChild(leeg);
+      return;
+    }
+
+    const lijst = document.createElement("ul");
+    lijst.className = "ruimte-lijst";
+    for (const venster of vensters) lijst.appendChild(renderVenster(venster));
+    ruimteEl.appendChild(lijst);
+  }
+
+  function renderVenster(venster) {
+    const li = document.createElement("li");
+    li.className = "ruimte-rij";
+
+    const lengte = document.createElement("span");
+    lengte.className = "ruimte-lengte";
+    lengte.textContent = `${venster.length} dg`;
+    li.appendChild(lengte);
+
+    const midden = document.createElement("span");
+    midden.className = "ruimte-midden";
+
+    const bereik = document.createElement("span");
+    bereik.textContent = `${kortDatum(venster.start)} – ${kortDatum(venster.end)}`;
+    midden.appendChild(bereik);
+
+    // Alleen een prijs tonen als er een prijs is: "kost geen les" onder elke
+    // regel is dertien keer dezelfde mededeling. Geen regel betekent gratis.
+    if (venster.gemisteLessen.length > 0) {
+      const perVak = {};
+      for (const les of venster.gemisteLessen) perVak[les.course] = (perVak[les.course] ?? 0) + 1;
+      const prijs = document.createElement("span");
+      prijs.className = "ruimte-prijs";
+      prijs.textContent = `kost ${Object.entries(perVak)
+        .map(([vak, n]) => `${vakAfkorting(vak)} ${n}x`)
+        .join(", ")}`;
+      midden.appendChild(prijs);
+    }
+
+    if (venster.bevatRisicoperiode) {
+      const risico = document.createElement("span");
+      risico.className = "ruimte-risico";
+      risico.textContent = "valt deels in de flexibele week";
+      midden.appendChild(risico);
+    }
+    li.appendChild(midden);
+
+    const knop = document.createElement("button");
+    knop.type = "button";
+    knop.className = "rij-knop";
+    knop.textContent = "Inplannen";
+    knop.addEventListener("click", () => callbacks.onRuimteKiezen(venster.start, venster.end));
+    li.appendChild(knop);
+
+    return li;
+  }
+
   function render(ctx) {
     laatsteCtx = ctx;
     if (ctx.overzichtFilters) actieveFilters = new Set(ctx.overzichtFilters);
     tekenenTelkaarten();
     tekenenGemist();
+    tekenenRuimte();
     tekenenProjecten();
     tekenenFiltersEnLijst();
   }

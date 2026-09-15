@@ -214,6 +214,15 @@ export function verwijderReis(state, id) {
  * @param {string[]} filters actieve filternamen op het scherm Overzicht
  * @returns {object}
  */
+/**
+ * @param {object} state
+ * @param {number} budget hoeveel lesdagen een vrij venster mag kosten
+ * @returns {object}
+ */
+export function zetRuimteBudget(state, budget) {
+  return { ...state, ruimteBudget: budget };
+}
+
 export function zetOverzichtFilters(state, filters) {
   return { ...state, overzichtFilters: [...filters] };
 }

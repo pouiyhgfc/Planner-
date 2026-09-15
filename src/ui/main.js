@@ -11,6 +11,7 @@ import {
   zetPythonInschrijving,
   zetVakVeld,
   zetOverzichtFilters,
+  zetRuimteBudget,
   zetOpleveringAfgevinkt,
   zetKalenderWeergave,
   zetTripStatus,
@@ -340,6 +341,7 @@ function overzichtWeergeven() {
     vakkenVeldwaarden: state.vakkenVeldwaarden,
     verborgenItems: state.verborgenItems,
     overzichtFilters: state.overzichtFilters,
+    ruimteBudget: state.ruimteBudget,
   });
 }
 
@@ -431,6 +433,23 @@ async function voegItemEnHerteken(veld) {
   state = voegItemToe(state, veld);
   await bewaarState(state);
   allesWeergeven();
+}
+
+async function zetRuimteBudgetEnHerteken(budget) {
+  state = zetRuimteBudget(state, budget);
+  await bewaarState(state);
+  overzichtWeergeven();
+}
+
+/**
+ * "Inplannen" bij een vrij venster: open het dagblad van de eerste dag met het
+ * formulier erbij, en de begin- en einddatum van het venster al ingevuld.
+ * @param {string} start
+ * @param {string} end
+ */
+function plannenInVenster(start, end) {
+  navigatie.naarScherm("maand");
+  maandScherm.openDag(start, { formOpenen: true, terugNaarScherm: "overzicht", formBereik: { start, end } });
 }
 
 async function zetOverzichtFiltersEnBewaar(filters) {
@@ -536,6 +555,8 @@ const overzichtScherm = initOverzichtScherm(schermEls.overzicht, {
   onReisVerwijderen: verwijderReisEnHerteken,
   onDagKiezen: dagKiezenVanuitOverzicht,
   onFiltersWijzigen: zetOverzichtFiltersEnBewaar,
+  onRuimteBudgetWijzigen: zetRuimteBudgetEnHerteken,
+  onRuimteKiezen: (start, end) => plannenInVenster(start, end),
 });
 
 // #eigen-beheer staat in index.html binnen het overzichtscherm en zou dus

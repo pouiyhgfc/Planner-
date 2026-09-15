@@ -15,7 +15,7 @@ import { academicDeadlines, chinaVisaFreeDeadline, flexWeekAnnouncementDeadline 
 import { projects } from "../data/projects.js";
 import { opleveringen } from "../data/opleveringen.js";
 import { genereerKalenderDagen } from "../lib/dayStatus.js";
-import { freeBlocks } from "../lib/blocks.js";
+import { freeBlocks, blocksWithCost } from "../lib/blocks.js";
 import { alleTripItems, effectieveTripStatus } from "../data/trips.js";
 import { isStipMoment } from "./maandGrid.js";
 import { deadlineSleutel, mijlpaalSleutel, verborgenDeadlineSleutel, verborgenOpleveringSleutel } from "./dagblad.js";
@@ -176,4 +176,29 @@ export function rijenEigenItems(items) {
 /** @param {boolean} [pythonAfgewezen] @param {Record<string, string>} [tripStatusOverrides] @param {object[]} [eigenReizen] @returns {{datum: string, inhoud: string, vak: null}[]} */
 export function rijenVrijeBlokken(pythonAfgewezen = false, tripStatusOverrides = {}, eigenReizen = []) {
   return freeBlocks(pythonAfgewezen, tripStatusOverrides, eigenReizen).map((b) => ({ datum: b.start, inhoud: `${meervoud(b.length, "dag", "dagen")} vrij (t/m ${kortDatum(b.end)})`, vak: null }));
+}
+
+/** Korter dan dit is een gewoon weekend en geen venster om iets in te plannen. */
+export const RUIMTE_MINIMUM_DAGEN = 3;
+
+/**
+ * De aaneengesloten vensters waarin iets past, met wat ze kosten. Dit is de
+ * enige plek waar blocksWithCost() zichtbaar wordt: de motor rekende het al
+ * uit, maar geen enkel scherm toonde het.
+ *
+ * De app kiest niets en beveelt niets aan (CLAUDE.md §1) — hij zet de vensters
+ * op volgorde van datum met hun prijs erbij. `budget` is hoeveel lesdagen een
+ * venster mag kosten; dat is een keuze van de gebruiker, geen oordeel van de app.
+ *
+ * @param {number} budget 0, 1 of 2 lesdagen
+ * @param {string} vandaag "YYYY-MM-DD" — voorbije vensters zijn geen ruimte meer
+ * @param {boolean} [pythonAfgewezen]
+ * @param {Record<string, string>} [tripStatusOverrides]
+ * @param {object[]} [eigenReizen]
+ * @returns {{start: string, end: string, length: number, gemisteLessen: object[], bevatRisicoperiode: boolean}[]}
+ */
+export function rijenRuimte(budget, vandaag, pythonAfgewezen = false, tripStatusOverrides = {}, eigenReizen = []) {
+  return blocksWithCost(budget, pythonAfgewezen, tripStatusOverrides, eigenReizen)
+    .filter((b) => b.end >= vandaag && b.length >= RUIMTE_MINIMUM_DAGEN)
+    .sort((a, b) => a.start.localeCompare(b.start));
 }
