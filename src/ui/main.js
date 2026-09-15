@@ -15,6 +15,9 @@ import {
   zetTripStatus,
   voegReisToe,
   verwijderReis,
+  wijzigItem,
+  wijzigReis,
+  zetItemVerborgen,
   vraagPersistentOpslagAan,
   bereidExportVoor,
   bereidSamenvoegingVoor,
@@ -27,6 +30,7 @@ import { initMaandScherm } from "./schermMaand.js";
 import { initWekenScherm } from "./schermWeken.js";
 import { initOverzichtScherm } from "./schermOverzicht.js";
 import { initVakkenScherm } from "./schermVakken.js";
+import { verborgenOmschrijving } from "./verborgen.js";
 import {
   renderThemaRegel,
   renderPersistRegel,
@@ -37,6 +41,7 @@ import {
   renderEigenReizenLijst,
   renderPlannerForm,
   renderEigenItemsLijst,
+  renderVerborgenLijst,
 } from "./planner.js";
 
 const foutEl = document.getElementById("fout-melding");
@@ -62,6 +67,9 @@ const reisFormEl = document.getElementById("reis-form");
 const eigenReizenEl = document.getElementById("eigen-reizen-lijst");
 const formEl = document.getElementById("planner-form");
 const eigenItemsEl = document.getElementById("eigen-items-lijst");
+const verborgenEl = document.getElementById("verborgen-lijst");
+const reisUitklapEl = document.getElementById("reis-uitklap");
+const itemUitklapEl = document.getElementById("item-uitklap");
 
 const schermEls = Object.fromEntries(SCHERMEN.map((s) => [s, document.getElementById(`scherm-${s}`)]));
 const navKnopEls = [...document.querySelectorAll(".navknop")];
@@ -69,6 +77,10 @@ const navKnopEls = [...document.querySelectorAll(".navknop")];
 let state = await laadState();
 let openstaandeConflicten = [];
 let persistToegekend = null;
+// Welk eigen item of welke eigen reis op dit moment bewerkt wordt; null =
+// het formulier staat in "toevoegen"-stand.
+let bewerktItemId = null;
+let bewerkteReisId = null;
 
 const THEMA_ATTRIBUUT = { licht: "light", donker: "dark" };
 
@@ -103,10 +115,34 @@ function instellingenWeergeven() {
   renderExportRegel(exportEl, state.laatsteExport, exporteer);
   renderConflictenPaneel(conflictenEl, openstaandeConflicten, pasConflictenToe);
   renderReisstatusPaneel(reisstatusEl, state.tripStatusOverrides, (variant, nieuweStatus) => zetTripStatusEnHerteken(variant, nieuweStatus));
-  renderReisForm(reisFormEl, (veld) => voegReisEnHerteken(veld));
-  renderEigenReizenLijst(eigenReizenEl, state.eigenReizen, (id) => verwijderReisEnHerteken(id));
-  renderPlannerForm(formEl, (veld) => voegItemEnHerteken(veld));
-  renderEigenItemsLijst(eigenItemsEl, state.items, (id) => verwijderItemEnHerteken(id));
+  const bewerkteReis = state.eigenReizen.find((r) => r.id === bewerkteReisId) ?? null;
+  renderReisForm(reisFormEl, (veld) => reisOpslaan(veld), bewerkteReis);
+  // Het formulier zit in een ingeklapt blok; bij bewerken moet het openstaan,
+  // anders lijkt "Bewerken" niets te doen.
+  zetUitklap(reisUitklapEl, Boolean(bewerkteReis), bewerkteReis ? "Reis bewerken" : "Reis toevoegen");
+  renderEigenReizenLijst(eigenReizenEl, state.eigenReizen, (id) => verwijderReisEnHerteken(id), (id) => startReisBewerken(id));
+
+  const bewerktItem = state.items.find((i) => i.id === bewerktItemId) ?? null;
+  renderPlannerForm(formEl, (veld) => itemOpslaan(veld), bewerktItem ? { item: bewerktItem } : undefined);
+  zetUitklap(itemUitklapEl, Boolean(bewerktItem), bewerktItem ? "Item bewerken" : "Item toevoegen");
+  renderEigenItemsLijst(eigenItemsEl, state.items, (id) => verwijderItemEnHerteken(id), (id) => startItemBewerken(id));
+
+  renderVerborgenLijst(
+    verborgenEl,
+    state.verborgenItems.map((sleutel) => ({ sleutel, omschrijving: verborgenOmschrijving(sleutel) })),
+    (sleutel) => verbergEnHerteken(sleutel, false)
+  );
+}
+
+/**
+ * @param {HTMLDetailsElement} el
+ * @param {boolean} openen alleen afdwingen, nooit dichtklappen wat de
+ *   gebruiker zelf heeft opengezet
+ * @param {string} titel
+ */
+function zetUitklap(el, openen, titel) {
+  if (openen) el.open = true;
+  el.querySelector("summary").textContent = titel;
 }
 
 function pythonAfgewezen() {
@@ -134,7 +170,59 @@ function maandWeergeven() {
     eigenReizen: state.eigenReizen,
     vakkenVeldwaarden: state.vakkenVeldwaarden,
     kalenderWeergave: state.kalenderWeergave,
+    verborgenItems: state.verborgenItems,
   });
+}
+
+/**
+ * Alle zes de weergaven opnieuw tekenen. Stond eerder vijf keer als dezelfde
+ * reeks aanroepen uitgeschreven, met per plek net een andere volgorde of een
+ * vergeten scherm.
+ */
+function allesWeergeven() {
+  instellingenWeergeven();
+  topbarWeergeven();
+  maandWeergeven();
+  wekenWeergeven();
+  overzichtWeergeven();
+  vakkenWeergeven();
+}
+
+function startItemBewerken(id) {
+  bewerktItemId = id;
+  instellingenWeergeven();
+}
+
+function startReisBewerken(id) {
+  bewerkteReisId = id;
+  instellingenWeergeven();
+}
+
+/** Opslaan is toevoegen óf bijwerken, afhankelijk van wat er in bewerking is. */
+async function itemOpslaan(veld) {
+  state = bewerktItemId ? wijzigItem(state, bewerktItemId, veld) : voegItemToe(state, veld);
+  bewerktItemId = null;
+  await bewaarState(state);
+  allesWeergeven();
+}
+
+async function reisOpslaan(veld) {
+  state = bewerkteReisId ? wijzigReis(state, bewerkteReisId, veld) : voegReisToe(state, veld);
+  bewerkteReisId = null;
+  await bewaarState(state);
+  allesWeergeven();
+}
+
+/**
+ * Een vast item (deadline of oplevering) wegzetten als niet van toepassing,
+ * of die keuze terugdraaien. De data in src/data/ blijft ongemoeid.
+ * @param {string} sleutel
+ * @param {boolean} verborgen
+ */
+async function verbergEnHerteken(sleutel, verborgen = true) {
+  state = zetItemVerborgen(state, sleutel, verborgen);
+  await bewaarState(state);
+  allesWeergeven();
 }
 
 async function zetKalenderWeergaveEnHerteken(waarde) {
@@ -198,6 +286,7 @@ function overzichtWeergeven() {
     tripStatusOverrides: state.tripStatusOverrides,
     eigenReizen: state.eigenReizen,
     vakkenVeldwaarden: state.vakkenVeldwaarden,
+    verborgenItems: state.verborgenItems,
   });
 }
 
@@ -208,6 +297,7 @@ function vakkenWeergeven() {
     afgevinkteOpleveringen: state.afgevinkteOpleveringen,
     pythonInschrijving: state.pythonInschrijving,
     vakkenVeldwaarden: state.vakkenVeldwaarden,
+    verborgenItems: state.verborgenItems,
   });
 }
 
@@ -286,23 +376,13 @@ async function zetMijlpaalEnHerteken(sleutel, afgevinkt) {
 async function voegItemEnHerteken(veld) {
   state = voegItemToe(state, veld);
   await bewaarState(state);
-  instellingenWeergeven();
-  topbarWeergeven();
-  maandWeergeven();
-  wekenWeergeven();
-  overzichtWeergeven();
-  vakkenWeergeven();
+  allesWeergeven();
 }
 
 async function verwijderItemEnHerteken(id) {
   state = verwijderItem(state, id);
   await bewaarState(state);
-  instellingenWeergeven();
-  topbarWeergeven();
-  maandWeergeven();
-  wekenWeergeven();
-  overzichtWeergeven();
-  vakkenWeergeven();
+  allesWeergeven();
 }
 
 async function zetDeadlineEnHerteken(sleutel, afgevinkt) {
@@ -338,12 +418,7 @@ async function importeerBestand(bestand) {
   state = { ...state, items };
   await bewaarState(state);
   openstaandeConflicten = conflicten;
-  instellingenWeergeven();
-  topbarWeergeven();
-  maandWeergeven();
-  wekenWeergeven();
-  overzichtWeergeven();
-  vakkenWeergeven();
+  allesWeergeven();
 }
 exportEl.addEventListener("import-bestand", (e) => importeerBestand(e.detail));
 
@@ -351,12 +426,7 @@ async function pasConflictenToe(keuzes) {
   state = { ...state, items: pasConflictKeuzesToe(state.items, openstaandeConflicten, keuzes) };
   openstaandeConflicten = [];
   await bewaarState(state);
-  instellingenWeergeven();
-  topbarWeergeven();
-  maandWeergeven();
-  wekenWeergeven();
-  overzichtWeergeven();
-  vakkenWeergeven();
+  allesWeergeven();
 }
 
 pasThemaToe(state.ui.thema);
@@ -381,6 +451,7 @@ const maandScherm = initMaandScherm(schermEls.maand, {
   onTerugNaarScherm: (naam) => navigatie.naarScherm(naam),
   onNaarVak: naarVak,
   onKalenderWeergaveWijzigen: zetKalenderWeergaveEnHerteken,
+  onVerbergen: (sleutel) => verbergEnHerteken(sleutel),
 });
 
 const wekenScherm = initWekenScherm(schermEls.weken, {
@@ -402,6 +473,7 @@ const vakkenScherm = initVakkenScherm(schermEls.vakken, {
   onInschrijvingWijzigen: zetPythonInschrijvingEnHerteken,
   onDeadlineToggle: zetDeadlineEnHerteken,
   onOpleveringToggle: zetOpleveringEnHerteken,
+  onVerbergen: (sleutel) => verbergEnHerteken(sleutel),
 });
 
 topbarWeergeven();

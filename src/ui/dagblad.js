@@ -7,8 +7,9 @@
 import { volledigeDatum, kortDatum, collegeWeek } from "./datumlabels.js";
 import { meervoud } from "./tekst.js";
 import { courseVoor } from "../data/courses.js";
-import { opleveringen } from "../data/opleveringen.js";
+
 import { projects } from "../data/projects.js";
+import { zichtbareOpleveringen } from "./overzichtData.js";
 import { appPeriod } from "../data/semester.js";
 import { costOfRange } from "../lib/blocks.js";
 import { renderPlannerForm } from "./planner.js";
@@ -30,6 +31,25 @@ export function mijlpaalSleutel(project, mijlpaal) {
   return `${project.id}::${mijlpaal.datum}::${mijlpaal.label}`;
 }
 
+/**
+ * Sleutels voor state.verborgenItems (schema.js v12). De soort staat vooraan
+ * zodat een deadline en een oplevering nooit dezelfde sleutel kunnen
+ * opleveren.
+ * @param {object} deadline
+ * @returns {string}
+ */
+export function verborgenDeadlineSleutel(deadline) {
+  return `deadline::${deadlineSleutel(deadline)}`;
+}
+
+/**
+ * @param {string} id een src/data/opleveringen.js item-id
+ * @returns {string}
+ */
+export function verborgenOpleveringSleutel(id) {
+  return `oplevering::${id}`;
+}
+
 function kopSectie(titel) {
   const kop = document.createElement("h3");
   kop.className = "dagblad-kop";
@@ -49,6 +69,7 @@ function kopSectie(titel) {
  *   eigenProjecten: object[],
  *   pythonAfgewezen: boolean,
  *   vakkenVeldwaarden: Record<string, string>,
+ *   verborgenItems: string[],
  *   formOpenen: boolean,
  * }} data
  * @param {{
@@ -63,11 +84,12 @@ function kopSectie(titel) {
  *   onVeldWijzigen: (sleutel: string, waarde: string) => void,
  *   onNaarVak: (vakId: string) => void,
  *   onDagVerschuiven: (dagen: number) => void,
+ *   onVerbergen: (sleutel: string) => void,
  * }} acties
  */
 export function renderDagblad(
   root,
-  { ymd, dag, eigenItems, afgevinkteDeadlines, afgevinkteOpleveringen, afgevinkteMijlpalen, eigenProjecten = [], pythonAfgewezen = false, vakkenVeldwaarden = {}, formOpenen = false },
+  { ymd, dag, eigenItems, afgevinkteDeadlines, afgevinkteOpleveringen, afgevinkteMijlpalen, eigenProjecten = [], pythonAfgewezen = false, vakkenVeldwaarden = {}, verborgenItems = [], formOpenen = false },
   acties
 ) {
   root.textContent = "";
@@ -149,6 +171,7 @@ export function renderDagblad(
 
   const lessen = dag.vakken.filter((v) => v.type === "les");
   const tentamens = dag.vakken.filter((v) => v.type === "tentamen" || /presentat/i.test(v.label));
+  const deadlinesVandaag = dag.deadlines.filter((d) => !verborgenItems.includes(verborgenDeadlineSleutel(d)));
 
   // 4. Lessen — elke les een blok (FASE-9.md B4), geen platte regel: alleen
   // velden tonen die er zijn, en wat er die dag voor dat vak in- of
@@ -158,7 +181,7 @@ export function renderDagblad(
     root.appendChild(kopSectie("Lessen"));
     const lijst = document.createElement("ul");
     for (const les of lessen) {
-      lijst.appendChild(renderLesBlok(les, week, dag.deadlines, acties.onNaarVak));
+      lijst.appendChild(renderLesBlok(les, week, deadlinesVandaag, acties.onNaarVak));
     }
     root.appendChild(lijst);
   }
@@ -193,21 +216,23 @@ export function renderDagblad(
 
   // 6. Opleveringen (fase 9 B3) — items met een vaste of zelf ingevulde
   // datum die op deze dag valt.
-  const opleveringenVandaag = opleveringen.filter((o) => (o.datum ?? vakkenVeldwaarden[`${o.id}.datum`]) === ymd);
+  const opleveringenVandaag = zichtbareOpleveringen(verborgenItems).filter((o) => (o.datum ?? vakkenVeldwaarden[`${o.id}.datum`]) === ymd);
   if (opleveringenVandaag.length > 0) {
     root.appendChild(kopSectie("Opleveringen"));
     const lijst = document.createElement("ul");
     for (const item of opleveringenVandaag) {
-      lijst.appendChild(renderOpleveringRij(item, afgevinkteOpleveringen, acties.onOpleveringToggle));
+      const rij = renderOpleveringRij(item, afgevinkteOpleveringen, acties.onOpleveringToggle);
+      rij.appendChild(verbergKnop(verborgenOpleveringSleutel(item.id), acties.onVerbergen));
+      lijst.appendChild(rij);
     }
     root.appendChild(lijst);
   }
 
   // 7. Deadlines
-  if (dag.deadlines.length > 0) {
+  if (deadlinesVandaag.length > 0) {
     root.appendChild(kopSectie("Deadlines"));
     const lijst = document.createElement("ul");
-    for (const deadline of dag.deadlines) {
+    for (const deadline of deadlinesVandaag) {
       const sleutel = deadlineSleutel(deadline);
       const li = document.createElement("li");
       const label = document.createElement("label");
@@ -220,6 +245,7 @@ export function renderDagblad(
       tekst.textContent = ` ${deadline.label}`;
       label.appendChild(tekst);
       li.appendChild(label);
+      li.appendChild(verbergKnop(verborgenDeadlineSleutel(deadline), acties.onVerbergen));
       lijst.appendChild(li);
     }
     root.appendChild(lijst);
@@ -346,6 +372,31 @@ function renderLesBlok(les, week, deadlinesVandaag, onNaarVak) {
 
   li.appendChild(inhoud);
   return li;
+}
+
+/**
+ * Knop om een vast item weg te zetten als niet van toepassing. Vraagt om
+ * bevestiging in de knop zelf, net als de verwijderknop bij eigen items,
+ * zodat één misplaatste tik niets laat verdwijnen.
+ * @param {string} sleutel
+ * @param {(sleutel: string) => void} onVerbergen
+ * @returns {HTMLButtonElement}
+ */
+export function verbergKnop(sleutel, onVerbergen) {
+  const knop = document.createElement("button");
+  knop.type = "button";
+  knop.className = "verberg-knop";
+  knop.textContent = "Verbergen";
+  let bevestigen = false;
+  knop.addEventListener("click", () => {
+    if (!bevestigen) {
+      bevestigen = true;
+      knop.textContent = "Zeker weten?";
+      return;
+    }
+    onVerbergen(sleutel);
+  });
+  return knop;
 }
 
 /**

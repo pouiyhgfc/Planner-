@@ -98,7 +98,7 @@ export function initOverzichtScherm(root, callbacks) {
   }
 
   function tekenenTelkaarten() {
-    const { vandaag, afgevinkteDeadlines, pythonAfgewezen, tripStatusOverrides = {}, eigenReizen = [] } = laatsteCtx;
+    const { vandaag, afgevinkteDeadlines, pythonAfgewezen, tripStatusOverrides = {}, eigenReizen = [], verborgenItems = [] } = laatsteCtx;
     telkaartenEl.textContent = "";
 
     const volgende = volgendeTentamenOfPresentatie(vandaag, pythonAfgewezen);
@@ -110,7 +110,7 @@ export function initOverzichtScherm(root, callbacks) {
       )
     );
 
-    const openstaand = aantalOpenstaandeDeadlines(vandaag, afgevinkteDeadlines);
+    const openstaand = aantalOpenstaandeDeadlines(vandaag, afgevinkteDeadlines, verborgenItems);
     telkaartenEl.appendChild(telkaart(String(openstaand), "openstaande deadlines", () => zetFilters(new Set(["deadlines"]))));
 
     const blokken = resterendeBlokken(vandaag, pythonAfgewezen, tripStatusOverrides, eigenReizen);
@@ -251,11 +251,11 @@ export function initOverzichtScherm(root, callbacks) {
   }
 
   function bouwRijen() {
-    const { items, eigenProjecten, pythonAfgewezen, tripStatusOverrides = {}, eigenReizen = [], vakkenVeldwaarden = {} } = laatsteCtx;
+    const { items, eigenProjecten, pythonAfgewezen, tripStatusOverrides = {}, eigenReizen = [], vakkenVeldwaarden = {}, verborgenItems = [] } = laatsteCtx;
     let rijen = [];
     if (actieveFilters.has("schooldagen")) rijen.push(...rijenSchooldagen(pythonAfgewezen, tripStatusOverrides, eigenReizen).map((r) => ({ ...r, categorie: "schooldagen" })));
     if (actieveFilters.has("tentamens")) rijen.push(...rijenTentamens(pythonAfgewezen).map((r) => ({ ...r, categorie: "tentamens" })));
-    if (actieveFilters.has("deadlines")) rijen.push(...rijenDeadlines().map((r) => ({ ...r, categorie: "deadlines" })));
+    if (actieveFilters.has("deadlines")) rijen.push(...rijenDeadlines(verborgenItems).map((r) => ({ ...r, categorie: "deadlines" })));
     if (actieveFilters.has("projecten")) {
       rijen.push(...rijenProjecten().map((r) => ({ ...r, categorie: "projecten" })));
       for (const project of eigenProjecten) {
@@ -266,10 +266,10 @@ export function initOverzichtScherm(root, callbacks) {
     }
     if (actieveFilters.has("reizen")) rijen.push(...rijenReizen(tripStatusOverrides, eigenReizen).map((r) => ({ ...r, categorie: "reizen" })));
     if (actieveFilters.has("presentaties")) {
-      rijen.push(...rijenOpleveringen(vakkenVeldwaarden).filter((r) => r.oplevering.soort === "presentatie").map((r) => ({ ...r, categorie: "presentaties" })));
+      rijen.push(...rijenOpleveringen(vakkenVeldwaarden, verborgenItems).filter((r) => r.oplevering.soort === "presentatie").map((r) => ({ ...r, categorie: "presentaties" })));
     }
     if (actieveFilters.has("verslagen")) {
-      rijen.push(...rijenOpleveringen(vakkenVeldwaarden).filter((r) => r.oplevering.soort === "verslag").map((r) => ({ ...r, categorie: "verslagen" })));
+      rijen.push(...rijenOpleveringen(vakkenVeldwaarden, verborgenItems).filter((r) => r.oplevering.soort === "verslag").map((r) => ({ ...r, categorie: "verslagen" })));
     }
     if (actieveFilters.has("feestdagen")) rijen.push(...rijenFeestdagen().map((r) => ({ ...r, categorie: "feestdagen" })));
     if (actieveFilters.has("eigenItems")) rijen.push(...rijenEigenItems(items).map((r) => ({ ...r, categorie: "eigenItems" })));

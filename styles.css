@@ -875,6 +875,16 @@ select {
   border-bottom: var(--border-width) solid var(--border-soft);
 }
 
+/* Knoppen die bij een regel horen: klein en terughoudend, want ze staan
+   naast elke rij in een dichte lijst. */
+.verberg-knop,
+.rij-knop {
+  margin-left: 8px;
+  padding: 2px 8px;
+  font-size: var(--fs-min);
+  color: var(--text-muted);
+}
+
 .dagblad-acties {
   display: flex;
   flex-wrap: wrap;

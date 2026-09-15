@@ -109,6 +109,49 @@ export function zetMijlpaalAfgevinkt(state, sleutel, afgevinkt) {
 }
 
 /**
+ * Verbergt of toont een vast item (een deadline of oplevering uit src/data/)
+ * dat niet van toepassing is. Het item zelf blijft in de data staan —
+ * kalenderfeiten worden niet weggegooid (CLAUDE.md §5) — dit is alleen een
+ * weergavekeuze, en omkeerbaar via Instellingen.
+ * @param {{verborgenItems: string[]}} state
+ * @param {string} sleutel met soortprefix, zie schema.js v12
+ * @param {boolean} verborgen
+ * @returns {{verborgenItems: string[]}}
+ */
+export function zetItemVerborgen(state, sleutel, verborgen) {
+  const zonder = state.verborgenItems.filter((s) => s !== sleutel);
+  return { ...state, verborgenItems: verborgen ? [...zonder, sleutel] : zonder };
+}
+
+/**
+ * @param {{items: object[]}} state
+ * @param {string} id
+ * @param {{naam: string, start: string, end: string, status: string, notitie: string}} veld
+ * @returns {{items: object[]}}
+ */
+export function wijzigItem(state, id, veld) {
+  const bestaand = state.items.find((item) => item.id === id);
+  if (!bestaand) throw new Error(`onbekend item: ${id}`);
+  const gewijzigd = { ...bestaand, ...veld, id, bijgewerkt: huidigeYMD() };
+  valideerItem(gewijzigd);
+  return { ...state, items: state.items.map((item) => (item.id === id ? gewijzigd : item)) };
+}
+
+/**
+ * @param {{eigenReizen: object[]}} state
+ * @param {string} id
+ * @param {{naam: string, start: string, end: string, status: string, vluchten?: object[]}} veld
+ * @returns {{eigenReizen: object[]}}
+ */
+export function wijzigReis(state, id, veld) {
+  const bestaand = state.eigenReizen.find((reis) => reis.id === id);
+  if (!bestaand) throw new Error(`onbekende reis: ${id}`);
+  const gewijzigd = { ...bestaand, ...veld, id };
+  valideerReis(gewijzigd);
+  return { ...state, eigenReizen: state.eigenReizen.map((reis) => (reis.id === id ? gewijzigd : reis)) };
+}
+
+/**
  * @param {{afgevinkteOpleveringen: string[]}} state
  * @param {string} id een src/data/opleveringen.js item-id
  * @param {boolean} afgevinkt

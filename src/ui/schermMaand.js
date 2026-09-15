@@ -26,6 +26,7 @@ import { renderDagblad } from "./dagblad.js";
  *   onTerugNaarScherm: (naam: string) => void,
  *   onNaarVak: (vakId: string) => void,
  *   onKalenderWeergaveWijzigen: (waarde: "compact"|"uitgebreid") => void,
+ *   onVerbergen: (sleutel: string) => void,
  * }} callbacks
  * @returns {{render: (ctx: {vandaag: string, items: object[], afgevinkteDeadlines: string[], afgevinkteOpleveringen: string[], afgevinkteMijlpalen: string[], eigenProjecten: object[], pythonAfgewezen: boolean, tripStatusOverrides: Record<string, string>, eigenReizen: object[], vakkenVeldwaarden: Record<string, string>, kalenderWeergave: "compact"|"uitgebreid"}) => void}}
  */
@@ -104,6 +105,7 @@ export function initMaandScherm(root, callbacks) {
       eigenReizen = [],
       vakkenVeldwaarden = {},
       kalenderWeergave = "compact",
+      verborgenItems = [],
     } = laatsteCtx;
 
     // FASE-9.md B5 punt 4: weekbalk boven de kalender voor de week van de
@@ -135,6 +137,7 @@ export function initMaandScherm(root, callbacks) {
           eigenProjecten,
           pythonAfgewezen,
           vakkenVeldwaarden,
+          verborgenItems,
           formOpenen,
         },
         {
@@ -151,6 +154,7 @@ export function initMaandScherm(root, callbacks) {
           onVeldWijzigen: callbacks.onVeldWijzigen,
           onNaarVak: callbacks.onNaarVak,
           onDagVerschuiven: verschuifDag,
+          onVerbergen: callbacks.onVerbergen,
         }
       );
     }

@@ -6,12 +6,11 @@
 
 import { courses, courseVoor } from "../data/courses.js";
 import { alleVakItems } from "../data/coursedates.js";
-import { opleveringen } from "../data/opleveringen.js";
 import { WEEKDAGEN, kortDatum } from "./datumlabels.js";
 import { meervoud } from "./tekst.js";
 import { lesoverzicht, gemisteSessies, chineseAbsentieStand } from "./vakkenData.js";
-import { alleDeadlineItems } from "./overzichtData.js";
-import { deadlineSleutel } from "./dagblad.js";
+import { zichtbareDeadlines, zichtbareOpleveringen } from "./overzichtData.js";
+import { deadlineSleutel, verbergKnop, verborgenDeadlineSleutel, verborgenOpleveringSleutel } from "./dagblad.js";
 
 function veldSleutel(vakId, veldnaam) {
   return `${vakId}.${veldnaam}`;
@@ -258,12 +257,13 @@ function renderTentamensSectie(vakId) {
  * @param {string} vakId
  * @param {string[]} afgevinkteOpleveringen
  * @param {Record<string, string>} veldwaarden
+ * @param {string[]} verborgenItems
  * @param {(sleutel: string, waarde: string) => void} onVeldWijzigen
  * @param {(id: string, afgevinkt: boolean) => void} onOpleveringToggle
  * @returns {HTMLElement|null}
  */
-function renderOpleveringenSectie(vakId, afgevinkteOpleveringen, veldwaarden, onVeldWijzigen, onOpleveringToggle) {
-  const relevant = opleveringen.filter((o) => o.vak === vakId);
+function renderOpleveringenSectie(vakId, afgevinkteOpleveringen, veldwaarden, verborgenItems, onVeldWijzigen, onOpleveringToggle, onVerbergen) {
+  const relevant = zichtbareOpleveringen(verborgenItems).filter((o) => o.vak === vakId);
   if (relevant.length === 0) return null;
 
   const wrap = document.createElement("div");
@@ -314,6 +314,7 @@ function renderOpleveringenSectie(vakId, afgevinkteOpleveringen, veldwaarden, on
       li.appendChild(opmerking);
     }
 
+    li.appendChild(verbergKnop(verborgenOpleveringSleutel(item.id), onVerbergen));
     lijst.appendChild(li);
   }
   wrap.appendChild(lijst);
@@ -326,12 +327,13 @@ function renderOpleveringenSectie(vakId, afgevinkteOpleveringen, veldwaarden, on
  * dedupLabel) — hetzelfde onderdeel hoort maar één keer op dit scherm.
  * @param {string} vakId
  * @param {string[]} afgevinkteDeadlines
+ * @param {string[]} verborgenItems
  * @param {(sleutel: string, afgevinkt: boolean) => void} onToggle
  * @returns {HTMLElement|null}
  */
-function renderOpdrachtenEnDeadlinesSectie(vakId, afgevinkteDeadlines, onToggle) {
-  const dedupLabels = new Set(opleveringen.filter((o) => o.vak === vakId && o.dedupLabel).map((o) => o.dedupLabel));
-  const relevant = alleDeadlineItems.filter((d) => d.course === vakId && !dedupLabels.has(d.label));
+function renderOpdrachtenEnDeadlinesSectie(vakId, afgevinkteDeadlines, verborgenItems, onToggle, onVerbergen) {
+  const dedupLabels = new Set(zichtbareOpleveringen(verborgenItems).filter((o) => o.vak === vakId && o.dedupLabel).map((o) => o.dedupLabel));
+  const relevant = zichtbareDeadlines(verborgenItems).filter((d) => d.course === vakId && !dedupLabels.has(d.label));
   if (relevant.length === 0) return null;
 
   const wrap = document.createElement("div");
@@ -350,6 +352,7 @@ function renderOpdrachtenEnDeadlinesSectie(vakId, afgevinkteDeadlines, onToggle)
     tekst.textContent = ` ${kortDatum(deadline.date ?? deadline.start)} — ${deadline.label}`;
     label.appendChild(tekst);
     li.appendChild(label);
+    li.appendChild(verbergKnop(verborgenDeadlineSleutel(deadline), onVerbergen));
     lijst.appendChild(li);
   }
   wrap.appendChild(lijst);
@@ -465,11 +468,13 @@ function renderDetail(root, course, ctx, callbacks) {
     course.id,
     ctx.afgevinkteOpleveringen,
     ctx.vakkenVeldwaarden,
+    ctx.verborgenItems,
     callbacks.onVeldWijzigen,
-    callbacks.onOpleveringToggle
+    callbacks.onOpleveringToggle,
+    callbacks.onVerbergen
   );
   if (opleveringenSectie) root.appendChild(opleveringenSectie);
-  const deadlinesSectie = renderOpdrachtenEnDeadlinesSectie(course.id, ctx.afgevinkteDeadlines, callbacks.onDeadlineToggle);
+  const deadlinesSectie = renderOpdrachtenEnDeadlinesSectie(course.id, ctx.afgevinkteDeadlines, ctx.verborgenItems, callbacks.onDeadlineToggle, callbacks.onVerbergen);
   if (deadlinesSectie) root.appendChild(deadlinesSectie);
   const tellersSectie = renderTellersSectie(course, ctx.vakkenVeldwaarden, callbacks.onVeldWijzigen);
   if (tellersSectie) root.appendChild(tellersSectie);
@@ -532,6 +537,7 @@ export function initVakkenScherm(root, callbacks) {
         onInschrijvingWijzigen: callbacks.onInschrijvingWijzigen,
         onDeadlineToggle: callbacks.onDeadlineToggle,
         onOpleveringToggle: callbacks.onOpleveringToggle,
+        onVerbergen: callbacks.onVerbergen,
       });
     }
   }

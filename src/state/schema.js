@@ -49,12 +49,18 @@
  *     streepjes plus de zware-momentenregel) of "uitgebreid" (alle
  *     onderwerpen die dag als tekst) op het scherm Maand. Standaard
  *     "compact".
+ * v12: state kreeg verborgenItems: deadlines en opleveringen uit src/data/
+ *     die de gebruiker niet van toepassing vindt. De data zelf blijft staan
+ *     (CLAUDE.md §5: kalenderfeiten worden niet weggegooid) — dit is puur
+ *     een weergavekeuze, omkeerbaar via Instellingen. Sleutels zijn
+ *     voorafgegaan door hun soort ("deadline::" / "oplevering::") zodat twee
+ *     soorten nooit op elkaar kunnen botsen.
  */
 
 import { parseYMD } from "../lib/date.js";
 import { trips, TRIP_STATUSSEN } from "../data/trips.js";
 
-export const CURRENT_SCHEMA_VERSION = 11;
+export const CURRENT_SCHEMA_VERSION = 12;
 
 const STATUS_WAARDEN = ["idee", "vast"];
 export const SCHERMEN = ["maand", "weken", "overzicht", "vakken"];
@@ -100,6 +106,7 @@ export function leegState() {
     eigenReizen: [],
     afgevinkteOpleveringen: [],
     kalenderWeergave: "compact",
+    verborgenItems: [],
   };
 }
 
@@ -262,6 +269,14 @@ export function migrate(state) {
     };
   }
 
+  if (s.schemaVersion === 11) {
+    s = {
+      ...s,
+      schemaVersion: 12,
+      verborgenItems: s.verborgenItems ?? [],
+    };
+  }
+
   if (s.schemaVersion === CURRENT_SCHEMA_VERSION) {
     return {
       ...s,
@@ -276,6 +291,7 @@ export function migrate(state) {
       eigenReizen: s.eigenReizen ?? [],
       afgevinkteOpleveringen: s.afgevinkteOpleveringen ?? [],
       kalenderWeergave: KALENDER_WEERGAVEN.includes(s.kalenderWeergave) ? s.kalenderWeergave : "compact",
+      verborgenItems: s.verborgenItems ?? [],
     };
   }
   throw new Error(`onbekende schemaVersion: ${state.schemaVersion}`);

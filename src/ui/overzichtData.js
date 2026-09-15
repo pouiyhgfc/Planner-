@@ -18,7 +18,7 @@ import { genereerKalenderDagen } from "../lib/dayStatus.js";
 import { freeBlocks } from "../lib/blocks.js";
 import { alleTripItems, effectieveTripStatus } from "../data/trips.js";
 import { isStipMoment } from "./maandGrid.js";
-import { deadlineSleutel, mijlpaalSleutel } from "./dagblad.js";
+import { deadlineSleutel, mijlpaalSleutel, verborgenDeadlineSleutel, verborgenOpleveringSleutel } from "./dagblad.js";
 
 export { mijlpaalSleutel };
 export const alleDeadlineItems = [...rteActionItems, ...academicDeadlines, chinaVisaFreeDeadline, flexWeekAnnouncementDeadline];
@@ -44,11 +44,29 @@ export function volgendeTentamenOfPresentatie(vandaag, pythonAfgewezen = false) 
  * @param {string[]} afgevinkteDeadlines
  * @returns {number}
  */
-export function aantalOpenstaandeDeadlines(vandaag, afgevinkteDeadlines) {
-  return alleDeadlineItems.filter((d) => {
+export function aantalOpenstaandeDeadlines(vandaag, afgevinkteDeadlines, verborgenItems = []) {
+  return zichtbareDeadlines(verborgenItems).filter((d) => {
     const datum = d.date ?? d.start;
     return datum >= vandaag && !afgevinkteDeadlines.includes(deadlineSleutel(d));
   }).length;
+}
+
+/**
+ * Deadlines minus de items die de gebruiker heeft weggezet als niet van
+ * toepassing (schema.js v12). De data blijft staan; alleen de weergave niet.
+ * @param {string[]} [verborgenItems]
+ * @returns {object[]}
+ */
+export function zichtbareDeadlines(verborgenItems = []) {
+  return alleDeadlineItems.filter((d) => !verborgenItems.includes(verborgenDeadlineSleutel(d)));
+}
+
+/**
+ * @param {string[]} [verborgenItems]
+ * @returns {object[]}
+ */
+export function zichtbareOpleveringen(verborgenItems = []) {
+  return opleveringen.filter((o) => !verborgenItems.includes(verborgenOpleveringSleutel(o.id)));
 }
 
 /** @param {boolean} [pythonAfgewezen] @param {Record<string, string>} [tripStatusOverrides] @param {object[]} [eigenReizen] @returns {{datum: string, inhoud: string}[]} */
@@ -90,9 +108,9 @@ export function rijenTentamens(pythonAfgewezen = false) {
     .map((v) => ({ datum: v.date, inhoud: v.label, vak: v.course }));
 }
 
-/** @returns {{datum: string, inhoud: string, deadline: object, vak: string|null}[]} */
-export function rijenDeadlines() {
-  return alleDeadlineItems.map((d) => ({
+/** @param {string[]} [verborgenItems] @returns {{datum: string, inhoud: string, deadline: object, vak: string|null}[]} */
+export function rijenDeadlines(verborgenItems = []) {
+  return zichtbareDeadlines(verborgenItems).map((d) => ({
     datum: d.date ?? d.start,
     inhoud: d.end && d.end !== d.start ? `${d.label} (${kortDatum(d.start)} t/m ${kortDatum(d.end)})` : d.label,
     deadline: d,
@@ -119,8 +137,8 @@ export function rijenProjecten() {
  * @param {Record<string, string>} [vakkenVeldwaarden]
  * @returns {{datum: string, inhoud: string, oplevering: object, vak: string}[]}
  */
-export function rijenOpleveringen(vakkenVeldwaarden = {}) {
-  return opleveringen
+export function rijenOpleveringen(vakkenVeldwaarden = {}, verborgenItems = []) {
+  return zichtbareOpleveringen(verborgenItems)
     .map((o) => ({ o, datum: o.datum ?? vakkenVeldwaarden[`${o.id}.datum`] ?? null }))
     .filter(({ datum }) => datum !== null)
     .map(({ o, datum }) => ({

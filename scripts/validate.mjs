@@ -30,6 +30,9 @@ import {
   zetVakVeld,
   zetOpleveringAfgevinkt,
   zetKalenderWeergave,
+  zetItemVerborgen,
+  wijzigItem,
+  wijzigReis,
   zetTripStatus,
   voegReisToe,
   verwijderReis,
@@ -43,7 +46,8 @@ import { seizoensdataLabel } from "../src/data/season.js";
 import { kortDatum, collegeWeek } from "../src/ui/datumlabels.js";
 import { maandWeken, isStipMoment, dagRegelTekst, onderwerpenRegels } from "../src/ui/maandGrid.js";
 import { zwareMomentenOpDag, weekgewicht } from "../src/lib/weekgewicht.js";
-import { deadlineSleutel } from "../src/ui/dagblad.js";
+import { deadlineSleutel, verborgenDeadlineSleutel, verborgenOpleveringSleutel } from "../src/ui/dagblad.js";
+import { verborgenOmschrijving } from "../src/ui/verborgen.js";
 import { maandagVan, weekAantal, weekStarts, verschuifVenster, dagdelenMetKleur } from "../src/ui/wekenGrid.js";
 import { projects } from "../src/data/projects.js";
 import { lesoverzicht, gemisteSessies, chineseAbsentieStand } from "../src/ui/vakkenData.js";
@@ -60,6 +64,8 @@ import {
   rijenVrijeBlokken,
   rijenReizen,
   rijenOpleveringen,
+  zichtbareDeadlines,
+  zichtbareOpleveringen,
 } from "../src/ui/overzichtData.js";
 import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -1917,6 +1923,83 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   // Elke feestdag/geen-lesdag uit DATA.md §2 moet ergens in de app te zien zijn.
   const vrijeDagen = holidays.flatMap((h) => (h.date ? [h.date] : rangeDays(h.start, h.end)));
   check("alle vrije dagen uit DATA.md §2 tonen hun naam in de kalender", vrijeDagen.every((ymd) => dagRegelTekst(dayStatus(ymd)) !== null), true);
+}
+
+// Verbergen: een vast item wegzetten als niet van toepassing. De data in
+// src/data/ blijft staan (CLAUDE.md §5) — alleen de weergave verandert, en
+// de keuze is omkeerbaar.
+{
+  const v11 = { ...leegState(), schemaVersion: 11 };
+  delete v11.verborgenItems;
+  const gemigreerd = migrate(v11);
+  check("migrate v11->v12: schemaVersion wordt de actuele versie", gemigreerd.schemaVersion, CURRENT_SCHEMA_VERSION);
+  check("migrate v11->v12: verborgenItems default lege array", gemigreerd.verborgenItems.length, 0);
+  check("migrate v11->v12: kalenderWeergave blijft behouden", gemigreerd.kalenderWeergave, "compact");
+
+  const deadline = rteActionItems.find((d) => d.label === "Assignment #1 due");
+  const sleutel = verborgenDeadlineSleutel(deadline);
+  check("verbergsleutels dragen hun soort, zodat twee soorten niet botsen", sleutel.startsWith("deadline::"), true);
+  check("opleveringsleutel idem", verborgenOpleveringSleutel("RTE-OPDR-1"), "oplevering::RTE-OPDR-1");
+
+  let state = leegState();
+  state = zetItemVerborgen(state, sleutel, true);
+  check("zetItemVerborgen: sleutel staat in de lijst", state.verborgenItems.includes(sleutel), true);
+  check("zichtbareDeadlines: het verborgen item valt weg", zichtbareDeadlines(state.verborgenItems).some((d) => deadlineSleutel(d) === deadlineSleutel(deadline)), false);
+  check("zichtbareDeadlines: de rest blijft staan", zichtbareDeadlines(state.verborgenItems).length, zichtbareDeadlines([]).length - 1);
+  check("rijenDeadlines: laat het verborgen item weg", rijenDeadlines(state.verborgenItems).length, rijenDeadlines().length - 1);
+  check(
+    "aantalOpenstaandeDeadlines: telt een verborgen deadline niet mee",
+    aantalOpenstaandeDeadlines("2026-09-01", [], state.verborgenItems),
+    aantalOpenstaandeDeadlines("2026-09-01", []) - 1
+  );
+  check("de bron blijft ongemoeid: het item staat nog gewoon in coursedates.js", rteActionItems.some((d) => d.label === "Assignment #1 due"), true);
+  check("verborgenOmschrijving: leesbaar, niet de kale sleutel", verborgenOmschrijving(sleutel).includes("Assignment #1 due"), true);
+
+  state = zetItemVerborgen(state, sleutel, false);
+  check("zetItemVerborgen: weer tonen haalt de sleutel weg", state.verborgenItems.length, 0);
+
+  let metOplevering = zetItemVerborgen(leegState(), verborgenOpleveringSleutel("RTE-OPDR-1"), true);
+  check("zichtbareOpleveringen: het verborgen item valt weg", zichtbareOpleveringen(metOplevering.verborgenItems).some((o) => o.id === "RTE-OPDR-1"), false);
+  check("rijenOpleveringen: idem", rijenOpleveringen({}, metOplevering.verborgenItems).some((r) => r.oplevering.id === "RTE-OPDR-1"), false);
+  check("verborgenOmschrijving voor een oplevering", verborgenOmschrijving(verborgenOpleveringSleutel("RTE-OPDR-1")).includes("Assignment #1"), true);
+  check("verborgenOmschrijving valt terug op de sleutel als het item niet meer bestaat", verborgenOmschrijving("oplevering::BESTAAT-NIET"), "oplevering::BESTAAT-NIET");
+}
+
+// Bewerken van eigen items en reizen — dat kon eerder niet: alleen toevoegen
+// en verwijderen, dus elke correctie betekende opnieuw intypen.
+{
+  let state = voegItemToe(leegState(), { naam: "Weekendje", start: "2026-10-03", end: "2026-10-04", status: "idee", notitie: "" });
+  const id = state.items[0].id;
+  state = wijzigItem(state, id, { naam: "Weekendje Tainan", start: "2026-10-03", end: "2026-10-05", status: "vast", notitie: "geboekt" });
+  check("wijzigItem: er blijft één item (geen kopie erbij)", state.items.length, 1);
+  check("wijzigItem: id blijft hetzelfde", state.items[0].id, id);
+  check("wijzigItem: velden zijn bijgewerkt", state.items[0].naam, "Weekendje Tainan");
+  check("wijzigItem: einddatum bijgewerkt", state.items[0].end, "2026-10-05");
+  check("wijzigItem: status bijgewerkt", state.items[0].status, "vast");
+
+  let fout = null;
+  try {
+    wijzigItem(state, "bestaat-niet", { naam: "X", start: "2026-10-03", end: "2026-10-03", status: "idee", notitie: "" });
+  } catch (e) {
+    fout = e;
+  }
+  check("wijzigItem: onbekend id gooit een Error", fout instanceof Error, true);
+
+  fout = null;
+  try {
+    wijzigItem(state, id, { naam: "X", start: "2026-10-09", end: "2026-10-03", status: "idee", notitie: "" });
+  } catch (e) {
+    fout = e;
+  }
+  check("wijzigItem: valideert nog steeds (start na eind gooit een Error)", fout instanceof Error, true);
+
+  let reisState = voegReisToe(leegState(), { naam: "Kyoto", start: "2026-11-01", end: "2026-11-03", status: "geboekt" });
+  const reisId = reisState.eigenReizen[0].id;
+  reisState = wijzigReis(reisState, reisId, { naam: "Kyoto en Osaka", start: "2026-11-01", end: "2026-11-05", status: "wijziging-aangevraagd" });
+  check("wijzigReis: er blijft één reis", reisState.eigenReizen.length, 1);
+  check("wijzigReis: id blijft hetzelfde", reisState.eigenReizen[0].id, reisId);
+  check("wijzigReis: status bijgewerkt", reisState.eigenReizen[0].status, "wijziging-aangevraagd");
+  check("wijzigReis: vluchten blijven behouden als ze niet meegegeven worden", Array.isArray(reisState.eigenReizen[0].vluchten), true);
 }
 
 console.log(`\n${passed} geslaagd, ${failures} mislukt.`);

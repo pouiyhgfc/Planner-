@@ -22,20 +22,31 @@ const TRIP_STATUS_LABELS = {
 
 /**
  * @param {HTMLElement} root
- * @param {(veld: {naam: string, start: string, end: string, status: string, notitie: string}) => void} onToevoegen
- * @param {{start?: string, end?: string}} [voorinvulling] datumbereik dat al is ingevuld (bijv. vanuit het dagblad)
+ * @param {(veld: {naam: string, start: string, end: string, status: string, notitie: string}) => void} onOpslaan
+ * @param {{start?: string, end?: string, item?: object}} [opties] voorinvulling
+ *   van het datumbereik (bijv. vanuit het dagblad), of een bestaand item om
+ *   te bewerken — dat kon eerder niet: je kon alleen toevoegen en weggooien.
  */
-export function renderPlannerForm(root, onToevoegen, voorinvulling) {
+export function renderPlannerForm(root, onOpslaan, opties) {
   root.textContent = "";
   root.className = "planner-form";
 
+  const bewerkt = opties?.item ?? null;
   const naam = invoerveld("text", { verplicht: true });
   const start = invoerveld("date");
   const eind = invoerveld("date");
-  if (voorinvulling?.start) start.value = voorinvulling.start;
-  if (voorinvulling?.end) eind.value = voorinvulling.end;
+  if (bewerkt) {
+    naam.value = bewerkt.naam;
+    start.value = bewerkt.start;
+    eind.value = bewerkt.end;
+  } else {
+    if (opties?.start) start.value = opties.start;
+    if (opties?.end) eind.value = opties.end;
+  }
   const status = keuzeveld(["idee", "vast"]);
+  if (bewerkt) status.value = bewerkt.status;
   const notitie = invoerveld("text");
+  if (bewerkt) notitie.value = bewerkt.notitie ?? "";
 
   const waarschuwing = document.createElement("div");
   waarschuwing.className = "kosten-waarschuwing";
@@ -60,7 +71,7 @@ export function renderPlannerForm(root, onToevoegen, voorinvulling) {
 
   const knop = document.createElement("button");
   knop.type = "submit";
-  knop.textContent = "Toevoegen";
+  knop.textContent = bewerkt ? "Opslaan" : "Toevoegen";
 
   const form = document.createElement("form");
   form.appendChild(metLabel("Naam", naam));
@@ -74,7 +85,7 @@ export function renderPlannerForm(root, onToevoegen, voorinvulling) {
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     if (!naam.value || !start.value || !eind.value) return;
-    onToevoegen({
+    onOpslaan({
       naam: naam.value,
       start: start.value,
       end: eind.value,
@@ -324,9 +335,10 @@ export function renderReisstatusPaneel(root, tripStatusOverrides, onWijzigen) {
  * niet in src/data/ (src/data/trips.js:eigenReisItems() maakt hem daarna
  * visueel identiek aan een reis uit trips.js).
  * @param {HTMLElement} root
- * @param {(veld: {naam: string, start: string, end: string, status: string, vluchten: {datum: string, tijd: string|null, label: string}[]}) => void} onToevoegen
+ * @param {(veld: {naam: string, start: string, end: string, status: string, vluchten: {datum: string, tijd: string|null, label: string}[]}) => void} onOpslaan
+ * @param {object} [bewerkt] een bestaande reis om te bewerken
  */
-export function renderReisForm(root, onToevoegen) {
+export function renderReisForm(root, onOpslaan, bewerkt) {
   root.textContent = "";
   root.className = "reis-form";
 
@@ -334,6 +346,12 @@ export function renderReisForm(root, onToevoegen) {
   const start = invoerveld("date");
   const eind = invoerveld("date");
   const status = keuzeveld(TRIP_STATUSSEN, TRIP_STATUS_LABELS);
+  if (bewerkt) {
+    naam.value = bewerkt.naam;
+    start.value = bewerkt.start;
+    eind.value = bewerkt.end;
+    status.value = bewerkt.status;
+  }
 
   const vluchtenWrap = document.createElement("div");
   vluchtenWrap.className = "reis-vluchten";
@@ -371,7 +389,7 @@ export function renderReisForm(root, onToevoegen) {
 
   const knop = document.createElement("button");
   knop.type = "submit";
-  knop.textContent = "Reis toevoegen";
+  knop.textContent = bewerkt ? "Reis opslaan" : "Reis toevoegen";
 
   const form = document.createElement("form");
   form.appendChild(metLabel("Naam", naam));
@@ -388,7 +406,7 @@ export function renderReisForm(root, onToevoegen) {
     const vluchten = vluchtRijen
       .filter((r) => r.datum.value)
       .map((r) => ({ datum: r.datum.value, tijd: r.tijd.value || null, label: r.label.value || "" }));
-    onToevoegen({ naam: naam.value, start: start.value, end: eind.value, status: status.value, vluchten });
+    onOpslaan({ naam: naam.value, start: start.value, end: eind.value, status: status.value, vluchten });
     form.reset();
     vluchtenWrap.textContent = "";
     vluchtRijen.length = 0;
@@ -402,8 +420,8 @@ export function renderReisForm(root, onToevoegen) {
  * @param {object[]} reizen
  * @param {(id: string) => void} onVerwijderen
  */
-export function renderEigenReizenLijst(root, reizen, onVerwijderen) {
-  renderVerwijderbareLijst(root, reizen, onVerwijderen, "Nog geen eigen reizen.", (reis) => {
+export function renderEigenReizenLijst(root, reizen, onVerwijderen, onBewerken) {
+  renderVerwijderbareLijst(root, reizen, onVerwijderen, onBewerken, "Nog geen eigen reizen.", (reis) => {
     const vluchten = reis.vluchten?.length > 0 ? ` — ${meervoud(reis.vluchten.length, "vlucht", "vluchten")}` : "";
     return `${kortDatum(reis.start)} → ${kortDatum(reis.end)} — ${reis.naam} (${TRIP_STATUS_LABELS[reis.status] ?? reis.status})${vluchten}`;
   });
@@ -414,8 +432,8 @@ export function renderEigenReizenLijst(root, reizen, onVerwijderen) {
  * @param {object[]} items
  * @param {(id: string) => void} onVerwijderen
  */
-export function renderEigenItemsLijst(root, items, onVerwijderen) {
-  renderVerwijderbareLijst(root, items, onVerwijderen, "Nog geen eigen items.", (item) => {
+export function renderEigenItemsLijst(root, items, onVerwijderen, onBewerken) {
+  renderVerwijderbareLijst(root, items, onVerwijderen, onBewerken, "Nog geen eigen items.", (item) => {
     const bereik = item.start === item.end ? kortDatum(item.start) : `${kortDatum(item.start)} → ${kortDatum(item.end)}`;
     return `${bereik} — ${item.naam} (${item.status})`;
   });
@@ -428,10 +446,11 @@ export function renderEigenItemsLijst(root, items, onVerwijderen) {
  * @param {HTMLElement} root
  * @param {{id: string, naam: string, start: string}[]} rijen
  * @param {(id: string) => void} onVerwijderen
+ * @param {(id: string) => void} onBewerken
  * @param {string} legeTekst
  * @param {(rij: object) => string} regelTekst
  */
-function renderVerwijderbareLijst(root, rijen, onVerwijderen, legeTekst, regelTekst) {
+function renderVerwijderbareLijst(root, rijen, onVerwijderen, onBewerken, legeTekst, regelTekst) {
   root.className = "eigen-items-lijst";
   root.textContent = "";
 
@@ -452,12 +471,61 @@ function renderVerwijderbareLijst(root, rijen, onVerwijderen, legeTekst, regelTe
     tekst.textContent = regelTekst(rij);
     li.appendChild(tekst);
 
+    const bewerk = document.createElement("button");
+    bewerk.type = "button";
+    bewerk.className = "rij-knop";
+    bewerk.textContent = "Bewerken";
+    bewerk.addEventListener("click", () => onBewerken(rij.id));
+    li.appendChild(bewerk);
+
     const verwijder = document.createElement("button");
     verwijder.type = "button";
+    verwijder.className = "rij-knop";
     verwijder.textContent = "×";
     verwijder.setAttribute("aria-label", `Verwijder "${rij.naam}"`);
     verwijder.addEventListener("click", () => onVerwijderen(rij.id));
     li.appendChild(verwijder);
+
+    lijst.appendChild(li);
+  }
+  root.appendChild(lijst);
+}
+
+/**
+ * Wat je hebt weggezet als niet van toepassing. De items zelf staan nog
+ * gewoon in src/data/ — dit is de plek om die keuze terug te draaien, zodat
+ * verbergen nooit definitief voelt.
+ * @param {HTMLElement} root
+ * @param {{sleutel: string, omschrijving: string}[]} verborgen
+ * @param {(sleutel: string) => void} onWeerTonen
+ */
+export function renderVerborgenLijst(root, verborgen, onWeerTonen) {
+  root.className = "eigen-items-lijst";
+  root.textContent = "";
+
+  if (verborgen.length === 0) {
+    const leeg = document.createElement("p");
+    leeg.className = "eigen-items-leeg";
+    leeg.textContent = "Niets verborgen.";
+    root.appendChild(leeg);
+    return;
+  }
+
+  const lijst = document.createElement("ul");
+  for (const rij of verborgen) {
+    const li = document.createElement("li");
+    li.className = "eigen-item-rij";
+
+    const tekst = document.createElement("span");
+    tekst.textContent = rij.omschrijving;
+    li.appendChild(tekst);
+
+    const knop = document.createElement("button");
+    knop.type = "button";
+    knop.className = "rij-knop";
+    knop.textContent = "Weer tonen";
+    knop.addEventListener("click", () => onWeerTonen(rij.sleutel));
+    li.appendChild(knop);
 
     lijst.appendChild(li);
   }
