@@ -575,5 +575,11 @@ export function initVakkenScherm(root, callbacks) {
     tekenen();
   }
 
-  return { render, openVak: toonVak };
+  /** Zet dit scherm terug in zijn beginstand: de vakdetail dicht. */
+  function naarBovenkant() {
+    if (geselecteerd === null) return;
+    sluit();
+  }
+
+  return { render, openVak: toonVak, naarBovenkant };
 }
