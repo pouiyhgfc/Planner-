@@ -5,6 +5,7 @@
  */
 
 import { volledigeDatum, kortDatum, collegeWeek } from "./datumlabels.js";
+import { meervoud } from "./tekst.js";
 import { courseVoor } from "../data/courses.js";
 import { opleveringen } from "../data/opleveringen.js";
 import { projects } from "../data/projects.js";
@@ -69,23 +70,26 @@ export function renderDagblad(
 ) {
   root.textContent = "";
 
+  // 1. Datum — op dezelfde regel als Sluiten; die knop stond eerder alleen
+  // op een eigen regel met de datum eronder, wat een halve schermhoogte
+  // kostte voordat de inhoud begon.
+  const week = collegeWeek(ymd);
   const kop = document.createElement("div");
   kop.className = "dagblad-kop-rij";
+
+  const datumEl = document.createElement("p");
+  datumEl.className = "dagblad-datum";
+  datumEl.textContent = week ? `${volledigeDatum(ymd)} · week ${week.week}` : volledigeDatum(ymd);
+  kop.appendChild(datumEl);
+
   const sluit = document.createElement("button");
   sluit.type = "button";
   sluit.className = "tap-target";
   sluit.textContent = "Sluiten";
   sluit.addEventListener("click", acties.onSluiten);
   kop.appendChild(sluit);
-  root.appendChild(kop);
 
-  // 1. Datum
-  const week = collegeWeek(ymd);
-  const datumTekst = week ? `${volledigeDatum(ymd)} · week ${week.week}` : volledigeDatum(ymd);
-  const datumEl = document.createElement("p");
-  datumEl.className = "dagblad-datum";
-  datumEl.textContent = datumTekst;
-  root.appendChild(datumEl);
+  root.appendChild(kop);
 
   // 2. Reizen (fase 9 B1)
   const reizen = dag.vasteBoekingen.filter((v) => v.type === "vaste-boeking");
@@ -213,7 +217,7 @@ export function renderDagblad(
     const lijst = document.createElement("ul");
     for (const [vak, n] of vakken) {
       const li = document.createElement("li");
-      li.textContent = `${vak}: ${n} lesmoment(en) gemist bij absentie`;
+      li.textContent = `${vak}: ${meervoud(n, "lesmoment", "lesmomenten")} gemist bij absentie`;
       lijst.appendChild(li);
     }
     root.appendChild(lijst);

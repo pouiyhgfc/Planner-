@@ -41,7 +41,7 @@ import {
 import { chinaAftelling, flexWeekStatus, cnyDrukte, resterendeBlokken, absentieTotaal } from "../src/lib/overzicht.js";
 import { seizoensdataLabel } from "../src/data/season.js";
 import { kortDatum, collegeWeek } from "../src/ui/datumlabels.js";
-import { maandWeken, isStipMoment, zwareRegelTekst, onderwerpenTekst } from "../src/ui/maandGrid.js";
+import { maandWeken, isStipMoment, zwareRegelTekst, onderwerpenRegels } from "../src/ui/maandGrid.js";
 import { zwareMomentenOpDag, weekgewicht } from "../src/lib/weekgewicht.js";
 import { deadlineSleutel } from "../src/ui/dagblad.js";
 import { maandagVan, weekAantal, weekStarts, verschuifVenster, dagdelenMetKleur } from "../src/ui/wekenGrid.js";
@@ -1839,7 +1839,8 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   const dag20261118 = dayStatus("2026-11-18");
   check("2026-11-18: geen zwaar moment (gewone lesdag)", zwareMomentenOpDag(dag20261118).totaal, 0);
   check("2026-11-18: zwareRegelTekst is null in compacte stand", zwareRegelTekst(dag20261118), null);
-  check("2026-11-18: drie onderwerpen in uitgebreide stand", onderwerpenTekst(dag20261118)?.split(" · ").length, 3);
+  check("2026-11-18: drie onderwerpen in uitgebreide stand", onderwerpenRegels(dag20261118).length, 3);
+  check("2026-11-18: elke onderwerpregel begint met de vakafkorting", onderwerpenRegels(dag20261118)[0].startsWith("PSY "), true);
 
   const dag20261028 = dayStatus("2026-10-28");
   const z1028 = zwareMomentenOpDag(dag20261028);

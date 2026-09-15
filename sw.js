@@ -31,6 +31,7 @@ const APP_SHELL = [
   "./src/ui/vakkenData.js",
   "./src/ui/datumlabels.js",
   "./src/ui/planner.js",
+  "./src/ui/tekst.js",
   "./src/lib/date.js",
   "./src/lib/academicWeek.js",
   "./src/lib/dayStatus.js",

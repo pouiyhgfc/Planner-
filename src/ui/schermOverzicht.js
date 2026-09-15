@@ -55,13 +55,16 @@ const WEERGAVEN = [
 export function initOverzichtScherm(root, callbacks) {
   const telkaartenEl = document.createElement("div");
   telkaartenEl.className = "telkaarten";
-  const projectenEl = document.createElement("div");
   const filtersEl = document.createElement("div");
   const lijstEl = document.createElement("div");
+  const projectenEl = document.createElement("div");
+  // De chronologische lijst is waar dit scherm voor is; de projectkaarten en
+  // het invoerformulier stonden ervóór, waardoor je er eerst langs moest
+  // scrollen.
   root.appendChild(telkaartenEl);
-  root.appendChild(projectenEl);
   root.appendChild(filtersEl);
   root.appendChild(lijstEl);
+  root.appendChild(projectenEl);
 
   let actieveFilters = new Set(STANDAARD_AAN);
   let weergave = "datum";
@@ -233,7 +236,17 @@ export function initOverzichtScherm(root, callbacks) {
 
     for (const project of projects) projectenEl.appendChild(renderProjectKaart(project, afgevinkteMijlpalen, true));
     for (const project of eigenProjecten) projectenEl.appendChild(renderProjectKaart(project, afgevinkteMijlpalen, false));
-    projectenEl.appendChild(renderEigenProjectForm());
+
+    // Het invoerformulier stond altijd open, terwijl je zelden een project
+    // toevoegt; ingeklapt kost het één regel in plaats van vijf velden.
+    const uitklap = document.createElement("details");
+    uitklap.className = "uitklap";
+    const samenvatting = document.createElement("summary");
+    samenvatting.className = "tap-target";
+    samenvatting.textContent = "Eigen project toevoegen";
+    uitklap.appendChild(samenvatting);
+    uitklap.appendChild(renderEigenProjectForm());
+    projectenEl.appendChild(uitklap);
   }
 
   function bouwRijen() {

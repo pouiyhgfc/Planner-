@@ -95,17 +95,18 @@ export function renderTopbar({ weekEl, absentieEl }, { vandaag, absenties }, onA
     weekEl.appendChild(weekSpan);
   }
 
+  // Zonder absenties is er niets te melden; een knop die permanent "geen
+  // absenties" zegt, kost ruimte in de topbalk zonder iets toe te voegen.
+  // Het scherm Vakken blijft gewoon via de tabbalk bereikbaar.
   absentieEl.textContent = "";
+  const entries = Object.entries(absenties).filter(([, n]) => n > 0);
+  if (entries.length === 0) return;
+
+  const totaal = entries.reduce((som, [, n]) => som + n, 0);
   const knop = document.createElement("button");
   knop.type = "button";
   knop.className = "tap-target absentie-knop";
-  const entries = Object.entries(absenties).filter(([, n]) => n > 0);
-  if (entries.length === 0) {
-    knop.textContent = "geen absenties";
-  } else {
-    const totaal = entries.reduce((som, [, n]) => som + n, 0);
-    knop.textContent = `${entries.map(([vak, n]) => `${vak} ${n}`).join(" · ")} · totaal ${totaal}`;
-  }
+  knop.textContent = `${entries.map(([vak, n]) => `${vak} ${n}`).join(" · ")} · totaal ${totaal}`;
   knop.addEventListener("click", onAbsentieTik);
   absentieEl.appendChild(knop);
 }

@@ -7,6 +7,7 @@
 import { costOfRange } from "../lib/blocks.js";
 import { diffDays } from "../lib/date.js";
 import { kortDatum } from "./datumlabels.js";
+import { meervoud } from "./tekst.js";
 import { huidigeYMD } from "../state/store.js";
 import { trips, effectieveTripStatus, TRIP_STATUSSEN } from "../data/trips.js";
 
@@ -197,7 +198,7 @@ export function renderExportRegel(root, laatsteExport, onExporteren) {
     tekst.classList.add("export-waarschuwing");
   } else {
     const dagenGeleden = diffDays(laatsteExport, huidigeYMD());
-    tekst.textContent = `Laatste export: ${kortDatum(laatsteExport)} (${dagenGeleden} dagen geleden)`;
+    tekst.textContent = `Laatste export: ${kortDatum(laatsteExport)} (${meervoud(dagenGeleden, "dag", "dagen")} geleden)`;
     if (dagenGeleden > EXPORT_WAARSCHUWING_DAGEN) tekst.classList.add("export-waarschuwing");
   }
   root.appendChild(tekst);
@@ -243,7 +244,7 @@ export function renderConflictenPaneel(root, conflicten, onOplossen) {
   root.hidden = false;
 
   const kop = document.createElement("div");
-  kop.textContent = `${conflicten.length} conflict(en) bij import — kies per item welke versie moet blijven:`;
+  kop.textContent = `${meervoud(conflicten.length, "conflict", "conflicten")} bij import — kies per item welke versie moet blijven:`;
   root.appendChild(kop);
 
   const keuzes = {};
@@ -403,7 +404,7 @@ export function renderReisForm(root, onToevoegen) {
  */
 export function renderEigenReizenLijst(root, reizen, onVerwijderen) {
   renderVerwijderbareLijst(root, reizen, onVerwijderen, "Nog geen eigen reizen.", (reis) => {
-    const vluchten = reis.vluchten?.length > 0 ? ` — ${reis.vluchten.length} vlucht(en)` : "";
+    const vluchten = reis.vluchten?.length > 0 ? ` — ${meervoud(reis.vluchten.length, "vlucht", "vluchten")}` : "";
     return `${kortDatum(reis.start)} → ${kortDatum(reis.end)} — ${reis.naam} (${TRIP_STATUS_LABELS[reis.status] ?? reis.status})${vluchten}`;
   });
 }

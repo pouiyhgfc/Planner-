@@ -162,16 +162,18 @@ function renderWeekkaart(root, weekMaandag, pythonAfgewezen, tripStatusOverrides
   const week = collegeWeek(weekMaandag) ?? collegeWeek(weekEind);
   const titel = document.createElement("div");
   titel.className = "weekkaart-titelblok";
+  // Eén weeknummer, niet twee: de kaart noemde zowel het ISO-weeknummer als
+  // de collegeweek, wat naast elkaar verwarrend leest. De collegeweek is wat
+  // telt; valt de week buiten het semester, dan is er alleen het ISO-nummer.
   const titelRegel = document.createElement("span");
   titelRegel.className = "weekkaart-titel";
-  titelRegel.textContent = `week ${dagen[0].isoWeek} — ${kortDatum(weekMaandag)} t/m ${kortDatum(weekEind)}`;
+  titelRegel.textContent = week ? `week ${week.week} van ${week.totaal}` : `week ${dagen[0].isoWeek}`;
   titel.appendChild(titelRegel);
-  if (week) {
-    const collegeweekRegel = document.createElement("span");
-    collegeweekRegel.className = "weekkaart-collegeweek";
-    collegeweekRegel.textContent = `week ${week.week} van ${week.totaal}`;
-    titel.appendChild(collegeweekRegel);
-  }
+
+  const periodeRegel = document.createElement("span");
+  periodeRegel.className = "weekkaart-collegeweek";
+  periodeRegel.textContent = `${kortDatum(weekMaandag)} t/m ${kortDatum(weekEind)}`;
+  titel.appendChild(periodeRegel);
   kop.appendChild(titel);
 
   // De badge vat de week samen, de uitzonderingenlijst eronder geeft dezelfde

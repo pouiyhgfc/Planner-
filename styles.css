@@ -354,6 +354,22 @@ select {
   font-family: var(--ff-head);
   font-size: 18px;
 }
+/* Het paneel was één doorlopende kolom; per onderwerp een blok met een kop
+   en een scheidingslijn maakt zichtbaar waar het een over het ander gaat. */
+.instellingen-sectie {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: var(--border-width) solid var(--border-soft);
+}
+.instellingen-sectie h3 {
+  font-size: 15px;
+}
+.instellingen-sectie .uitklap {
+  margin-top: 0;
+  border-top: none;
+}
 .eigen-items-lijst ul {
   list-style: none;
   margin: 0;
@@ -505,7 +521,7 @@ select {
 
 .maand-dagkoppen {
   display: grid;
-  grid-template-columns: 24px repeat(7, 1fr);
+  grid-template-columns: 28px repeat(7, 1fr);
   gap: 2px;
   margin-bottom: 2px;
   text-align: center;
@@ -515,38 +531,54 @@ select {
 
 .maand-weekrij {
   display: grid;
-  grid-template-columns: 24px repeat(7, 1fr);
+  grid-template-columns: 28px repeat(7, 1fr);
   gap: 2px;
   margin-bottom: 2px;
 }
 
-/* FASE-9.md B5 punt 1 — weekgewicht: weeknummer + aantal zware momenten */
+/* FASE-9.md B5 punt 1 — weekgewicht: weeknummer + aantal zware momenten.
+   Twee kale cijfers onder elkaar lazen als twee weeknummers; het aantal
+   staat nu in een eigen rondje, zodat duidelijk is wat wat is. */
 .maand-weekgewicht {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 3px;
   border-radius: var(--radius-day);
-  font-size: var(--fs-min);
-  color: var(--text-muted);
 }
 .maand-weekgewicht-week {
   font-family: var(--ff-display);
+  font-size: 10px;
+  color: var(--text-faint);
 }
 .maand-weekgewicht-getal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  background: var(--card2);
+  border: var(--border-width) solid var(--border);
+  font-size: 10px;
   font-weight: 600;
+  color: var(--text-muted);
 }
 .maand-weekgewicht.zwaar {
   border: var(--border-width) solid var(--danger-border);
-  color: var(--danger-text);
 }
 .maand-weekgewicht.zwaar .maand-weekgewicht-getal {
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
   color: var(--danger-text);
 }
 
+/* min-height in plaats van aspect-ratio: een vierkant vakje is op een
+   telefoon grotendeels leeg in de compacte stand, en te krap zodra er in de
+   uitgebreide stand tekst in staat. Nu is een rij precies zo hoog als zijn
+   inhoud nodig heeft. */
 .dagvak {
-  aspect-ratio: 1;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -557,7 +589,7 @@ select {
   background: var(--card);
   padding: 4px;
   min-width: 0;
-  min-height: 0;
+  min-height: 46px;
   overflow: hidden;
 }
 .dagvak.buiten-maand {
@@ -601,9 +633,24 @@ select {
   height: 6px;
   border-radius: 50%;
 }
+/* Twee regels in plaats van één afgeknipte: op één regel bleef er in een
+   vakje van ~50px maar zo'n zes tekens over ("General…"), wat niets zegt. */
 .dagvak-regel {
   width: 100%;
   margin-top: 2px;
+  font-size: 9px;
+  line-height: 1.15;
+  color: var(--text-muted);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+/* Uitgebreide stand: per vak een eigen regel, elk afgekapt op de breedte van
+   het vakje — zo blijft in elk geval de afkorting plus het begin leesbaar. */
+.dagvak-onderwerp {
+  width: 100%;
+  margin-top: 1px;
   font-size: 9px;
   line-height: 1.2;
   color: var(--text-muted);
@@ -663,9 +710,22 @@ select {
   margin: 8px 0 0;
 }
 
+.uitklap {
+  margin-top: 12px;
+  border-top: var(--border-width) solid var(--border-soft);
+}
+.uitklap > summary {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  color: var(--text-muted);
+  font-size: var(--fs-min);
+  cursor: pointer;
+}
+
 .maand-legenda {
   list-style: none;
-  margin: 16px 0 0;
+  margin: 4px 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -699,13 +759,19 @@ select {
 }
 .dagblad-kop-rij {
   display: flex;
-  justify-content: flex-end;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
   margin-bottom: 8px;
+}
+.dagblad-kop-rij > button {
+  flex-shrink: 0;
 }
 .dagblad-datum {
   font-family: var(--ff-head);
   font-size: 18px;
-  margin: 0 0 8px;
+  margin: 0;
+  min-width: 0;
 }
 .dagblad-kop {
   font-family: var(--ff-head);
@@ -1105,7 +1171,8 @@ select {
 .vak-detail-naam {
   font-family: var(--ff-head);
   font-size: 20px;
-  margin: 8px 0 12px;
+  margin: 0;
+  min-width: 0;
 }
 .vak-detail-regels {
   display: grid;

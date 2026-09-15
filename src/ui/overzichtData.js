@@ -7,6 +7,7 @@
 
 import { diffDays } from "../lib/date.js";
 import { kortDatum } from "./datumlabels.js";
+import { meervoud } from "./tekst.js";
 import { courseNaam } from "../data/courses.js";
 import { alleVakItems, rteActionItems } from "../data/coursedates.js";
 import { holidays } from "../data/holidays.js";
@@ -151,5 +152,5 @@ export function rijenEigenItems(items) {
 
 /** @param {boolean} [pythonAfgewezen] @param {Record<string, string>} [tripStatusOverrides] @param {object[]} [eigenReizen] @returns {{datum: string, inhoud: string, vak: null}[]} */
 export function rijenVrijeBlokken(pythonAfgewezen = false, tripStatusOverrides = {}, eigenReizen = []) {
-  return freeBlocks(pythonAfgewezen, tripStatusOverrides, eigenReizen).map((b) => ({ datum: b.start, inhoud: `${b.length} dagen vrij (t/m ${kortDatum(b.end)})`, vak: null }));
+  return freeBlocks(pythonAfgewezen, tripStatusOverrides, eigenReizen).map((b) => ({ datum: b.start, inhoud: `${meervoud(b.length, "dag", "dagen")} vrij (t/m ${kortDatum(b.end)})`, vak: null }));
 }

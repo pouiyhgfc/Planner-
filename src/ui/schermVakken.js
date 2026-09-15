@@ -8,6 +8,7 @@ import { courses, courseVoor } from "../data/courses.js";
 import { alleVakItems } from "../data/coursedates.js";
 import { opleveringen } from "../data/opleveringen.js";
 import { WEEKDAGEN, kortDatum } from "./datumlabels.js";
+import { meervoud } from "./tekst.js";
 import { lesoverzicht, gemisteSessies, chineseAbsentieStand } from "./vakkenData.js";
 import { alleDeadlineItems } from "./overzichtData.js";
 import { deadlineSleutel } from "./dagblad.js";
@@ -82,11 +83,6 @@ function renderKopSectie(course, veldwaarden, ctx, callbacks) {
   if (course.id === "PY") {
     wrap.appendChild(renderInschrijvingBadge(ctx.pythonInschrijving, callbacks.onInschrijvingWijzigen));
   }
-
-  const naam = document.createElement("h2");
-  naam.className = "vak-detail-naam";
-  naam.textContent = course.name;
-  wrap.appendChild(naam);
 
   const regels = document.createElement("dl");
   regels.className = "vak-detail-regels";
@@ -210,7 +206,7 @@ function renderAbsentieSectie(course, items, pythonAfgewezen) {
   if (course.id === "RTE") {
     const standKop = document.createElement("p");
     standKop.textContent =
-      gemist.length === 0 ? "Nog geen in-class momenten gemist (op basis van geplande absenties)." : `${gemist.length} in-class moment(en) gemist:`;
+      gemist.length === 0 ? "Nog geen in-class momenten gemist (op basis van geplande absenties)." : `${meervoud(gemist.length, "in-class moment", "in-class momenten")} gemist:`;
     wrap.appendChild(standKop);
     if (gemist.length > 0) {
       const lijst = document.createElement("ul");
@@ -223,7 +219,7 @@ function renderAbsentieSectie(course, items, pythonAfgewezen) {
     }
   } else {
     const stand = document.createElement("p");
-    stand.textContent = `Huidige stand: ${gemist.length} sessie(s) gemist (op basis van geplande absenties).`;
+    stand.textContent = `Huidige stand: ${meervoud(gemist.length, "sessie", "sessies")} gemist (op basis van geplande absenties).`;
     wrap.appendChild(stand);
   }
 
@@ -440,8 +436,14 @@ function renderCursusrestrictiesSectie(course) {
 function renderDetail(root, course, ctx, callbacks) {
   root.textContent = "";
 
+  // Vaknaam en Sluiten op één regel; de knop stond eerder alleen op een lege
+  // regel met de naam eronder.
   const kopRij = document.createElement("div");
   kopRij.className = "dagblad-kop-rij";
+  const naam = document.createElement("h2");
+  naam.className = "vak-detail-naam";
+  naam.textContent = course.name;
+  kopRij.appendChild(naam);
   const sluit = document.createElement("button");
   sluit.type = "button";
   sluit.className = "tap-target";

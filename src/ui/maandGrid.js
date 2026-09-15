@@ -62,15 +62,16 @@ export function zwareRegelTekst(dag) {
 }
 
 /**
- * FASE-9.md B5 punt 3: de onderwerpen van een dag, afgekort tot de labels
- * zelf, chronologisch, voor de "uitgebreide" weergave. null als er niets is.
+ * FASE-9.md B5 punt 3: de onderwerpen van een dag voor de "uitgebreide"
+ * weergave, chronologisch, één regel per vak met de vakafkorting ervoor.
+ * Eén doorlopende regel met alle onderwerpen achter elkaar paste niet in een
+ * dagvakje van ~50px: daar bleven zes tekens van over. Per vak een eigen
+ * regel leest wél ("PSY Learning"), ook als de staart wegvalt.
  * @param {ReturnType<typeof dayStatus>} dag
- * @returns {string|null}
+ * @returns {string[]} leeg als er die dag niets is
  */
-export function onderwerpenTekst(dag) {
-  const vakken = gesorteerdOpTijd(dag.vakken);
-  if (vakken.length === 0) return null;
-  return vakken.map((v) => v.label).join(" · ");
+export function onderwerpenRegels(dag) {
+  return gesorteerdOpTijd(dag.vakken).map((v) => `${AFKORTING[v.course] ?? v.course} ${v.label}`);
 }
 
 /**
@@ -346,12 +347,21 @@ function renderDagvak(ymd, buitenPeriode, buitenMaand, vandaag, geselecteerd, it
 
   // FASE-9.md B5 punt 2/3: compact toont alleen de zware-momentenregel
   // (leeg bij een gewone lesdag); uitgebreid toont elke dag de onderwerpen.
-  const regelTekst = kalenderWeergave === "uitgebreid" ? onderwerpenTekst(dag) : zwareRegelTekst(dag);
-  if (regelTekst) {
-    const regel = document.createElement("span");
-    regel.className = "dagvak-regel";
-    regel.textContent = regelTekst;
-    knop.appendChild(regel);
+  if (kalenderWeergave === "uitgebreid") {
+    for (const regelTekst of onderwerpenRegels(dag)) {
+      const regel = document.createElement("span");
+      regel.className = "dagvak-onderwerp";
+      regel.textContent = regelTekst;
+      knop.appendChild(regel);
+    }
+  } else {
+    const regelTekst = zwareRegelTekst(dag);
+    if (regelTekst) {
+      const regel = document.createElement("span");
+      regel.className = "dagvak-regel";
+      regel.textContent = regelTekst;
+      knop.appendChild(regel);
+    }
   }
 
   const heeftEigenItem = items.some((item) => item.start <= ymd && ymd <= item.end);
@@ -393,7 +403,19 @@ function renderReisElementen(knop, dag, ymd) {
   }
 }
 
+/**
+ * De legenda legt de kleurcodering uit: nuttig als je de app net gebruikt,
+ * daarna zes regels die onder elke maand blijven staan. Ingeklapt kost hij
+ * één regel en is hij nog steeds één tik weg.
+ */
 function renderLegenda() {
+  const uitklap = document.createElement("details");
+  uitklap.className = "uitklap maand-legenda-uitklap";
+  const samenvatting = document.createElement("summary");
+  samenvatting.className = "tap-target";
+  samenvatting.textContent = "Legenda";
+  uitklap.appendChild(samenvatting);
+
   const lijst = document.createElement("ul");
   lijst.className = "maand-legenda";
   for (const c of courses) {
@@ -417,9 +439,10 @@ function renderLegenda() {
   reisSwatch.className = "legenda-swatch legenda-swatch-reis";
   reisLi.appendChild(reisSwatch);
   const reisTekst = document.createElement("span");
-  reisTekst.textContent = "Reis — band over de volle breedte, streepjesrand = wijziging aangevraagd, ruit = losse vlucht";
+  reisTekst.textContent = "Reis — volle band = geboekt, gestreepte omlijning = wijziging aangevraagd, ruit = losse vlucht";
   reisLi.appendChild(reisTekst);
   lijst.appendChild(reisLi);
 
-  return lijst;
+  uitklap.appendChild(lijst);
+  return uitklap;
 }
