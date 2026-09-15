@@ -209,6 +209,15 @@ export function verwijderReis(state, id) {
  * @param {"compact"|"uitgebreid"} waarde
  * @returns {{kalenderWeergave: string}}
  */
+/**
+ * @param {object} state
+ * @param {string[]} filters actieve filternamen op het scherm Overzicht
+ * @returns {object}
+ */
+export function zetOverzichtFilters(state, filters) {
+  return { ...state, overzichtFilters: [...filters] };
+}
+
 export function zetKalenderWeergave(state, waarde) {
   return { ...state, kalenderWeergave: waarde };
 }

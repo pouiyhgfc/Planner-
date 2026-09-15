@@ -10,6 +10,7 @@ import {
   verwijderProject,
   zetPythonInschrijving,
   zetVakVeld,
+  zetOverzichtFilters,
   zetOpleveringAfgevinkt,
   zetKalenderWeergave,
   zetTripStatus,
@@ -335,6 +336,7 @@ function overzichtWeergeven() {
     eigenReizen: state.eigenReizen,
     vakkenVeldwaarden: state.vakkenVeldwaarden,
     verborgenItems: state.verborgenItems,
+    overzichtFilters: state.overzichtFilters,
   });
 }
 
@@ -425,6 +427,11 @@ async function voegItemEnHerteken(veld) {
   state = voegItemToe(state, veld);
   await bewaarState(state);
   allesWeergeven();
+}
+
+async function zetOverzichtFiltersEnBewaar(filters) {
+  state = zetOverzichtFilters(state, filters);
+  await bewaarState(state);
 }
 
 async function verwijderItemEnHerteken(id) {
@@ -521,7 +528,10 @@ const overzichtScherm = initOverzichtScherm(schermEls.overzicht, {
   onVerbergen: (sleutel) => verbergEnHerteken(sleutel),
   onItemVerwijderen: verwijderItemEnHerteken,
   onItemBewerken: startItemBewerken,
+  onReisBewerken: startReisBewerken,
+  onReisVerwijderen: verwijderReisEnHerteken,
   onDagKiezen: dagKiezenVanuitOverzicht,
+  onFiltersWijzigen: zetOverzichtFiltersEnBewaar,
 });
 
 // #eigen-beheer staat in index.html binnen het overzichtscherm en zou dus

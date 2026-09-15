@@ -62,13 +62,17 @@
  *     die nu beantwoord is; die wordt opgetrokken naar de datawaarde. Een
  *     bewuste keuze ("bevestigd" of "afgewezen") blijft ongemoeid — de knop
  *     op het vakkenscherm blijft dus werken en overschrijft de data.
+ * v14: state kreeg overzichtFilters: welke soorten regels het scherm Overzicht
+ *     toont. Stond eerder alleen in het geheugen van het scherm, waardoor een
+ *     uitgezette soort na een herlaad weer terugkwam — en dat is precies wat
+ *     je niet wilt van een knop die "verberg alle vrije blokken" heet.
  */
 
 import { parseYMD } from "../lib/date.js";
 import { trips, TRIP_STATUSSEN } from "../data/trips.js";
 import { courseVoor } from "../data/courses.js";
 
-export const CURRENT_SCHEMA_VERSION = 13;
+export const CURRENT_SCHEMA_VERSION = 14;
 
 /** @returns {string} de inschrijvingsstand zoals src/data/courses.js die kent */
 function inschrijvingUitData() {
@@ -81,6 +85,17 @@ const THEMA_WAARDEN = ["systeem", "licht", "donker"];
 export const PERIODES = ["1w", "2w", "4w", "1m", "3m", "alle", "eigen"];
 export const PYTHON_INSCHRIJVING_WAARDEN = ["onbevestigd", "bevestigd", "afgewezen"];
 export const KALENDER_WEERGAVEN = ["compact", "uitgebreid"];
+export const OVERZICHT_FILTERS = ["schooldagen", "tentamens", "deadlines", "projecten", "reizen", "presentaties", "verslagen", "feestdagen", "eigenItems", "vrijeBlokken"];
+const OVERZICHT_FILTERS_STANDAARD = ["tentamens", "deadlines", "vrijeBlokken", "reizen"];
+
+/**
+ * @param {unknown} lijst
+ * @returns {string[]} alleen bestaande filternamen; onbekende namen vallen weg
+ */
+function geldigeOverzichtFilters(lijst) {
+  if (!Array.isArray(lijst)) return [...OVERZICHT_FILTERS_STANDAARD];
+  return lijst.filter((f) => OVERZICHT_FILTERS.includes(f));
+}
 
 /**
  * @returns {{activeScreen: string, scrollPositions: Record<string, number>, thema: string}}
@@ -120,6 +135,7 @@ export function leegState() {
     afgevinkteOpleveringen: [],
     kalenderWeergave: "compact",
     verborgenItems: [],
+    overzichtFilters: [...OVERZICHT_FILTERS_STANDAARD],
   };
 }
 
@@ -298,6 +314,14 @@ export function migrate(state) {
     };
   }
 
+  if (s.schemaVersion === 13) {
+    s = {
+      ...s,
+      schemaVersion: 14,
+      overzichtFilters: geldigeOverzichtFilters(s.overzichtFilters),
+    };
+  }
+
   if (s.schemaVersion === CURRENT_SCHEMA_VERSION) {
     return {
       ...s,
@@ -313,6 +337,7 @@ export function migrate(state) {
       afgevinkteOpleveringen: s.afgevinkteOpleveringen ?? [],
       kalenderWeergave: KALENDER_WEERGAVEN.includes(s.kalenderWeergave) ? s.kalenderWeergave : "compact",
       verborgenItems: s.verborgenItems ?? [],
+      overzichtFilters: geldigeOverzichtFilters(s.overzichtFilters),
     };
   }
   throw new Error(`onbekende schemaVersion: ${state.schemaVersion}`);

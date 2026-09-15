@@ -5,7 +5,7 @@
  * en correct voor alles.
  */
 
-const CACHE_NAAM = "planner-v18";
+const CACHE_NAAM = "planner-v19";
 
 const APP_SHELL = [
   "./",
