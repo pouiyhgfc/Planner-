@@ -13,6 +13,7 @@ import { courses, courseVoor } from "../data/courses.js";
 import { WEEKDAGEN, maandNaam } from "./datumlabels.js";
 import { vakAfkorting } from "./tekst.js";
 import { renderLegenda } from "./legenda.js";
+import { maakKnop } from "./knoppen.js";
 
 const ZWAAR_DREMPEL = 3;
 const KALENDER_WEERGAVEN = [
@@ -184,10 +185,7 @@ function renderWeergaveToggle(huidig, onWijzigen) {
   const rij = document.createElement("div");
   rij.className = "maand-weergave-toggle";
   for (const w of KALENDER_WEERGAVEN) {
-    const knop = document.createElement("button");
-    knop.type = "button";
-    knop.className = "tap-target weergave-knop";
-    knop.textContent = w.label;
+    const knop = maakKnop({ label: w.label, className: "tap-target weergave-knop" });
     knop.setAttribute("aria-current", huidig === w.id ? "true" : "false");
     knop.addEventListener("click", () => onWijzigen(w.id));
     rij.appendChild(knop);
@@ -202,10 +200,7 @@ function renderHeader(jaar, maand, vandaag, onNavigeren) {
   const rij = document.createElement("div");
   rij.className = "maand-header-rij";
 
-  const vorige = document.createElement("button");
-  vorige.type = "button";
-  vorige.className = "tap-target maand-pijl";
-  vorige.textContent = "‹";
+  const vorige = maakKnop({ label: "‹", className: "tap-target maand-pijl" });
   vorige.setAttribute("aria-label", "Vorige maand");
   const { y: vy, m: vm } = vorigeMaand(jaar, maand);
   vorige.disabled = laatsteDagVanMaand(vy, vm) < appPeriod.start;
@@ -215,19 +210,13 @@ function renderHeader(jaar, maand, vandaag, onNavigeren) {
   kop.className = "maand-naam";
   kop.textContent = `${maandNaam(maand)} ${jaar}`;
 
-  const volgende = document.createElement("button");
-  volgende.type = "button";
-  volgende.className = "tap-target maand-pijl";
-  volgende.textContent = "›";
+  const volgende = maakKnop({ label: "›", className: "tap-target maand-pijl" });
   volgende.setAttribute("aria-label", "Volgende maand");
   const { y: ny, m: nm } = volgendeMaand(jaar, maand);
   volgende.disabled = toYMD({ y: ny, m: nm, d: 1 }) > appPeriod.end;
   volgende.addEventListener("click", () => onNavigeren(ny, nm));
 
-  const vandaagKnop = document.createElement("button");
-  vandaagKnop.type = "button";
-  vandaagKnop.className = "tap-target maand-vandaag-knop";
-  vandaagKnop.textContent = "Vandaag";
+  const vandaagKnop = maakKnop({ label: "Vandaag", className: "tap-target maand-vandaag-knop" });
   vandaagKnop.addEventListener("click", () => {
     const { y, m } = parseYMD(vandaag);
     onNavigeren(y, m);
@@ -298,8 +287,9 @@ function renderGrid(jaar, maand, vandaag, geselecteerd, items, pythonAfgewezen, 
 }
 
 /**
- * FASE-9.md B5 punt 1: smalle kolom links van elke weekrij. 0 blijft leeg,
- * niet "0"; drie of meer zware momenten krijgt een rand in --danger-border.
+ * FASE-9.md B5 punt 1: smalle kolom links van elke weekrij met het
+ * collegeweeknummer. Drie of meer zware momenten (tentamen, presentatie,
+ * harde deadline) zetten er het aantal bij, met een rand in --danger-border.
  * Geen collegeweek van toepassing (vakantie, buiten het semester) → leeg.
  * @param {ReturnType<typeof weekgewicht>} gewicht
  */
@@ -313,12 +303,16 @@ function renderWeekgewicht(gewicht) {
   weekEl.textContent = String(gewicht.week);
   el.appendChild(weekEl);
 
-  if (gewicht.totaal > 0) {
+  // Alleen bij een zware week een getal. Stond er vanaf één zwaar moment, dus
+  // bij bijna elke week — twee losse getallen boven elkaar in een kolom van
+  // 16px, zonder dat ergens staat wat het tweede betekent. Nu is het getal
+  // zeldzaam en betekent het "let op".
+  if (gewicht.totaal >= ZWAAR_DREMPEL) {
     const getalEl = document.createElement("span");
     getalEl.className = "maand-weekgewicht-getal";
     getalEl.textContent = String(gewicht.totaal);
     el.appendChild(getalEl);
-    if (gewicht.totaal >= ZWAAR_DREMPEL) el.classList.add("zwaar");
+    el.classList.add("zwaar");
   }
 
   return el;

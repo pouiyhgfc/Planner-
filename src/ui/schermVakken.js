@@ -11,6 +11,7 @@ import { meervoud } from "./tekst.js";
 import { lesoverzicht, gemisteSessies, chineseAbsentieStand } from "./vakkenData.js";
 import { zichtbareDeadlines, zichtbareOpleveringen } from "./overzichtData.js";
 import { deadlineSleutel, verbergKnop, verborgenDeadlineSleutel, verborgenOpleveringSleutel } from "./dagblad.js";
+import { maakKnop } from "./knoppen.js";
 
 function veldSleutel(vakId, veldnaam) {
   return `${vakId}.${veldnaam}`;
@@ -450,11 +451,7 @@ function renderDetail(root, course, ctx, callbacks) {
   naam.className = "vak-detail-naam";
   naam.textContent = course.name;
   kopRij.appendChild(naam);
-  const sluit = document.createElement("button");
-  sluit.type = "button";
-  sluit.className = "tap-target";
-  sluit.textContent = "Sluiten";
-  sluit.addEventListener("click", callbacks.onSluiten);
+  const sluit = maakKnop({ label: "Sluiten", onKlik: callbacks.onSluiten });
   kopRij.appendChild(sluit);
   root.appendChild(kopRij);
 

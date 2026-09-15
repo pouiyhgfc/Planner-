@@ -53,7 +53,6 @@
   --shadow: rgba(20, 30, 25, 0.06);
   --accent: #0e7a52;
   --accent-strong: #0a5a3c;
-  --accent-contrast: #ffffff;
   --accent-bg: #eef7f2;
   --accent-border: #c5e6d6;
   --accent-text: #0a5a3c;
@@ -64,7 +63,6 @@
   --waarschuwing-bg: #fdf6e7;
   --waarschuwing-text: #8a5a06;
   --purple-bg: #f5f3ff;
-  --purple-border: #ddd6fe;
   --purple-text: #6d28d9;
 
   /* vakkleuren — licht. Kleur codeert het vak, nooit de status. */
@@ -94,7 +92,6 @@
     --shadow: rgba(0, 0, 0, 0.45);
     --accent: #1fa06a;
     --accent-strong: #5fd6a0;
-    --accent-contrast: #06140d;
     --accent-bg: #10251b;
     --accent-border: #1d4534;
     --accent-text: #5fd6a0;
@@ -105,7 +102,6 @@
     --danger-border: #4a2521;
     --danger-text: #f0867c;
     --purple-bg: #1c1830;
-    --purple-border: #352c54;
     --purple-text: #c4b5fd;
 
     /* vakkleuren — donker */
@@ -135,7 +131,6 @@
   --shadow: rgba(0, 0, 0, 0.45);
   --accent: #1fa06a;
   --accent-strong: #5fd6a0;
-  --accent-contrast: #06140d;
   --accent-bg: #10251b;
   --accent-border: #1d4534;
   --accent-text: #5fd6a0;
@@ -146,7 +141,6 @@
   --danger-border: #4a2521;
   --danger-text: #f0867c;
   --purple-bg: #1c1830;
-  --purple-border: #352c54;
   --purple-text: #c4b5fd;
 
   /* vakkleuren — donker */
@@ -321,11 +315,6 @@ select {
   font-family: var(--ff-head);
   font-size: 20px;
   margin: 0 0 4px;
-}
-.scherm-toelichting {
-  color: var(--text-muted);
-  font-size: var(--fs-min);
-  margin: 0;
 }
 
 #bottomnav {
@@ -1398,6 +1387,10 @@ select {
   flex: 1;
   min-width: 0;
 }
+.ruimte-lengte-ruim {
+  color: var(--accent-text);
+  font-weight: 600;
+}
 .ruimte-prijs,
 .ruimte-risico {
   color: var(--text-muted);
@@ -1536,21 +1529,6 @@ select {
   font-size: var(--fs-min);
 }
 
-.inschrijving-badge {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  background: var(--purple-bg);
-  color: var(--purple-text);
-  border-radius: var(--radius-control);
-  padding: 8px 10px;
-  margin-bottom: 8px;
-  font-size: var(--fs-min);
-}
-.inschrijving-label {
-  font-weight: 600;
-}
 
 .vak-sectie-kop {
   font-family: var(--ff-head);

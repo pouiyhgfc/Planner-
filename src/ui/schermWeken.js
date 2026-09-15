@@ -9,6 +9,7 @@ import { appPeriod } from "../data/semester.js";
 import { PERIODES } from "../state/schema.js";
 import { maandagVan, weekStarts, verschuifVenster, PERIODE_LABELS, renderWeekstrips } from "./wekenGrid.js";
 import { renderLegenda } from "./legenda.js";
+import { maakKnop } from "./knoppen.js";
 
 /**
  * @param {HTMLElement} root
@@ -62,10 +63,7 @@ export function initWekenScherm(root, callbacks) {
     const rij = document.createElement("div");
     rij.className = "periodekiezer";
     for (const periode of PERIODES) {
-      const knop = document.createElement("button");
-      knop.type = "button";
-      knop.className = "tap-target periode-knop";
-      knop.textContent = PERIODE_LABELS[periode];
+      const knop = maakKnop({ label: PERIODE_LABELS[periode], className: "tap-target periode-knop" });
       knop.setAttribute("aria-current", periode === w.periode ? "true" : "false");
       knop.addEventListener("click", () => wijzig({ periode }));
       rij.appendChild(knop);
@@ -127,18 +125,12 @@ export function initWekenScherm(root, callbacks) {
     rij.className = "weken-navigatie";
 
     const starts = weekStarts(w.startWeek, w.periode, w.eigenStart, w.eigenEind);
-    const vorige = document.createElement("button");
-    vorige.type = "button";
-    vorige.className = "tap-target maand-pijl";
-    vorige.textContent = "‹";
+    const vorige = maakKnop({ label: "‹", className: "tap-target maand-pijl" });
     vorige.setAttribute("aria-label", "Vorige periode");
     vorige.disabled = w.periode === "alle" || starts[0] <= maandagVan(appPeriod.start);
     vorige.addEventListener("click", () => schuif(-1, w));
 
-    const volgende = document.createElement("button");
-    volgende.type = "button";
-    volgende.className = "tap-target maand-pijl";
-    volgende.textContent = "›";
+    const volgende = maakKnop({ label: "›", className: "tap-target maand-pijl" });
     volgende.setAttribute("aria-label", "Volgende periode");
     volgende.disabled = w.periode === "alle" || addDays(starts.at(-1), 6) >= appPeriod.end;
     volgende.addEventListener("click", () => schuif(1, w));
