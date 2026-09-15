@@ -2,11 +2,12 @@
 <html lang="nl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Schoolkalender</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/icon-192.png">
-<meta name="theme-color" content="#111111">
+<meta name="theme-color" content="#f6f5f1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#171c19" media="(prefers-color-scheme: dark)">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -47,6 +48,7 @@
 
     <section class="instellingen-sectie">
       <h3>Opslag en back-up</h3>
+      <div id="install-regel"></div>
       <div id="persist-regel"></div>
       <div id="export-regel"></div>
       <div id="conflicten-paneel" hidden></div>

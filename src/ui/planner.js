@@ -4,10 +4,10 @@
  * (zie src/ui/main.js) — de inhoud zelf is ongewijzigd.
  */
 
-import { costOfRange } from "../lib/blocks.js";
+import { conflictenVoorRange } from "../lib/blocks.js";
 import { diffDays } from "../lib/date.js";
 import { kortDatum } from "./datumlabels.js";
-import { meervoud } from "./tekst.js";
+import { meervoud, vakAfkorting } from "./tekst.js";
 import { huidigeYMD } from "../state/store.js";
 import { trips, effectieveTripStatus, TRIP_STATUSSEN } from "../data/trips.js";
 
@@ -52,19 +52,43 @@ export function renderPlannerForm(root, onOpslaan, opties) {
   waarschuwing.className = "kosten-waarschuwing";
   waarschuwing.hidden = true;
 
+  // De waarschuwing noemde alleen het aantal lessen, waardoor een periode over
+  // een tentamen heen er net zo onschuldig uitzag als een periode over een
+  // gewone woensdag. Nu staat wat er echt in de weg zit bovenaan, en krijgt de
+  // melding een niveau: vrij, let op, of ernstig.
   function toonWaarschuwing() {
     if (!start.value || !eind.value || start.value > eind.value) {
       waarschuwing.hidden = true;
       return;
     }
-    const { perVak } = costOfRange(start.value, eind.value);
-    const regels = Object.entries(perVak).map(([vak, n]) => `${vak}: ${n}x`);
-    if (regels.length === 0) {
-      waarschuwing.hidden = true;
+    const c = conflictenVoorRange(start.value, eind.value);
+    waarschuwing.hidden = false;
+    waarschuwing.className = `kosten-waarschuwing niveau-${c.niveau}`;
+    waarschuwing.textContent = "";
+
+    if (c.niveau === "vrij") {
+      waarschuwing.textContent = `Deze dagen zijn vrij — ${meervoud(c.vrijeDagen, "dag", "dagen")} zonder les.`;
       return;
     }
-    waarschuwing.hidden = false;
-    waarschuwing.textContent = `Let op — dit valt samen met lessen: ${regels.join(", ")}`;
+
+    const regels = [];
+    for (const { datum, item } of c.tentamens) regels.push(`Tentamen op ${kortDatum(datum)}: ${item.label}`);
+    for (const { datum, item } of c.presentaties) regels.push(`Presentatie op ${kortDatum(datum)}: ${item.label}`);
+    for (const { datum, item } of c.hardeDeadlines) regels.push(`Harde deadline op ${kortDatum(datum)}: ${item.label}`);
+
+    const lessen = Object.entries(c.lessenPerVak).map(([vak, n]) => `${vakAfkorting(vak)} ${n}x`);
+    if (lessen.length > 0) regels.push(`Lessen die je mist: ${lessen.join(", ")}`);
+
+    const kop = document.createElement("strong");
+    kop.textContent = c.niveau === "ernstig" ? "Dit komt slecht uit" : "Let op";
+    waarschuwing.appendChild(kop);
+    const lijst = document.createElement("ul");
+    for (const regel of regels) {
+      const li = document.createElement("li");
+      li.textContent = regel;
+      lijst.appendChild(li);
+    }
+    waarschuwing.appendChild(lijst);
   }
   start.addEventListener("change", toonWaarschuwing);
   eind.addEventListener("change", toonWaarschuwing);
@@ -192,6 +216,33 @@ export function renderPersistRegel(root, toegekend) {
   } else {
     root.textContent = "Opslag: persistente opslag geweigerd door de browser — exporteer regelmatig.";
   }
+}
+
+/**
+ * Installeerregel. Chrome geeft het beforeinstallprompt-event pas als de app
+ * installeerbaar is én nog niet geïnstalleerd; is er geen event, dan staat er
+ * uitleg in plaats van een knop die niets doet.
+ * @param {HTMLElement} root
+ * @param {{beschikbaar: boolean, geinstalleerd: boolean}} stand
+ * @param {() => void} onInstalleren
+ */
+export function renderInstallRegel(root, stand, onInstalleren) {
+  root.className = "install-regel";
+  root.textContent = "";
+  if (stand.geinstalleerd) {
+    root.textContent = "Deze app draait als geïnstalleerde app.";
+    return;
+  }
+  if (!stand.beschikbaar) {
+    root.textContent = "Installeren kan via het browsermenu (\u201cToevoegen aan startscherm\u201d).";
+    return;
+  }
+  const knop = document.createElement("button");
+  knop.type = "button";
+  knop.className = "tap-target";
+  knop.textContent = "Op startscherm zetten";
+  knop.addEventListener("click", onInstalleren);
+  root.appendChild(knop);
 }
 
 /**

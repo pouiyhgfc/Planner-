@@ -17,6 +17,8 @@ import { appPeriod, semesterMarkers } from "../data/semester.js";
 import { courseVoor } from "../data/courses.js";
 import { psyDates, agtechDates, rteDates, pythonDates, chineseLessons, rteActionItems } from "../data/coursedates.js";
 import { alleTripItems, effectieveTripStatus } from "../data/trips.js";
+import { dayStatus } from "./dayStatus.js";
+import { zwareMomentenOpDag } from "./weekgewicht.js";
 
 const alleLesItems = [...psyDates, ...agtechDates, ...rteDates, ...pythonDates, ...chineseLessons];
 const AVOND_BEGIN = "18:25";
@@ -203,4 +205,40 @@ export function costOfRange(start, end, pythonAfgewezen = false) {
   const perVak = {};
   for (const v of items) perVak[v.course] = (perVak[v.course] || 0) + 1;
   return { items, perVak };
+}
+
+/**
+ * Waar botst een periode mee? Dit is de basis onder de waarschuwing in het
+ * invoerformulier: niet alleen "hoeveel lessen", maar ook wat er onmisbaar is.
+ * Puur, en zegt niets over wat Idries zou moeten doen — de app oordeelt niet
+ * over een reis (CLAUDE.md §1), hij benoemt alleen wat er op die dagen staat.
+ *
+ * niveau: "vrij" (niets), "let-op" (alleen lessen) of "ernstig" (er staat een
+ * tentamen, een presentatie of een harde deadline in de periode).
+ * @param {string} start "YYYY-MM-DD"
+ * @param {string} end "YYYY-MM-DD"
+ * @param {boolean} [pythonAfgewezen]
+ * @param {Record<string, string>} [tripStatusOverrides]
+ * @param {object[]} [eigenReizen]
+ * @returns {{niveau: string, tentamens: object[], presentaties: object[], hardeDeadlines: object[], lessenPerVak: Record<string, number>, vrijeDagen: number}}
+ */
+export function conflictenVoorRange(start, end, pythonAfgewezen = false, tripStatusOverrides = {}, eigenReizen = []) {
+  const tentamens = [];
+  const presentaties = [];
+  const hardeDeadlines = [];
+  let vrijeDagen = 0;
+
+  for (const ymd of rangeDays(start, end)) {
+    const dag = dayStatus(ymd, pythonAfgewezen, tripStatusOverrides, eigenReizen);
+    const zwaar = zwareMomentenOpDag(dag);
+    for (const t of zwaar.tentamens) tentamens.push({ datum: ymd, item: t });
+    for (const pres of zwaar.presentaties) presentaties.push({ datum: ymd, item: pres });
+    for (const d of zwaar.deadlines) hardeDeadlines.push({ datum: ymd, item: d });
+    if (dag.vakken.length === 0) vrijeDagen += 1;
+  }
+
+  const { perVak: lessenPerVak } = costOfRange(start, end, pythonAfgewezen);
+  const ernstig = tentamens.length + presentaties.length + hardeDeadlines.length > 0;
+  const niveau = ernstig ? "ernstig" : Object.keys(lessenPerVak).length > 0 ? "let-op" : "vrij";
+  return { niveau, tentamens, presentaties, hardeDeadlines, lessenPerVak, vrijeDagen };
 }

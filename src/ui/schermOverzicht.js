@@ -4,11 +4,11 @@
  */
 
 import { resterendeBlokken, chinaAftelling } from "../lib/overzicht.js";
-import { deadlineSleutel } from "./dagblad.js";
+import { deadlineSleutel, verborgenDeadlineSleutel, verborgenOpleveringSleutel } from "./dagblad.js";
 import { kortDatum } from "./datumlabels.js";
 import { projects } from "../data/projects.js";
 import { courses, courseVoor } from "../data/courses.js";
-import { vakAfkorting, vakKleuren } from "./tekst.js";
+import { vakAfkorting, vakKleuren, meervoud } from "./tekst.js";
 import {
   volgendeTentamenOfPresentatie,
   aantalOpenstaandeDeadlines,
@@ -62,13 +62,47 @@ export function initOverzichtScherm(root, callbacks) {
   // De chronologische lijst is waar dit scherm voor is; de projectkaarten en
   // het invoerformulier stonden ervóór, waardoor je er eerst langs moest
   // scrollen.
-  root.appendChild(telkaartenEl);
-  root.appendChild(filtersEl);
+  // Toevoegen zat alleen in Instellingen, terwijl dit het scherm is waar je de
+  // lijst voor je hebt. De knop opent het dagblad van vandaag met het
+  // formulier al open — dezelfde route als "Item erbij" op Weken.
+  const toevoegenEl = document.createElement("div");
+  toevoegenEl.className = "overzicht-toevoegen";
+  const toevoegenKnop = document.createElement("button");
+  toevoegenKnop.type = "button";
+  toevoegenKnop.className = "tap-target";
+  toevoegenKnop.textContent = "Item toevoegen";
+  toevoegenKnop.addEventListener("click", () => callbacks.onDagKiezen(laatsteCtx.vandaag, { formOpenen: true }));
+  toevoegenEl.appendChild(toevoegenKnop);
+
+  // Telkaarten en filterchips namen samen het eerste scherm in beslag, terwijl
+  // de lijst is waar je voor komt. Allebei ingeklapt; de kop van het blok zegt
+  // wat erin zit, dus je hoeft niets te raden.
+  const telkaartenUitklap = document.createElement("details");
+  telkaartenUitklap.className = "uitklap";
+  const telkaartenSamenvatting = document.createElement("summary");
+  telkaartenSamenvatting.className = "tap-target";
+  telkaartenSamenvatting.textContent = "Kerncijfers";
+  telkaartenUitklap.appendChild(telkaartenSamenvatting);
+  telkaartenUitklap.appendChild(telkaartenEl);
+
+  const filtersUitklap = document.createElement("details");
+  filtersUitklap.className = "uitklap";
+  const filtersSamenvatting = document.createElement("summary");
+  filtersSamenvatting.className = "tap-target";
+  filtersUitklap.appendChild(filtersSamenvatting);
+  filtersUitklap.appendChild(filtersEl);
+
+  root.appendChild(toevoegenEl);
   root.appendChild(lijstEl);
+  root.appendChild(filtersUitklap);
+  root.appendChild(telkaartenUitklap);
   root.appendChild(projectenEl);
 
   let actieveFilters = new Set(STANDAARD_AAN);
-  let weergave = "datum";
+  // Welke vakblokken dichtgeklapt staan; blijft bewaard zolang het scherm leeft
+  // zodat een hertekening (bijv. na afvinken) niet alles weer openzet.
+  const ingeklapteVakken = new Set();
+  let weergave = "vak";
   let laatsteCtx = null;
 
   function zetFilters(nieuw) {
@@ -323,8 +357,63 @@ export function initOverzichtScherm(root, callbacks) {
     tekst.textContent = rij.inhoud;
     rechts.appendChild(tekst);
     li.appendChild(rechts);
+    li.appendChild(rijMenu(rij));
 
     return li;
+  }
+
+  /**
+   * Het ⋯-menu achter een regel. Welke acties erin staan hangt af van wat de
+   * regel is: een eigen item kun je bewerken en verwijderen, een deadline of
+   * oplevering uit src/data/ alleen verbergen (weggooien mag niet, CLAUDE.md
+   * §5), en naar de dag springen kan altijd.
+   * @param {object} rij
+   * @returns {HTMLElement}
+   */
+  function rijMenu(rij) {
+    const acties = [];
+    if (rij.categorie === "eigenItems" && rij.item) {
+      acties.push(["Bewerken", () => callbacks.onItemBewerken(rij.item.id)]);
+      acties.push(["Verwijderen", () => callbacks.onItemVerwijderen(rij.item.id)]);
+    }
+    if (rij.categorie === "deadlines" && rij.deadline) {
+      acties.push(["Verbergen", () => callbacks.onVerbergen(verborgenDeadlineSleutel(rij.deadline))]);
+    }
+    if (rij.oplevering) {
+      acties.push(["Verbergen", () => callbacks.onVerbergen(verborgenOpleveringSleutel(rij.oplevering.id))]);
+    }
+    acties.push(["Naar die dag", () => callbacks.onDagKiezen(rij.datum, { formOpenen: false })]);
+    acties.push(["Item op die dag", () => callbacks.onDagKiezen(rij.datum, { formOpenen: true })]);
+
+    const menu = document.createElement("details");
+    menu.className = "rij-menu";
+    const knop = document.createElement("summary");
+    knop.className = "tap-target";
+    knop.textContent = "⋯";
+    knop.setAttribute("aria-label", "Acties");
+    menu.appendChild(knop);
+
+    const lijst = document.createElement("div");
+    lijst.className = "rij-menu-lijst";
+    for (const [label, actie] of acties) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = label;
+      b.addEventListener("click", () => {
+        menu.open = false;
+        actie();
+      });
+      lijst.appendChild(b);
+    }
+    menu.appendChild(lijst);
+
+    // Eén menu tegelijk open: anders blijft er een rij opengeklapt staan zodra
+    // je verderop in de lijst een ander menu opent.
+    menu.addEventListener("toggle", () => {
+      if (!menu.open) return;
+      for (const ander of lijstEl.querySelectorAll("details.rij-menu[open]")) if (ander !== menu) ander.open = false;
+    });
+    return menu;
   }
 
   /**
@@ -378,22 +467,43 @@ export function initOverzichtScherm(root, callbacks) {
     for (const vakId of volgorde) {
       const groep = groepen.get(vakId);
       if (!groep || groep.length === 0) continue;
-      // FASE-9.md B3 punt 3 vroeg kopjes in vakkleur; die waren tot nu toe
-      // zwart-wit, waardoor de groepen visueel niet uit elkaar liepen.
-      const kop = document.createElement("h3");
-      kop.className = "overzicht-vak-kop";
-      kop.textContent = vakId === "__overig__" ? "Overig" : courseVoor(vakId).name;
-      if (vakId !== "__overig__") kop.style.color = vakKleuren(vakId).tekst;
-      container.appendChild(kop);
+      // Zelfde opbouw als de lesblokken in het dagblad: een gekleurd balkje in
+      // de vakkleur langs het hele blok, zodat de vakken ook los van de
+      // koptekst uit elkaar lopen. Inklapbaar, met de telling in de kop.
+      const blok = document.createElement("details");
+      blok.className = "overzicht-vakblok";
+      blok.open = !ingeklapteVakken.has(vakId);
+      const kleur = vakId === "__overig__" ? "var(--text-muted)" : vakKleuren(vakId).tekst;
+      blok.style.setProperty("--vakblok-kleur", kleur);
+
+      const kop = document.createElement("summary");
+      kop.className = "overzicht-vak-kop tap-target";
+      const naam = document.createElement("span");
+      naam.textContent = vakId === "__overig__" ? "Overig" : courseVoor(vakId).name;
+      naam.style.color = kleur;
+      const telling = document.createElement("span");
+      telling.className = "overzicht-vak-telling";
+      telling.textContent = meervoud(groep.length, "regel", "regels");
+      kop.appendChild(naam);
+      kop.appendChild(telling);
+      blok.appendChild(kop);
+
+      blok.addEventListener("toggle", () => {
+        if (blok.open) ingeklapteVakken.delete(vakId);
+        else ingeklapteVakken.add(vakId);
+      });
+
       const lijst = document.createElement("ul");
       lijst.className = "overzicht-lijst";
       for (const rij of groep) lijst.appendChild(renderRij(rij, false));
-      container.appendChild(lijst);
+      blok.appendChild(lijst);
+      container.appendChild(blok);
     }
     return container;
   }
 
   function tekenenFiltersEnLijst() {
+    filtersSamenvatting.textContent = `Weergave en filters (${meervoud(actieveFilters.size, "soort", "soorten")} aan)`;
     filtersEl.textContent = "";
     filtersEl.className = "overzicht-filters";
     filtersEl.appendChild(renderWeergaveToggle());
