@@ -72,6 +72,7 @@ function kopSectie(titel) {
  *   vakkenVeldwaarden: Record<string, string>,
  *   verborgenItems: string[],
  *   formOpenen: boolean,
+ *   formBereik: {start: string, end: string}|null,
  * }} data
  * @param {{
  *   onSluiten: () => void,
@@ -90,7 +91,7 @@ function kopSectie(titel) {
  */
 export function renderDagblad(
   root,
-  { ymd, dag, eigenItems, afgevinkteDeadlines, afgevinkteOpleveringen, afgevinkteMijlpalen, eigenProjecten = [], pythonAfgewezen = false, vakkenVeldwaarden = {}, verborgenItems = [], formOpenen = false },
+  { ymd, dag, eigenItems, afgevinkteDeadlines, afgevinkteOpleveringen, afgevinkteMijlpalen, eigenProjecten = [], pythonAfgewezen = false, vakkenVeldwaarden = {}, verborgenItems = [], formOpenen = false, formBereik = null },
   acties
 ) {
   root.textContent = "";
@@ -289,7 +290,7 @@ export function renderDagblad(
     root.appendChild(lijst);
   }
 
-  root.appendChild(renderActieknoppen(ymd, acties, formOpenen));
+  root.appendChild(renderActieknoppen(ymd, acties, formOpenen, formBereik));
 }
 
 /**
@@ -530,7 +531,7 @@ function renderEigenItemRij(item, onVerwijderen) {
   return li;
 }
 
-function renderActieknoppen(ymd, acties, formOpenen) {
+function renderActieknoppen(ymd, acties, formOpenen, formBereik) {
   const wrap = document.createElement("div");
   wrap.className = "dagblad-acties";
 
@@ -565,7 +566,9 @@ function renderActieknoppen(ymd, acties, formOpenen) {
         acties.onItemToevoegen(veld);
         invoegPlek.textContent = "";
       },
-      { start: ymd, end: ymd }
+      // Kom je via "Inplannen" bij een vrij venster, dan staat het hele venster
+      // er al in — anders begin je met één dag en typ je de rest opnieuw.
+      formBereik ?? { start: ymd, end: ymd }
     );
   }
 

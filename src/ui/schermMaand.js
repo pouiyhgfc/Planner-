@@ -47,6 +47,7 @@ export function initMaandScherm(root, callbacks) {
   let geselecteerd = null;
   let laatsteCtx = null;
   let formOpenenBijVolgende = false;
+  let formBereikBijVolgende = null;
   let terugNaarScherm = null;
 
   function toonMaand(j, m) {
@@ -124,7 +125,9 @@ export function initMaandScherm(root, callbacks) {
     if (geselecteerd !== null) {
       const eigenItems = items.filter((item) => item.start <= geselecteerd && geselecteerd <= item.end);
       const formOpenen = formOpenenBijVolgende;
+      const formBereik = formBereikBijVolgende;
       formOpenenBijVolgende = false;
+      formBereikBijVolgende = null;
       renderDagblad(
         dagbladEl,
         {
@@ -139,6 +142,7 @@ export function initMaandScherm(root, callbacks) {
           vakkenVeldwaarden,
           verborgenItems,
           formOpenen,
+          formBereik,
         },
         {
           onSluiten: sluitDagblad,
@@ -175,8 +179,9 @@ export function initMaandScherm(root, callbacks) {
    * gebruikt door "Open week" en (fase 9 B2) "Item erbij"/dagcel-tik op het
    * scherm Weken.
    * @param {string} ymd
-   * @param {{formOpenen?: boolean, terugNaarScherm?: string|null}} [opties]
+   * @param {{formOpenen?: boolean, terugNaarScherm?: string|null, formBereik?: {start: string, end: string}}} [opties]
    *   formOpenen: opent het invoerformulier meteen (B2 punt 1).
+   *   formBereik: vult begin- en einddatum vast in (knop "Inplannen" bij een vrij venster).
    *   terugNaarScherm: bij sluiten van het dagblad terug naar dit scherm (B2 punt 4).
    */
   function openDag(ymd, opties = {}) {
@@ -185,6 +190,7 @@ export function initMaandScherm(root, callbacks) {
     maand = m;
     geselecteerd = ymd;
     formOpenenBijVolgende = Boolean(opties.formOpenen);
+    formBereikBijVolgende = opties.formBereik ?? null;
     terugNaarScherm = opties.terugNaarScherm ?? null;
     tekenen();
   }

@@ -73,13 +73,16 @@
  *     bijvoorbeeld het Python-verslag (10%) er niet bij stond. Wie al een
  *     keuze had bewaard krijgt deze drie erbij — anders zou een bestaande
  *     installatie zijn zwaarste inlevermomenten nooit te zien krijgen.
+ * v16: state kreeg ruimteBudget: hoeveel lesdagen een vrij venster mag kosten
+ *     in het blok "Waar is ruimte" op Overzicht. 0, 1 of 2. Standaard 0 — de
+ *     app vult niet zelf in wat Idries bereid is te missen.
  */
 
 import { parseYMD } from "../lib/date.js";
 import { trips, TRIP_STATUSSEN } from "../data/trips.js";
 import { courseVoor } from "../data/courses.js";
 
-export const CURRENT_SCHEMA_VERSION = 15;
+export const CURRENT_SCHEMA_VERSION = 16;
 
 /** @returns {string} de inschrijvingsstand zoals src/data/courses.js die kent */
 function inschrijvingUitData() {
@@ -92,6 +95,7 @@ const THEMA_WAARDEN = ["systeem", "licht", "donker"];
 export const PERIODES = ["1w", "2w", "4w", "1m", "3m", "alle", "eigen"];
 export const PYTHON_INSCHRIJVING_WAARDEN = ["onbevestigd", "bevestigd", "afgewezen"];
 export const KALENDER_WEERGAVEN = ["compact", "uitgebreid"];
+export const RUIMTE_BUDGETTEN = [0, 1, 2];
 export const OVERZICHT_FILTERS = ["schooldagen", "tentamens", "deadlines", "opdrachten", "projecten", "reizen", "presentaties", "verslagen", "feestdagen", "eigenItems", "vrijeBlokken"];
 const OVERZICHT_FILTERS_STANDAARD = ["tentamens", "deadlines", "opdrachten", "presentaties", "verslagen", "vrijeBlokken", "reizen"];
 
@@ -143,6 +147,7 @@ export function leegState() {
     kalenderWeergave: "compact",
     verborgenItems: [],
     overzichtFilters: [...OVERZICHT_FILTERS_STANDAARD],
+    ruimteBudget: 0,
   };
 }
 
@@ -339,6 +344,14 @@ export function migrate(state) {
     };
   }
 
+  if (s.schemaVersion === 15) {
+    s = {
+      ...s,
+      schemaVersion: 16,
+      ruimteBudget: RUIMTE_BUDGETTEN.includes(s.ruimteBudget) ? s.ruimteBudget : 0,
+    };
+  }
+
   if (s.schemaVersion === CURRENT_SCHEMA_VERSION) {
     return {
       ...s,
@@ -355,6 +368,7 @@ export function migrate(state) {
       kalenderWeergave: KALENDER_WEERGAVEN.includes(s.kalenderWeergave) ? s.kalenderWeergave : "compact",
       verborgenItems: s.verborgenItems ?? [],
       overzichtFilters: geldigeOverzichtFilters(s.overzichtFilters),
+      ruimteBudget: RUIMTE_BUDGETTEN.includes(s.ruimteBudget) ? s.ruimteBudget : 0,
     };
   }
   throw new Error(`onbekende schemaVersion: ${state.schemaVersion}`);

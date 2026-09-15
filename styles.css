@@ -1341,6 +1341,68 @@ select {
 .overzicht-vak-kop::-webkit-details-marker {
   display: none;
 }
+/* "Waar is ruimte": de vensters waarin iets past, met hun prijs. Rustig
+   gehouden — dit is een lijst om te scannen, niet om te bedienen. */
+.overzicht-ruimte {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--card);
+}
+.ruimte-kop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ruimte-kop h3 {
+  margin: 0;
+  font-size: 15px;
+}
+.ruimte-keuze {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-min);
+  color: var(--text-muted);
+}
+.ruimte-lijst {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.ruimte-rij {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+  border-top: var(--border-width) solid var(--border-soft);
+  font-size: var(--fs-min);
+}
+.ruimte-lengte {
+  flex-shrink: 0;
+  width: 46px;
+  text-align: right;
+  font-family: var(--ff-display);
+  font-size: 15px;
+}
+.ruimte-midden {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.ruimte-prijs,
+.ruimte-risico {
+  color: var(--text-muted);
+}
+
 .overzicht-gemist {
   padding: 8px 10px;
   border-radius: var(--radius-control);

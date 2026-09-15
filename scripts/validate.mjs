@@ -67,6 +67,8 @@ import {
   rijenOpleveringen,
   zichtbareDeadlines,
   zichtbareOpleveringen,
+  rijenRuimte,
+  RUIMTE_MINIMUM_DAGEN,
 } from "../src/ui/overzichtData.js";
 import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -2172,6 +2174,33 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   check("migrate: bewaarde filterkeuze blijft staan", bewaard.overzichtFilters.join(","), "tentamens,opdrachten,presentaties,verslagen");
   const alAan = migrate({ ...leeg, schemaVersion: 14, overzichtFilters: ["opdrachten", "tentamens"] });
   check("migrate v14->v15: opdrachten niet dubbel toegevoegd", alAan.overzichtFilters.join(","), "opdrachten,tentamens,presentaties,verslagen");
+}
+
+// =====================================================================
+// rijenRuimte(): waar past iets, en wat kost het
+// =====================================================================
+
+{
+  const vandaag = "2026-09-15";
+  const gratis = rijenRuimte(0, vandaag);
+  check("ruimte: bij budget 0 kost geen enkel venster een les", gratis.every((v) => v.gemisteLessen.length === 0), true);
+  check("ruimte: alle vensters halen het minimum", gratis.every((v) => v.length >= RUIMTE_MINIMUM_DAGEN), true);
+  check("ruimte: geen venster dat al voorbij is", gratis.every((v) => v.end >= vandaag), true);
+  check("ruimte: op datum gesorteerd", gratis.map((v) => v.start).join(",") === [...gratis.map((v) => v.start)].sort().join(","), true);
+
+  // De wintervakantie is het langste aaneengesloten venster van het semester.
+  const langste = gratis.reduce((a, b) => (b.length > a.length ? b : a));
+  check("ruimte: het langste venster begint op 2026-12-25", langste.start, "2026-12-25");
+  check("ruimte: het langste venster eindigt op 2027-02-21", langste.end, "2027-02-21");
+  check("ruimte: het langste venster raakt de flexibele week", langste.bevatRisicoperiode, true);
+
+  // Meer budget levert nooit minder ruimte op.
+  const metEen = rijenRuimte(1, vandaag);
+  check("ruimte: met 1 lesdag budget minstens evenveel vensters", metEen.length >= gratis.length, true);
+  check("ruimte: met budget komt er een venster bij dat wél een les kost", metEen.some((v) => v.gemisteLessen.length > 0), true);
+
+  // Python uitzetten mag de ruimte niet verkleinen.
+  check("ruimte: zonder Python nooit minder ruimte", rijenRuimte(0, vandaag, true).length >= gratis.length, true);
 }
 
 console.log(`\n${passed} geslaagd, ${failures} mislukt.`);
