@@ -1,10 +1,11 @@
 import { parseYMD, toYMD, addDays, dayOfWeek, isoWeek, rangeDays, diffDays } from "../src/lib/date.js";
 import { appPeriod, timezone, week12, semesterMarkers, calendarNotes } from "../src/data/semester.js";
 import { holidays } from "../src/data/holidays.js";
-import { courses } from "../src/data/courses.js";
+import { courses, courseNaam } from "../src/data/courses.js";
 import { psyDates, agtechDates, rteDates, pythonDates, rteActionItems, chineseLessons, chineseTentamens, alleVakItems } from "../src/data/coursedates.js";
 import { opleveringen } from "../src/data/opleveringen.js";
 import { trips, effectieveTripStatus, TRIP_STATUSSEN, eigenReisItems, alleTripItems } from "../src/data/trips.js";
+import { openstaandeVragen, vragenPerGroep, vragenStand } from "../src/data/openstaandeVragen.js";
 import { chinaVisaFreeDeadline, flexWeekAnnouncementDeadline, academicDeadlines, japanUitersteTerugkomstDeadline } from "../src/data/deadlines.js";
 import { dayStatus, genereerKalenderDagen } from "../src/lib/dayStatus.js";
 import { isFree, freeBlocks, blocksWithCost, costOfRange } from "../src/lib/blocks.js";
@@ -2078,6 +2079,64 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   check("PY: zaal blijft ONBEKEND", courses.find((c) => c.id === "PY").room, null);
   const excursie = agtechDates.find((d) => d.week === 14);
   check("AGTECH: de excursie staat op 2026-12-10 zonder verzonnen tijd of locatie", excursie.date === "2026-12-10" && excursie.spreker === null, true);
+}
+
+// =====================================================================
+// Openstaande vragen (paneel onder Instellingen)
+// =====================================================================
+
+{
+  for (const v of openstaandeVragen) checkItem(`openstaandeVragen: ${v.id}`, v);
+
+  check("openstaandeVragen: allemaal zekerheid ONBEKEND", openstaandeVragen.every((v) => v.zekerheid === "ONBEKEND"), true);
+  check("openstaandeVragen: unieke ids", new Set(openstaandeVragen.map((v) => v.id)).size, openstaandeVragen.length);
+  check(
+    "openstaandeVragen: elk item heeft een vraag, toelichting en verwijzing",
+    openstaandeVragen.every((v) => v.vraag && v.toelichting && v.verwijzing),
+    true
+  );
+  check(
+    "openstaandeVragen: elk item hoort bij een bestaand vak of bij een eigen groep",
+    openstaandeVragen.every((v) => (v.vak ? Boolean(courses.find((c) => c.id === v.vak)) : typeof v.groep === "string" && v.groep.length > 0)),
+    true
+  );
+  check(
+    "openstaandeVragen: geen enkel item heeft zowel een vak als een eigen groep",
+    openstaandeVragen.every((v) => !(v.vak && v.groep)),
+    true
+  );
+
+  // Geen datum in dit bestand: elke datum hoort in coursedates.js/deadlines.js
+  // te staan en niet in een tweede exemplaar in een vragenlijst.
+  const bestandstekst = readFileSync(join(PROJECT_ROOT, "src/data/openstaandeVragen.js"), "utf8");
+  check("openstaandeVragen.js: geen enkele datum in het bestand", /\d{4}-\d{2}-\d{2}/.test(bestandstekst), false);
+
+  // De sleutels van twee vragen moeten gelijk zijn aan velden die elders in de
+  // app al een invoervakje hebben, anders staat hetzelfde antwoord straks op
+  // twee plekken los van elkaar.
+  const agtech = courses.find((c) => c.id === "AGTECH");
+  check("openstaandeVragen: AGTECH.code hoort bij een veld dat echt leeg is", agtech.code === null && agtech.onbekendeVelden.includes("code"), true);
+  check("openstaandeVragen: AGTECH.code gebruikt de sleutel van het vakkenscherm", openstaandeVragen.some((v) => v.id === "AGTECH.code"), true);
+  const filipijnen = trips.find((t) => t.id === "filipijnen-geboekt");
+  check(
+    "openstaandeVragen: overnachtingen gebruikt de sleutel van het dagblad",
+    openstaandeVragen.some((v) => v.id === `${filipijnen.variant}.${filipijnen.onbekendeVelden[0]}`),
+    true
+  );
+
+  // vragenPerGroep(): elke vraag komt precies één keer terug, in dezelfde volgorde
+  const groepen = vragenPerGroep();
+  const plat = groepen.flatMap((g) => g.vragen);
+  check("vragenPerGroep: alle vragen komen terug", plat.length, openstaandeVragen.length);
+  check("vragenPerGroep: geen dubbele koppen", new Set(groepen.map((g) => g.kop)).size, groepen.length);
+  check("vragenPerGroep: vakvragen krijgen de volledige vaknaam als kop", groepen[0].kop, courseNaam(openstaandeVragen[0].vak));
+
+  // vragenStand(): telt alleen echte antwoorden
+  check("vragenStand: leeg = 0 beantwoord", vragenStand({}).beantwoord, 0);
+  check("vragenStand: totaal = het aantal vragen", vragenStand({}).totaal, openstaandeVragen.length);
+  check("vragenStand: één antwoord telt", vragenStand({ [openstaandeVragen[0].id]: "iets" }).beantwoord, 1);
+  check("vragenStand: alleen spaties telt niet als antwoord", vragenStand({ [openstaandeVragen[0].id]: "   " }).beantwoord, 0);
+  check("vragenStand: een onbekende sleutel telt niet mee", vragenStand({ "bestaat.niet": "iets" }).beantwoord, 0);
 }
 
 console.log(`\n${passed} geslaagd, ${failures} mislukt.`);

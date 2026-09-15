@@ -320,6 +320,13 @@ van het semester. **STOP.**
 Blijven `ONBEKEND` in de app. Zet ze bij elkaar in een paneel onder
 instellingen, met een invoerveld per punt.
 
+**Gebouwd.** Instellingen → *Openstaande vragen*, gevuld uit
+`src/data/openstaandeVragen.js`. Elk punt heeft een invoerveld, een
+toelichting waarom het leeg staat en een verwijzing naar de plek in DATA.md.
+Een antwoord wordt opgeslagen onder dezelfde sleutel als het losse invulveld
+dat er elders al voor bestond, dus wie hier de AgTech-vakcode invult, ziet hem
+ook op het vakkenscherm staan. Bovenaan staat hoeveel er beantwoord zijn.
+
 **Stand op 2026-09-15: Idries heeft er acht beantwoord.** De antwoorden staan
 in DATA.md (§1, §3.1, §3.2, §3.4, §3.5, §4.0) en in `src/data/`. Hieronder de
 oorspronkelijke twaalf, met wat er nog van over is.

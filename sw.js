@@ -5,7 +5,7 @@
  * en correct voor alles.
  */
 
-const CACHE_NAAM = "planner-v10";
+const CACHE_NAAM = "planner-v11";
 
 const APP_SHELL = [
   "./",
@@ -33,6 +33,7 @@ const APP_SHELL = [
   "./src/ui/planner.js",
   "./src/ui/tekst.js",
   "./src/ui/verborgen.js",
+  "./src/ui/openstaandeVragen.js",
   "./src/lib/date.js",
   "./src/lib/academicWeek.js",
   "./src/lib/dayStatus.js",
@@ -48,6 +49,7 @@ const APP_SHELL = [
   "./src/data/opleveringen.js",
   "./src/data/season.js",
   "./src/data/projects.js",
+  "./src/data/openstaandeVragen.js",
   "./src/state/schema.js",
   "./src/state/store.js",
 ];

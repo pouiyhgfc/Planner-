@@ -720,6 +720,12 @@ op te bouwen.
 
 De app maakt hiervoor lege, gemarkeerde velden — géén aannames.
 
+**Waar dit in de app staat:** Instellingen → *Openstaande vragen*. Dat paneel
+toont elk punt uit deze paragraaf dat nog echt open is, met een invoerveld en
+een verwijzing terug naar de paragraaf hieronder. De lijst zelf staat in
+`src/data/openstaandeVragen.js`; wordt een punt hieronder opgelost, dan gaat
+het daar ook weg.
+
 **Idries heeft op 2026-09-15 een reeks van deze punten beantwoord.** Wat
 daarmee is komen te vervallen, staat hieronder doorgestreept met de vindplaats
 van het antwoord. Wat nog open is, staat gewoon in de lijst.
