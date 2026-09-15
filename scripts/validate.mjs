@@ -285,8 +285,8 @@ for (const c of courses) {
   check("PY: end === 16:20", py.end, "16:20");
   check("PY: inschrijving === bevestigd (loting geen drempel, Idries was al lid)", py.inschrijving, "bevestigd");
   check("PY: room ONBEKEND", py.room, null);
-  check("PY: groepsgrootte ONBEKEND", py.groepsproject.groepsgrootte, null);
-  check("PY: vormingstermijn ONBEKEND (niet verzonnen)", py.groepsproject.vormingstermijn, null);
+  check("PY: groepsgrootte 4 tot 6 (collegeslides)", `${py.groepsproject.groepsgrootteMin}-${py.groepsproject.groepsgrootteMax}`, "4-6");
+  check("PY: vormingstermijn 2026-10-09 (collegeslides)", py.groepsproject.vormingstermijn, "2026-10-09");
 }
 
 for (const d of psyDates) checkItem(`psyDates: ${d.date}`, d);
@@ -1120,10 +1120,10 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   check("projects.js: RTE termproject aanwezig", Boolean(rte), true);
   check("projects.js: Python groepsproject aanwezig", Boolean(py), true);
   check("projects.js: RTE heeft 5 mijlpalen (§3.3)", rte?.mijlpalen.length, 5);
-  check("projects.js: Python heeft 3 mijlpalen (weken 14-16)", py?.mijlpalen.length, 3);
-  check("projects.js: Python-mijlpalen matchen pythonDates-presentatiedata", py?.mijlpalen.map((m) => m.datum), ["2026-12-09", "2026-12-16", "2026-12-23"]);
+  check("projects.js: Python heeft 5 mijlpalen (groep, voorstel, 2x presentatie, verslag)", py?.mijlpalen.length, 5);
+  check("projects.js: Python-mijlpalen staan op de datums uit de collegeslides", py?.mijlpalen.map((m) => m.datum), ["2026-10-09", "2026-11-06", "2026-12-09", "2026-12-16", "2026-12-25"]);
   check("projects.js: Python groepsproject heeft een waarschuwing", Boolean(py?.waarschuwing), true);
-  check("projects.js: Python groepsgrootte staat op null (ONBEKEND)", py?.groepsgrootte, null);
+  check("projects.js: Python groepsgrootte 4 tot 6", `${py?.groepsgrootteMin}-${py?.groepsgrootteMax}`, "4-6");
 
   for (const project of projects) {
     checkBronZekerheid(`projects.js: ${project.id}`, project);
@@ -1639,8 +1639,11 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
 {
   check("rteDates: 16 items in totaal", rteDates.length, 16);
   check("rteDates: elk item heeft het veld vorm", rteDates.every((d) => "vorm" in d), true);
-  check("rteDates: 14 dagen hebben een bekende vorm", rteDates.filter((d) => d.vorm !== null).length, 14);
-  check("rteDates: week 9 en 11 zijn ONBEKEND (leeg in de syllabus zelf)", rteDates.filter((d) => d.vorm === null).map((d) => d.week).sort((a, b) => a - b), [9, 11]);
+  check("rteDates: 15 dagen hebben een bekende vorm (week 9 erbij uit de collegeslides)", rteDates.filter((d) => d.vorm !== null).length, 15);
+  // Week 9 stond leeg in de docx maar staat wél in de collegeslides; alleen de
+  // technical visit van week 11 heeft nergens een lesvorm.
+  check("rteDates: alleen week 11 heeft nog geen lesvorm", rteDates.filter((d) => d.vorm === null).map((d) => d.week), [11]);
+  check("rteDates: week 9 heeft nu in de les", rteDates.find((d) => d.week === 9).vorm, "in de les");
 
   const verwacht = {
     1: "in de les", 2: "in de les", 3: "in de les", 4: "in de les", 5: "in de les",
@@ -1766,18 +1769,19 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
 // FASE-9.md B3: src/data/opleveringen.js — vorm en dataconsistentie
 {
   check(
-    "opleveringen: 27 items (2 RTE termproject + 7 RTE opdrachten + 1 AgTech + 12 PY-opdrachten + 1 PY-project + 4 PSY)",
+    "opleveringen: 30 items (2 RTE termproject + 7 RTE opdrachten + 1 AgTech + 11 PY-opdrachten + 5 PY-project + 4 PSY)",
     opleveringen.length,
-    15 + courses.find((c) => c.id === "PY").opdrachten.aantal
+    19 + courses.find((c) => c.id === "PY").opdrachten.aantalMax
   );
 
   // De Python-opdrachtregels worden berekend uit het geschatte aantal in
   // courses.js, niet uitgeschreven — verandert dat getal, dan volgt de lijst.
-  const pyOpdr = opleveringen.filter((o) => o.vak === "PY" && o.soort === "opdracht");
-  check("PY: evenveel opdrachtregels als het aantal in courses.js", pyOpdr.length, courses.find((c) => c.id === "PY").opdrachten.aantal);
+  // Op id filteren, niet op soort: de projectonderdelen zijn ook "opdracht".
+  const pyOpdr = opleveringen.filter((o) => o.id.startsWith("PY-OPDR-"));
+  check("PY: evenveel opdrachtregels als het maximum in courses.js", pyOpdr.length, courses.find((c) => c.id === "PY").opdrachten.aantalMax);
   check("PY: opdrachtregels zijn doorlopend genummerd", pyOpdr.map((o) => o.naam).join(","), pyOpdr.map((_, i) => `Opdracht ${i + 1}`).join(","));
   check("PY: geen enkele opdrachtregel heeft een verzonnen datum", pyOpdr.every((o) => o.datum === null && o.mogelijkeData === null), true);
-  check("PY: opdrachtregels erven de onzekerheid van de schatting", pyOpdr.every((o) => o.zekerheid === "TE VERIFIËREN"), true);
+  check("PY: opdrachtregels erven de zekerheid van de bron", pyOpdr.every((o) => o.zekerheid === "ZEKER"), true);
   check("PY: unieke ids voor de opdrachtregels", new Set(pyOpdr.map((o) => o.id)).size, pyOpdr.length);
   check("opleveringen: alle ids uniek", new Set(opleveringen.map((o) => o.id)).size, opleveringen.length);
   check("opleveringen: elk id is uniek", new Set(opleveringen.map((o) => o.id)).size, opleveringen.length);
@@ -1806,7 +1810,7 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   check("opleveringen: PSY-opdrachten hebben geen (verzonnen) individuele weging", psyOpdrachten.every((o) => o.weging === null), true);
 
   check("opleveringen: AgTech-presentatie heeft geen (verzonnen) losse weging — onderdeel van de 40%-combinatie", opleveringen.find((o) => o.id === "AGTECH-PRESENTATIE")?.weging, null);
-  check("opleveringen: Python-projectpresentatie is 25% (Groepsproject)", opleveringen.find((o) => o.id === "PY-PROJECTPRESENTATIE")?.weging, 25);
+  check("opleveringen: Python-projectpresentatie is 5% bonus, optioneel", opleveringen.find((o) => o.id === "PY-PROJECTPRESENTATIE")?.weging, 5);
 }
 
 // FASE-9.md B3: schema v9 -> v10 (afgevinkteOpleveringen) en store-functie
@@ -1828,11 +1832,11 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
 // zelf ingevulde) datum horen in een chronologische lijst
 {
   const zonderInvoer = rijenOpleveringen();
-  check("rijenOpleveringen(): zonder invoer alleen items met vaste datum (7 RTE-opdrachten + AgTech)", zonderInvoer.length, 8);
+  check("rijenOpleveringen(): zonder invoer alleen items met vaste datum (7 RTE + AgTech + 4 Python-projectdeadlines)", zonderInvoer.length, 12);
   check("rijenOpleveringen(): geen enkel RTE-termproject/PSY/PY-item zonder invoer (allemaal datum: null)", zonderInvoer.some((r) => r.oplevering.id.startsWith("PSY-") || r.oplevering.id.startsWith("RTE-TERMPROJECT") || r.oplevering.id === "PY-PROJECTPRESENTATIE"), false);
 
   const metInvoer = rijenOpleveringen({ "RTE-TERMPROJECT-PRESENTATIE.datum": "2026-12-10", "PSY-OPDRACHT-1.datum": "2026-10-01" });
-  check("rijenOpleveringen(): een zelf ingevulde datum telt mee (8 + 2)", metInvoer.length, 10);
+  check("rijenOpleveringen(): een zelf ingevulde datum telt mee (12 + 2)", metInvoer.length, 14);
   check("rijenOpleveringen(): presentatie- en verslagfilter zijn te scheiden op soort", metInvoer.filter((r) => r.oplevering.soort === "presentatie").length, 2);
 }
 
@@ -1859,7 +1863,7 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   check("2026-09-24: RTE-termproject heeft een mijlpaal op deze dag", mijlpaalOp0924.some((x) => x.project.id === "RTE_TERMPROJECT"), true);
   check("mijlpaalSleutel: nog steeds bruikbaar na verhuizing naar dagblad.js", mijlpaalSleutel(mijlpaalOp0924[0].project, mijlpaalOp0924[0].mijlpaal).startsWith("RTE_TERMPROJECT::2026-09-24"), true);
 
-  check("opleveringen: 8 items met vaste datum (7 RTE-opdrachten + AgTech) — bruikbaar voor het dagblad zonder invulling", opleveringen.filter((o) => o.datum !== null).length, 8);
+  check("opleveringen: 12 items met vaste datum — bruikbaar voor het dagblad zonder invulling", opleveringen.filter((o) => o.datum !== null).length, 12);
 }
 
 // FASE-9.md B5: weekgewicht.js — tentamens, presentaties en harde deadlines
@@ -2055,19 +2059,19 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
 // ~12 opdrachten waarvan 10 meetellen (schatting → TE VERIFIËREN).
 {
   const py = courses.find((c) => c.id === "PY");
-  check("PY: ~12 opdrachten", py.opdrachten.aantal, 12);
-  check("PY: daarvan tellen er 10 mee", py.opdrachten.aantalTelt, 10);
-  check("PY: aantallen zijn een schatting van Idries", py.opdrachten.zekerheid, "TE VERIFIËREN");
+  check("PY: ongeveer 7 tot 11 opdrachten (collegeslides)", `${py.opdrachten.aantalMin}-${py.opdrachten.aantalMax}`, "7-11");
+  check("PY: alle opdrachten tellen mee, er vallen er geen af", py.opdrachten.alleTellenMee, true);
+  check("PY: aantallen komen nu uit een brondocument", py.opdrachten.zekerheid, "ZEKER");
   check("PY: inleverdatums blijven ONBEKEND", py.opdrachten.datums, null);
   checkBronZekerheid("courses: PY.opdrachten", py.opdrachten);
-  check("PY: groepsgrootte blijft ONBEKEND", py.groepsproject.groepsgrootte, null);
-  check("PY: groepsprojecttekst meldt dat de groep rond is", py.groepsproject.tekst.includes("groepsgenoot"), true);
+  check("PY: groepsprojecttekst noemt de groepsgrootte", py.groepsproject.tekst.includes("4 tot 6"), true);
+  check("PY: groepsprojecttekst noemt de verdeling van de 25%", py.groepsproject.tekst.includes("verslag 10%"), true);
 
   const pyProject = projects.find((p) => p.id === "PY_GROEPSPROJECT");
-  check("PY_GROEPSPROJECT: waarschuwing meldt dat het F-risico is afgedekt", pyProject.waarschuwing.includes("afgedekt"), true);
+  check("PY_GROEPSPROJECT: waarschuwing noemt de aftrek per halve dag", pyProject.waarschuwing.includes("halve dag"), true);
 
   const presentatie = opleveringen.find((o) => o.id === "PY-PROJECTPRESENTATIE");
-  check("PY-projectpresentatie: geen verplichting", presentatie.opmerking.includes("geen verplichting"), true);
+  check("PY-projectpresentatie: optioneel en bonus", presentatie.opmerking.includes("Optioneel"), true);
   check("PY-projectpresentatie: datum blijft ONBEKEND", presentatie.datum, null);
 }
 
@@ -2145,7 +2149,7 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
 
 {
   const leeg = leegState();
-  check("leegState: overzichtFilters heeft de vier standaardsoorten", leeg.overzichtFilters.join(","), "tentamens,deadlines,vrijeBlokken,reizen");
+  check("leegState: overzichtFilters heeft de zeven standaardsoorten", leeg.overzichtFilters.join(","), "tentamens,deadlines,opdrachten,presentaties,verslagen,vrijeBlokken,reizen");
 
   const zonder = zetOverzichtFilters(leeg, ["tentamens", "deadlines"]);
   check("zetOverzichtFilters: nieuwe keuze opgeslagen", zonder.overzichtFilters.join(","), "tentamens,deadlines");
@@ -2157,12 +2161,17 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   delete v13.overzichtFilters;
   const gemigreerd = migrate(v13);
   check("migrate v13->v14: schemaVersion is bijgewerkt", gemigreerd.schemaVersion, CURRENT_SCHEMA_VERSION);
-  check("migrate v13->v14: standaardfilters ingevuld", gemigreerd.overzichtFilters.join(","), "tentamens,deadlines,vrijeBlokken,reizen");
+  check("migrate v13->v15: standaardfilters ingevuld", gemigreerd.overzichtFilters.join(","), "tentamens,deadlines,opdrachten,presentaties,verslagen,vrijeBlokken,reizen");
   check("migrate v13->v14: andere keuzes blijven staan", gemigreerd.kalenderWeergave, "uitgebreid");
 
   // Een bewaarde keuze wordt niet overschreven, onbekende namen vallen weg
+  // Een bewaarde keuze blijft staan; onbekende namen vallen weg. Het in v15
+  // toegevoegde filter "opdrachten" komt er wel bij, anders zou een bestaande
+  // installatie de opdrachtdeadlines nooit zien.
   const bewaard = migrate({ ...leeg, schemaVersion: 13, overzichtFilters: ["tentamens", "bestaat-niet"] });
-  check("migrate: bewaarde filterkeuze blijft staan", bewaard.overzichtFilters.join(","), "tentamens");
+  check("migrate: bewaarde filterkeuze blijft staan", bewaard.overzichtFilters.join(","), "tentamens,opdrachten,presentaties,verslagen");
+  const alAan = migrate({ ...leeg, schemaVersion: 14, overzichtFilters: ["opdrachten", "tentamens"] });
+  check("migrate v14->v15: opdrachten niet dubbel toegevoegd", alAan.overzichtFilters.join(","), "opdrachten,tentamens,presentaties,verslagen");
 }
 
 console.log(`\n${passed} geslaagd, ${failures} mislukt.`);

@@ -385,7 +385,9 @@ function renderTellersSectie(course, veldwaarden, onVeldWijzigen) {
 
     rij.appendChild(ingeleverdInput);
     rij.appendChild(scheiding);
-    const totaal = veldwaarden[totaalSleutel] || (course.opdrachten.aantal ? String(course.opdrachten.aantal) : "");
+    // De bron noemt een marge (7-11), geen vast aantal: het bovenste getal is
+    // het veilige totaal om tegen af te tellen. Eigen invoer wint.
+    const totaal = veldwaarden[totaalSleutel] || String(course.opdrachten.aantalMax);
     if (totaal) {
       const totaalEl = document.createElement("span");
       totaalEl.textContent = totaal;
