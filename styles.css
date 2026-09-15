@@ -824,6 +824,33 @@ select {
   font-size: var(--fs-min);
   cursor: pointer;
 }
+/* Een uitklap die iets toevoegt is een actie, geen kopje. Stond in dezelfde
+   grijstint als de "nog geen eigen items"-tekst eronder en was daardoor niet
+   als knop te herkennen, terwijl Exporteer en Importeren ernaast wel een
+   knoprand hadden. */
+.uitklap-actie {
+  border-top: none;
+  margin-top: 8px;
+}
+.uitklap-actie > summary {
+  justify-content: center;
+  min-height: var(--tap-min);
+  padding: 8px 14px;
+  background: var(--card);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-control);
+  color: var(--text);
+  font-size: var(--fs-base);
+  list-style: none;
+}
+.uitklap-actie > summary::-webkit-details-marker {
+  display: none;
+}
+.uitklap-actie[open] > summary {
+  border-color: var(--accent);
+  color: var(--accent-text);
+  margin-bottom: 8px;
+}
 
 .maand-legenda {
   list-style: none;
