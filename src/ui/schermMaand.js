@@ -189,7 +189,20 @@ export function initMaandScherm(root, callbacks) {
     tekenen();
   }
 
-  return { render, openDag };
+  /**
+   * Zet dit scherm terug in zijn beginstand: dagblad dicht. Gebruikt als je
+   * nog een keer op de al actieve tab tikt. Anders dan sluitDagblad() springt
+   * dit niet terug naar het scherm waar je vandaan kwam — je bent hier juist
+   * naartoe aan het navigeren.
+   */
+  function naarBovenkant() {
+    if (geselecteerd === null) return;
+    geselecteerd = null;
+    terugNaarScherm = null;
+    tekenen();
+  }
+
+  return { render, openDag, naarBovenkant };
 }
 
 /**

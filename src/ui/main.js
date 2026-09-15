@@ -487,6 +487,10 @@ const navigatie = initNavigatie({
   instellingenSluitEl,
   ui: state.ui,
   onUiWijzigen: wijzigUi,
+  onZelfdeScherm: (naam) => {
+    if (naam === "maand") maandScherm.naarBovenkant();
+    if (naam === "vakken") vakkenScherm.naarBovenkant();
+  },
 });
 
 const maandScherm = initMaandScherm(schermEls.maand, {

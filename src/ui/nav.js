@@ -19,11 +19,12 @@ const SCROLL_BEWAAR_VERTRAGING_MS = 400;
  *   instellingenSluitEl: HTMLElement,
  *   ui: {activeScreen: string, scrollPositions: Record<string, number>},
  *   onUiWijzigen: (nieuweUi: object) => void,
+ *   onZelfdeScherm?: (naam: string) => void,
  * }} opts
  * @returns {{naarScherm: (naam: string) => void}}
  */
 export function initNavigatie(opts) {
-  const { schermEls, navKnopEls, instellingenKnopEl, instellingenPaneelEl, instellingenSluitEl, onUiWijzigen } = opts;
+  const { schermEls, navKnopEls, instellingenKnopEl, instellingenPaneelEl, instellingenSluitEl, onUiWijzigen, onZelfdeScherm } = opts;
   let ui = opts.ui;
   // Eén timer per scherm, niet gedeeld — anders annuleert het scroll-event van
   // het ene scherm de nog-niet-opgeslagen positie van een ander scherm dat
@@ -36,9 +37,16 @@ export function initNavigatie(opts) {
     schermEls[naam].scrollTop = ui.scrollPositions[naam] ?? 0;
   }
 
+  // Nog een keer op de tab tikken waar je al bent, hoort dat scherm terug te
+  // zetten in zijn beginstand — zoals elke app. Deed hier niets, waardoor een
+  // geopende vakdetail of dagblad bleef staan en alleen via "Sluiten" wegging.
   function wisselScherm(naam) {
+    if (naam === ui.activeScreen) {
+      onZelfdeScherm?.(naam);
+      schermEls[naam].scrollTop = 0;
+      return;
+    }
     toonScherm(naam);
-    if (naam === ui.activeScreen) return;
     ui = { ...ui, activeScreen: naam };
     onUiWijzigen(ui);
   }
