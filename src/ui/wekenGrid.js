@@ -11,6 +11,7 @@ import { courseVoor } from "../data/courses.js";
 import { dayStatus, dagdeelVoorTijd, DAGDEEL_NAMEN } from "../lib/dayStatus.js";
 import { WEEKDAGEN, collegeWeek, kortDatum } from "./datumlabels.js";
 import { vakAfkorting } from "./tekst.js";
+import { maakKnop } from "./knoppen.js";
 
 export const PERIODE_LABELS = {
   "1w": "1 week",
@@ -201,11 +202,7 @@ function renderWeekkaart(root, weekMaandag, pythonAfgewezen, tripStatusOverrides
   for (const [i, naam] of WEEKDAGEN.entries()) {
     const ymd = dagen[i].date;
     const { d } = parseYMD(ymd);
-    const knop = document.createElement("button");
-    knop.type = "button";
-    knop.className = "tap-target weekkaart-dagkop";
-    knop.textContent = `${naam} ${d}`;
-    knop.addEventListener("click", () => onDagKlik(ymd));
+    const knop = maakKnop({ label: `${naam} ${d}`, className: "tap-target weekkaart-dagkop", onKlik: () => onDagKlik(ymd) });
     grid.appendChild(knop);
   }
 
@@ -266,11 +263,7 @@ function renderWeekkaart(root, weekMaandag, pythonAfgewezen, tripStatusOverrides
 
   const knoppen = document.createElement("div");
   knoppen.className = "weekkaart-knoppen";
-  const openKnop = document.createElement("button");
-  openKnop.type = "button";
-  openKnop.className = "tap-target";
-  openKnop.textContent = "Open week";
-  openKnop.addEventListener("click", () => onOpenWeek(weekMaandag));
+  const openKnop = maakKnop({ label: "Open week", onKlik: () => onOpenWeek(weekMaandag) });
 
   // FASE-9.md B2 punt 1: "Item erbij" gaf altijd de maandag door, ook als je
   // een andere dag bedoelde. Eerst een dagkiezer met alle zeven dagen van
@@ -280,18 +273,11 @@ function renderWeekkaart(root, weekMaandag, pythonAfgewezen, tripStatusOverrides
   dagkiezerEl.hidden = true;
   for (const dag of dagen) {
     const { d } = parseYMD(dag.date);
-    const dagKnop = document.createElement("button");
-    dagKnop.type = "button";
-    dagKnop.className = "tap-target";
-    dagKnop.textContent = `${WEEKDAGEN[dag.weekday]} ${d}`;
-    dagKnop.addEventListener("click", () => onItemErbij(dag.date));
+    const dagKnop = maakKnop({ label: `${WEEKDAGEN[dag.weekday]} ${d}`, onKlik: () => onItemErbij(dag.date) });
     dagkiezerEl.appendChild(dagKnop);
   }
 
-  const erbijKnop = document.createElement("button");
-  erbijKnop.type = "button";
-  erbijKnop.className = "tap-target";
-  erbijKnop.textContent = "Item erbij";
+  const erbijKnop = maakKnop({ label: "Item erbij" });
   erbijKnop.addEventListener("click", () => {
     dagkiezerEl.hidden = !dagkiezerEl.hidden;
   });

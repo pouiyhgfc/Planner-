@@ -8,7 +8,7 @@ import { conflictenVoorRange } from "../lib/blocks.js";
 import { diffDays } from "../lib/date.js";
 import { kortDatum } from "./datumlabels.js";
 import { meervoud, vakAfkorting } from "./tekst.js";
-import { bevestigKnop } from "./knoppen.js";
+import { bevestigKnop, maakKnop } from "./knoppen.js";
 import { huidigeYMD } from "../state/store.js";
 import { trips, effectieveTripStatus, TRIP_STATUSSEN } from "../data/trips.js";
 
@@ -240,11 +240,7 @@ export function renderVakMeetellenRegel(root, stand, onWijzigen) {
       : "Computer Programming in Python telt mee in de berekeningen.";
   root.appendChild(tekst);
 
-  const knop = document.createElement("button");
-  knop.type = "button";
-  knop.className = "tap-target";
-  knop.textContent = stand === "afgewezen" ? "Weer meetellen" : "Niet meer meetellen";
-  knop.addEventListener("click", () => onWijzigen(stand === "afgewezen" ? "bevestigd" : "afgewezen"));
+  const knop = maakKnop({ label: stand === "afgewezen" ? "Weer meetellen" : "Niet meer meetellen", onKlik: () => onWijzigen(stand === "afgewezen" ? "bevestigd" : "afgewezen") });
   root.appendChild(knop);
 }
 
@@ -267,11 +263,7 @@ export function renderInstallRegel(root, stand, onInstalleren) {
     root.textContent = "Installeren kan via het browsermenu (\u201cToevoegen aan startscherm\u201d).";
     return;
   }
-  const knop = document.createElement("button");
-  knop.type = "button";
-  knop.className = "tap-target";
-  knop.textContent = "Op startscherm zetten";
-  knop.addEventListener("click", onInstalleren);
+  const knop = maakKnop({ label: "Op startscherm zetten", onKlik: onInstalleren });
   root.appendChild(knop);
 }
 
@@ -295,10 +287,7 @@ export function renderExportRegel(root, laatsteExport, onExporteren) {
   }
   root.appendChild(tekst);
 
-  const knop = document.createElement("button");
-  knop.type = "button";
-  knop.textContent = "Exporteer";
-  knop.addEventListener("click", onExporteren);
+  const knop = maakKnop({ label: "Exporteer", onKlik: onExporteren });
   root.appendChild(knop);
 
   // Het kale bestandsveld toont een niet-vertaalbare "Choose file / no file
@@ -368,10 +357,7 @@ export function renderConflictenPaneel(root, conflicten, onOplossen) {
     root.appendChild(rij);
   }
 
-  const knop = document.createElement("button");
-  knop.type = "button";
-  knop.textContent = "Conflicten toepassen";
-  knop.addEventListener("click", () => onOplossen(keuzes));
+  const knop = maakKnop({ label: "Conflicten toepassen", onKlik: () => onOplossen(keuzes) });
   root.appendChild(knop);
 }
 
@@ -399,10 +385,7 @@ export function renderReisstatusPaneel(root, tripStatusOverrides, onWijzigen) {
     rij.appendChild(tekst);
 
     if (status !== "geboekt") {
-      const knop = document.createElement("button");
-      knop.type = "button";
-      knop.textContent = "Zet op geboekt";
-      knop.addEventListener("click", () => onWijzigen(item.variant, "geboekt"));
+      const knop = maakKnop({ label: "Zet op geboekt", onKlik: () => onWijzigen(item.variant, "geboekt") });
       rij.appendChild(knop);
     }
 
@@ -463,10 +446,7 @@ export function renderReisForm(root, onOpslaan, bewerkt) {
     });
   }
 
-  const vluchtToevoegKnop = document.createElement("button");
-  vluchtToevoegKnop.type = "button";
-  vluchtToevoegKnop.textContent = "Losse vlucht toevoegen";
-  vluchtToevoegKnop.addEventListener("click", voegVluchtRijToe);
+  const vluchtToevoegKnop = maakKnop({ label: "Losse vlucht toevoegen", onKlik: voegVluchtRijToe });
 
   const knop = document.createElement("button");
   knop.type = "submit";
@@ -552,11 +532,7 @@ function renderVerwijderbareLijst(root, rijen, onVerwijderen, onBewerken, legeTe
     tekst.textContent = regelTekst(rij);
     li.appendChild(tekst);
 
-    const bewerk = document.createElement("button");
-    bewerk.type = "button";
-    bewerk.className = "rij-knop";
-    bewerk.textContent = "Bewerken";
-    bewerk.addEventListener("click", () => onBewerken(rij.id));
+    const bewerk = maakKnop({ label: "Bewerken", className: "rij-knop", onKlik: () => onBewerken(rij.id) });
     li.appendChild(bewerk);
 
     // Verwijderen is definitief en stond als naamloos kruisje direct naast
@@ -604,11 +580,7 @@ export function renderVerborgenLijst(root, verborgen, onWeerTonen) {
     tekst.textContent = rij.omschrijving;
     li.appendChild(tekst);
 
-    const knop = document.createElement("button");
-    knop.type = "button";
-    knop.className = "rij-knop";
-    knop.textContent = "Weer tonen";
-    knop.addEventListener("click", () => onWeerTonen(rij.sleutel));
+    const knop = maakKnop({ label: "Weer tonen", className: "rij-knop", onKlik: () => onWeerTonen(rij.sleutel) });
     li.appendChild(knop);
 
     lijst.appendChild(li);

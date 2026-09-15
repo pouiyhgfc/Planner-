@@ -158,11 +158,17 @@ export function leegState() {
  * @returns {{schemaVersion: number, items: object[], laatsteExport: string|null}}
  */
 export function migrate(state) {
+  const van = state.schemaVersion;
+  if (!Number.isInteger(van) || van < 0 || van > CURRENT_SCHEMA_VERSION) {
+    throw new Error(`onbekende schemaVersion: ${state.schemaVersion}`);
+  }
+
   let s = state;
 
-  if (s.schemaVersion === 0) {
+  // v0 -> v1: een item had één datum en wordt een bereik.
+  if (van === 0) {
     s = {
-      schemaVersion: 1,
+      ...s,
       items: (s.items ?? []).map((item) => ({
         id: item.id,
         naam: item.naam,
@@ -174,204 +180,50 @@ export function migrate(state) {
     };
   }
 
-  if (s.schemaVersion === 1) {
-    s = {
-      schemaVersion: 2,
-      laatsteExport: s.laatsteExport ?? null,
-      items: (s.items ?? []).map((item) => ({ ...item, bijgewerkt: item.bijgewerkt ?? null })),
-    };
+  // v1 -> v2: elk item kreeg bijgewerkt, nodig voor de merge bij import.
+  if (van <= 1) {
+    s = { ...s, items: (s.items ?? []).map((item) => ({ ...item, bijgewerkt: item.bijgewerkt ?? null })) };
   }
 
-  if (s.schemaVersion === 2) {
-    s = {
-      schemaVersion: 3,
-      laatsteExport: s.laatsteExport ?? null,
-      items: s.items ?? [],
-      ui: geldigeUiState(s.ui),
-    };
+  // v12 -> v13: "onbevestigd" was de oude standaardwaarde en geen antwoord meer
+  // op een vraag die beantwoord is. Een bewuste keuze blijft staan, dus deze
+  // stap geldt alleen voor wie van vóór v13 komt.
+  if (van <= 12 && s.pythonInschrijving === "onbevestigd") {
+    s = { ...s, pythonInschrijving: inschrijvingUitData() };
   }
 
-  if (s.schemaVersion === 3) {
-    s = {
-      schemaVersion: 4,
-      laatsteExport: s.laatsteExport ?? null,
-      items: s.items ?? [],
-      ui: geldigeUiState(s.ui),
-      afgevinkteDeadlines: s.afgevinkteDeadlines ?? [],
-    };
+  // v14 -> v15: drie soorten die er niet waren of standaard uit stonden, komen
+  // erbij in een al bewaarde filterkeuze — anders blijven de zwaarste
+  // inlevermomenten onzichtbaar.
+  if (van <= 14 && Array.isArray(s.overzichtFilters)) {
+    const erbij = ["opdrachten", "presentaties", "verslagen"].filter((f) => !s.overzichtFilters.includes(f));
+    s = { ...s, overzichtFilters: [...s.overzichtFilters, ...erbij] };
   }
 
-  if (s.schemaVersion === 4) {
-    s = {
-      schemaVersion: 5,
-      laatsteExport: s.laatsteExport ?? null,
-      items: s.items ?? [],
-      ui: geldigeUiState(s.ui),
-      afgevinkteDeadlines: s.afgevinkteDeadlines ?? [],
-      weekWeergave: geldigeWeekWeergave(s.weekWeergave),
-    };
-  }
-
-  if (s.schemaVersion === 5) {
-    s = {
-      schemaVersion: 6,
-      laatsteExport: s.laatsteExport ?? null,
-      items: s.items ?? [],
-      ui: geldigeUiState(s.ui),
-      afgevinkteDeadlines: s.afgevinkteDeadlines ?? [],
-      weekWeergave: geldigeWeekWeergave(s.weekWeergave),
-      afgevinkteMijlpalen: s.afgevinkteMijlpalen ?? [],
-      eigenProjecten: s.eigenProjecten ?? [],
-    };
-  }
-
-  if (s.schemaVersion === 6) {
-    s = {
-      schemaVersion: 7,
-      laatsteExport: s.laatsteExport ?? null,
-      items: s.items ?? [],
-      ui: geldigeUiState(s.ui),
-      afgevinkteDeadlines: s.afgevinkteDeadlines ?? [],
-      weekWeergave: geldigeWeekWeergave(s.weekWeergave),
-      afgevinkteMijlpalen: s.afgevinkteMijlpalen ?? [],
-      eigenProjecten: s.eigenProjecten ?? [],
-      pythonInschrijving: PYTHON_INSCHRIJVING_WAARDEN.includes(s.pythonInschrijving) ? s.pythonInschrijving : inschrijvingUitData(),
-      vakkenVeldwaarden: s.vakkenVeldwaarden ?? {},
-    };
-  }
-
-  if (s.schemaVersion === 7) {
-    s = {
-      schemaVersion: 8,
-      laatsteExport: s.laatsteExport ?? null,
-      items: s.items ?? [],
-      ui: geldigeUiState(s.ui),
-      afgevinkteDeadlines: s.afgevinkteDeadlines ?? [],
-      weekWeergave: geldigeWeekWeergave(s.weekWeergave),
-      afgevinkteMijlpalen: s.afgevinkteMijlpalen ?? [],
-      eigenProjecten: s.eigenProjecten ?? [],
-      pythonInschrijving: PYTHON_INSCHRIJVING_WAARDEN.includes(s.pythonInschrijving) ? s.pythonInschrijving : inschrijvingUitData(),
-      vakkenVeldwaarden: s.vakkenVeldwaarden ?? {},
-      tripStatusOverrides: geldigeTripStatusOverrides(s.tripStatusOverrides),
-    };
-  }
-
-  if (s.schemaVersion === 8) {
-    s = {
-      schemaVersion: 9,
-      laatsteExport: s.laatsteExport ?? null,
-      items: s.items ?? [],
-      ui: geldigeUiState(s.ui),
-      afgevinkteDeadlines: s.afgevinkteDeadlines ?? [],
-      weekWeergave: geldigeWeekWeergave(s.weekWeergave),
-      afgevinkteMijlpalen: s.afgevinkteMijlpalen ?? [],
-      eigenProjecten: s.eigenProjecten ?? [],
-      pythonInschrijving: PYTHON_INSCHRIJVING_WAARDEN.includes(s.pythonInschrijving) ? s.pythonInschrijving : inschrijvingUitData(),
-      vakkenVeldwaarden: s.vakkenVeldwaarden ?? {},
-      tripStatusOverrides: geldigeTripStatusOverrides(s.tripStatusOverrides),
-      eigenReizen: s.eigenReizen ?? [],
-    };
-  }
-
-  if (s.schemaVersion === 9) {
-    s = {
-      schemaVersion: 10,
-      laatsteExport: s.laatsteExport ?? null,
-      items: s.items ?? [],
-      ui: geldigeUiState(s.ui),
-      afgevinkteDeadlines: s.afgevinkteDeadlines ?? [],
-      weekWeergave: geldigeWeekWeergave(s.weekWeergave),
-      afgevinkteMijlpalen: s.afgevinkteMijlpalen ?? [],
-      eigenProjecten: s.eigenProjecten ?? [],
-      pythonInschrijving: PYTHON_INSCHRIJVING_WAARDEN.includes(s.pythonInschrijving) ? s.pythonInschrijving : inschrijvingUitData(),
-      vakkenVeldwaarden: s.vakkenVeldwaarden ?? {},
-      tripStatusOverrides: geldigeTripStatusOverrides(s.tripStatusOverrides),
-      eigenReizen: s.eigenReizen ?? [],
-      afgevinkteOpleveringen: s.afgevinkteOpleveringen ?? [],
-    };
-  }
-
-  if (s.schemaVersion === 10) {
-    s = {
-      schemaVersion: 11,
-      laatsteExport: s.laatsteExport ?? null,
-      items: s.items ?? [],
-      ui: geldigeUiState(s.ui),
-      afgevinkteDeadlines: s.afgevinkteDeadlines ?? [],
-      weekWeergave: geldigeWeekWeergave(s.weekWeergave),
-      afgevinkteMijlpalen: s.afgevinkteMijlpalen ?? [],
-      eigenProjecten: s.eigenProjecten ?? [],
-      pythonInschrijving: PYTHON_INSCHRIJVING_WAARDEN.includes(s.pythonInschrijving) ? s.pythonInschrijving : inschrijvingUitData(),
-      vakkenVeldwaarden: s.vakkenVeldwaarden ?? {},
-      tripStatusOverrides: geldigeTripStatusOverrides(s.tripStatusOverrides),
-      eigenReizen: s.eigenReizen ?? [],
-      afgevinkteOpleveringen: s.afgevinkteOpleveringen ?? [],
-      kalenderWeergave: KALENDER_WEERGAVEN.includes(s.kalenderWeergave) ? s.kalenderWeergave : "compact",
-    };
-  }
-
-  if (s.schemaVersion === 11) {
-    s = {
-      ...s,
-      schemaVersion: 12,
-      verborgenItems: s.verborgenItems ?? [],
-    };
-  }
-
-  if (s.schemaVersion === 12) {
-    s = {
-      ...s,
-      schemaVersion: 13,
-      pythonInschrijving: s.pythonInschrijving === "onbevestigd" ? inschrijvingUitData() : s.pythonInschrijving,
-    };
-  }
-
-  if (s.schemaVersion === 13) {
-    s = {
-      ...s,
-      schemaVersion: 14,
-      overzichtFilters: geldigeOverzichtFilters(s.overzichtFilters),
-    };
-  }
-
-  if (s.schemaVersion === 14) {
-    const filters = geldigeOverzichtFilters(s.overzichtFilters);
-    const erbij = ["opdrachten", "presentaties", "verslagen"].filter((f) => !filters.includes(f));
-    s = {
-      ...s,
-      schemaVersion: 15,
-      overzichtFilters: [...filters, ...erbij],
-    };
-  }
-
-  if (s.schemaVersion === 15) {
-    s = {
-      ...s,
-      schemaVersion: 16,
-      ruimteBudget: RUIMTE_BUDGETTEN.includes(s.ruimteBudget) ? s.ruimteBudget : 0,
-    };
-  }
-
-  if (s.schemaVersion === CURRENT_SCHEMA_VERSION) {
-    return {
-      ...s,
-      ui: geldigeUiState(s.ui),
-      afgevinkteDeadlines: s.afgevinkteDeadlines ?? [],
-      weekWeergave: geldigeWeekWeergave(s.weekWeergave),
-      afgevinkteMijlpalen: s.afgevinkteMijlpalen ?? [],
-      eigenProjecten: s.eigenProjecten ?? [],
-      pythonInschrijving: PYTHON_INSCHRIJVING_WAARDEN.includes(s.pythonInschrijving) ? s.pythonInschrijving : inschrijvingUitData(),
-      vakkenVeldwaarden: s.vakkenVeldwaarden ?? {},
-      tripStatusOverrides: geldigeTripStatusOverrides(s.tripStatusOverrides),
-      eigenReizen: s.eigenReizen ?? [],
-      afgevinkteOpleveringen: s.afgevinkteOpleveringen ?? [],
-      kalenderWeergave: KALENDER_WEERGAVEN.includes(s.kalenderWeergave) ? s.kalenderWeergave : "compact",
-      verborgenItems: s.verborgenItems ?? [],
-      overzichtFilters: geldigeOverzichtFilters(s.overzichtFilters),
-      ruimteBudget: RUIMTE_BUDGETTEN.includes(s.ruimteBudget) ? s.ruimteBudget : 0,
-    };
-  }
-  throw new Error(`onbekende schemaVersion: ${state.schemaVersion}`);
+  // Alle overige stappen (v2 t/m v16) voegden alleen een veld met een
+  // standaardwaarde toe. Die velden worden hieronder sowieso aangevuld, dus er
+  // is geen stap per versie nodig — dat waren honderd regels die elke keer
+  // dezelfde velden opnieuw uitschreven.
+  return {
+    ...s,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
+    laatsteExport: s.laatsteExport ?? null,
+    items: s.items ?? [],
+    ui: geldigeUiState(s.ui),
+    afgevinkteDeadlines: s.afgevinkteDeadlines ?? [],
+    weekWeergave: geldigeWeekWeergave(s.weekWeergave),
+    afgevinkteMijlpalen: s.afgevinkteMijlpalen ?? [],
+    eigenProjecten: s.eigenProjecten ?? [],
+    pythonInschrijving: PYTHON_INSCHRIJVING_WAARDEN.includes(s.pythonInschrijving) ? s.pythonInschrijving : inschrijvingUitData(),
+    vakkenVeldwaarden: s.vakkenVeldwaarden ?? {},
+    tripStatusOverrides: geldigeTripStatusOverrides(s.tripStatusOverrides),
+    eigenReizen: s.eigenReizen ?? [],
+    afgevinkteOpleveringen: s.afgevinkteOpleveringen ?? [],
+    kalenderWeergave: KALENDER_WEERGAVEN.includes(s.kalenderWeergave) ? s.kalenderWeergave : "compact",
+    verborgenItems: s.verborgenItems ?? [],
+    overzichtFilters: geldigeOverzichtFilters(s.overzichtFilters),
+    ruimteBudget: RUIMTE_BUDGETTEN.includes(s.ruimteBudget) ? s.ruimteBudget : 0,
+  };
 }
 
 /**

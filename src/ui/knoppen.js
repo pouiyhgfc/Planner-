@@ -8,6 +8,24 @@
  */
 
 /**
+ * Een gewone knop. Het patroon eronder (element maken, type zetten, klasse
+ * zetten, tekst zetten, listener hangen) stond 27 keer uitgeschreven in de
+ * UI-laag; dat is vijf regels waar één regel hetzelfde zegt.
+ * @param {{label: string, className?: string, onKlik?: () => void, actief?: boolean}} opties
+ *   actief zet aria-current, voor knoppen die een keuze tonen.
+ * @returns {HTMLButtonElement}
+ */
+export function maakKnop({ label, className = "tap-target", onKlik, actief }) {
+  const el = document.createElement("button");
+  el.type = "button";
+  if (className) el.className = className;
+  el.textContent = label;
+  if (onKlik) el.addEventListener("click", onKlik);
+  if (actief !== undefined) el.setAttribute("aria-current", actief ? "true" : "false");
+  return el;
+}
+
+/**
  * @param {{label: string, bevestigLabel?: string, className?: string, onBevestigd: () => void, onStap?: () => void}} opties
  *   onStap wordt aangeroepen bij de eerste tik, zodat een omliggend menu open
  *   kan blijven staan tot de keuze gemaakt is.

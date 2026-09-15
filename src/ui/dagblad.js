@@ -7,7 +7,7 @@
 import { volledigeDatum, kortDatum, collegeWeek } from "./datumlabels.js";
 import { meervoud } from "./tekst.js";
 import { courseVoor } from "../data/courses.js";
-import { bevestigKnop } from "./knoppen.js";
+import { bevestigKnop, maakKnop } from "./knoppen.js";
 
 import { projects } from "../data/projects.js";
 import { zichtbareOpleveringen } from "./overzichtData.js";
@@ -113,17 +113,11 @@ export function renderDagblad(
   // stoppen bij de randen van de app-periode.
   const bladeren = document.createElement("div");
   bladeren.className = "dagblad-bladeren";
-  const vorige = document.createElement("button");
-  vorige.type = "button";
-  vorige.className = "tap-target dagblad-pijl";
-  vorige.textContent = "‹";
+  const vorige = maakKnop({ label: "‹", className: "tap-target dagblad-pijl" });
   vorige.setAttribute("aria-label", "Vorige dag");
   vorige.disabled = ymd <= appPeriod.start;
   vorige.addEventListener("click", () => acties.onDagVerschuiven(-1));
-  const volgende = document.createElement("button");
-  volgende.type = "button";
-  volgende.className = "tap-target dagblad-pijl";
-  volgende.textContent = "›";
+  const volgende = maakKnop({ label: "›", className: "tap-target dagblad-pijl" });
   volgende.setAttribute("aria-label", "Volgende dag");
   volgende.disabled = ymd >= appPeriod.end;
   volgende.addEventListener("click", () => acties.onDagVerschuiven(1));
@@ -131,11 +125,7 @@ export function renderDagblad(
   bladeren.appendChild(volgende);
   kop.appendChild(bladeren);
 
-  const sluit = document.createElement("button");
-  sluit.type = "button";
-  sluit.className = "tap-target";
-  sluit.textContent = "Sluiten";
-  sluit.addEventListener("click", acties.onSluiten);
+  const sluit = maakKnop({ label: "Sluiten", onKlik: acties.onSluiten });
   kop.appendChild(sluit);
 
   root.appendChild(kop);
@@ -394,11 +384,7 @@ export function verbergKnop(sleutel, onVerbergen) {
  * @returns {HTMLButtonElement}
  */
 function naarVakKnop(vakId, onNaarVak) {
-  const knop = document.createElement("button");
-  knop.type = "button";
-  knop.className = "lesblok-naar-vak";
-  knop.textContent = "Naar vak";
-  knop.addEventListener("click", () => onNaarVak(vakId));
+  const knop = maakKnop({ label: "Naar vak", className: "lesblok-naar-vak", onKlik: () => onNaarVak(vakId) });
   return knop;
 }
 
@@ -535,21 +521,11 @@ function renderActieknoppen(ymd, acties, formOpenen, formBereik) {
   const wrap = document.createElement("div");
   wrap.className = "dagblad-acties";
 
-  const toevoegKnop = document.createElement("button");
-  toevoegKnop.type = "button";
-  toevoegKnop.className = "tap-target";
-  toevoegKnop.textContent = "Item toevoegen";
+  const toevoegKnop = maakKnop({ label: "Item toevoegen" });
 
-  const absentieKnop = document.createElement("button");
-  absentieKnop.type = "button";
-  absentieKnop.className = "tap-target";
-  absentieKnop.textContent = "Absentie markeren";
-  absentieKnop.addEventListener("click", acties.onAbsentieMarkeren);
+  const absentieKnop = maakKnop({ label: "Absentie markeren", onKlik: acties.onAbsentieMarkeren });
 
-  const notitieKnop = document.createElement("button");
-  notitieKnop.type = "button";
-  notitieKnop.className = "tap-target";
-  notitieKnop.textContent = "Notitie";
+  const notitieKnop = maakKnop({ label: "Notitie" });
 
   wrap.appendChild(toevoegKnop);
   wrap.appendChild(absentieKnop);

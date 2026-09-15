@@ -7,6 +7,7 @@
 
 import { SCHERMEN } from "../state/schema.js";
 import { kortDatum, collegeWeek } from "./datumlabels.js";
+import { maakKnop } from "./knoppen.js";
 
 const SCROLL_BEWAAR_VERTRAGING_MS = 400;
 
@@ -115,10 +116,6 @@ export function renderTopbar({ weekEl, absentieEl }, { vandaag, absenties }, onA
   // lessen je mist staat op Overzicht en per vak op het vakkenscherm; de balk
   // hoort alleen te zeggen dát er iets staat.
   const totaal = entries.reduce((som, [, n]) => som + n, 0);
-  const knop = document.createElement("button");
-  knop.type = "button";
-  knop.className = "tap-target absentie-knop";
-  knop.textContent = `${totaal} ${totaal === 1 ? "les" : "lessen"} gemist`;
-  knop.addEventListener("click", onAbsentieTik);
+  const knop = maakKnop({ label: `${totaal} ${totaal === 1 ? "les" : "lessen"} gemist`, className: "tap-target absentie-knop", onKlik: onAbsentieTik });
   absentieEl.appendChild(knop);
 }

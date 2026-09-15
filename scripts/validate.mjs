@@ -2203,5 +2203,44 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   check("ruimte: zonder Python nooit minder ruimte", rijenRuimte(0, vandaag, true).length >= gratis.length, true);
 }
 
+// =====================================================================
+// migrate(): elke versie komt heel bij de huidige uit
+// =====================================================================
+
+{
+  const compleet = leegState();
+  const verplichteVelden = Object.keys(compleet);
+
+  for (let v = 0; v <= CURRENT_SCHEMA_VERSION; v++) {
+    const oud = { ...compleet, schemaVersion: v };
+    const nieuw = migrate(oud);
+    check(`migrate v${v}: komt uit op de huidige versie`, nieuw.schemaVersion, CURRENT_SCHEMA_VERSION);
+    const ontbreekt = verplichteVelden.filter((k) => nieuw[k] === undefined);
+    check(`migrate v${v}: geen enkel veld ontbreekt`, ontbreekt.join(",") || "geen", "geen");
+  }
+
+  // Een kale state van de allereerste vorm: één item met alleen "datum".
+  const v0 = { schemaVersion: 0, items: [{ id: "a", naam: "Oud item", datum: "2026-10-03" }] };
+  const uitV0 = migrate(v0);
+  check("migrate v0: datum wordt een bereik", `${uitV0.items[0].start} → ${uitV0.items[0].end}`, "2026-10-03 → 2026-10-03");
+  check("migrate v0: status krijgt een standaardwaarde", uitV0.items[0].status, "idee");
+  check("migrate v0: bijgewerkt is toegevoegd", uitV0.items[0].bijgewerkt, null);
+  check("migrate v0: naam blijft", uitV0.items[0].naam, "Oud item");
+
+  // Een bewuste keuze van ná v13 mag niet alsnog opgetrokken worden.
+  const bewustOnbevestigd = migrate({ ...compleet, schemaVersion: CURRENT_SCHEMA_VERSION, pythonInschrijving: "onbevestigd" });
+  check("migrate: 'onbevestigd' gekozen ná v13 blijft staan", bewustOnbevestigd.pythonInschrijving, "onbevestigd");
+
+  for (const kapot of [-1, CURRENT_SCHEMA_VERSION + 1, "3", null, undefined, 1.5]) {
+    let fout = null;
+    try {
+      migrate({ ...compleet, schemaVersion: kapot });
+    } catch (e) {
+      fout = e;
+    }
+    check(`migrate: schemaVersion ${JSON.stringify(kapot)} is een harde fout`, fout instanceof Error, true);
+  }
+}
+
 console.log(`\n${passed} geslaagd, ${failures} mislukt.`);
 if (failures > 0) process.exit(1);

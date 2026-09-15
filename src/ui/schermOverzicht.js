@@ -6,11 +6,11 @@
 import { resterendeBlokken, chinaAftelling } from "../lib/overzicht.js";
 import { deadlineSleutel, verborgenDeadlineSleutel, verborgenOpleveringSleutel } from "./dagblad.js";
 import { kortDatum } from "./datumlabels.js";
-import { projects } from "../data/projects.js";
 import { courses, courseVoor } from "../data/courses.js";
 import { vakAfkorting, vakKleuren, meervoud } from "./tekst.js";
-import { RUIMTE_BUDGETTEN } from "../state/schema.js";
-import { bevestigKnop } from "./knoppen.js";
+import { bevestigKnop, maakKnop } from "./knoppen.js";
+import { renderProjecten } from "./overzichtProjecten.js";
+import { renderRuimte } from "./overzichtRuimte.js";
 import { gemisteSessies } from "./vakkenData.js";
 import {
   volgendeTentamenOfPresentatie,
@@ -73,11 +73,7 @@ export function initOverzichtScherm(root, callbacks) {
   // formulier al open — dezelfde route als "Item erbij" op Weken.
   const toevoegenEl = document.createElement("div");
   toevoegenEl.className = "overzicht-toevoegen";
-  const toevoegenKnop = document.createElement("button");
-  toevoegenKnop.type = "button";
-  toevoegenKnop.className = "tap-target";
-  toevoegenKnop.textContent = "Item toevoegen";
-  toevoegenKnop.addEventListener("click", () => callbacks.onDagKiezen(laatsteCtx.vandaag, { formOpenen: true }));
+  const toevoegenKnop = maakKnop({ label: "Item toevoegen", onKlik: () => callbacks.onDagKiezen(laatsteCtx.vandaag, { formOpenen: true }) });
   toevoegenEl.appendChild(toevoegenKnop);
 
   // Telkaarten en filterchips namen samen het eerste scherm in beslag, terwijl
@@ -182,128 +178,6 @@ export function initOverzichtScherm(root, callbacks) {
         () => zetFilters(new Set(["deadlines"]))
       )
     );
-  }
-
-  function renderMijlpaalRij(project, mijlpaal, afgevinkteMijlpalen) {
-    const sleutel = mijlpaalSleutel(project, mijlpaal);
-    const li = document.createElement("li");
-    const label = document.createElement("label");
-    const vinkje = document.createElement("input");
-    vinkje.type = "checkbox";
-    vinkje.checked = afgevinkteMijlpalen.includes(sleutel);
-    vinkje.addEventListener("change", () => callbacks.onMijlpaalToggle(sleutel, vinkje.checked));
-    label.appendChild(vinkje);
-    const tekst = document.createElement("span");
-    tekst.textContent = ` ${kortDatum(mijlpaal.datum)} — ${mijlpaal.label}`;
-    label.appendChild(tekst);
-    li.appendChild(label);
-    return li;
-  }
-
-  function renderProjectKaart(project, afgevinkteMijlpalen, isVast) {
-    const kaart = document.createElement("div");
-    kaart.className = "card project-kaart";
-
-    const kop = document.createElement("div");
-    kop.className = "project-kaart-kop";
-    const titel = document.createElement("span");
-    titel.textContent = project.vak ? `${project.naam} — ${project.vak}` : project.naam;
-    kop.appendChild(titel);
-    if (!isVast) {
-      const verwijder = document.createElement("button");
-      verwijder.type = "button";
-      verwijder.textContent = "Verwijderen";
-      verwijder.addEventListener("click", () => callbacks.onProjectVerwijderen(project.id));
-      kop.appendChild(verwijder);
-    }
-    kaart.appendChild(kop);
-
-    if (project.tekst) {
-      const tekst = document.createElement("p");
-      tekst.className = "vak-detail-klein";
-      tekst.textContent = project.tekst;
-      kaart.appendChild(tekst);
-    }
-
-    if (project.waarschuwing) {
-      const waarschuwing = document.createElement("p");
-      waarschuwing.className = "project-waarschuwing";
-      waarschuwing.textContent = project.waarschuwing;
-      kaart.appendChild(waarschuwing);
-    }
-
-    const lijst = document.createElement("ul");
-    for (const mijlpaal of project.mijlpalen) lijst.appendChild(renderMijlpaalRij(project, mijlpaal, afgevinkteMijlpalen));
-    kaart.appendChild(lijst);
-
-    return kaart;
-  }
-
-  function renderEigenProjectForm() {
-    const form = document.createElement("form");
-    form.className = "eigen-project-form";
-
-    const naam = document.createElement("input");
-    naam.type = "text";
-    naam.placeholder = "Projectnaam";
-
-    const vak = document.createElement("input");
-    vak.type = "text";
-    vak.placeholder = "Vak (optioneel)";
-
-    const mijlpaalDatum = document.createElement("input");
-    mijlpaalDatum.type = "date";
-
-    const mijlpaalLabel = document.createElement("input");
-    mijlpaalLabel.type = "text";
-    mijlpaalLabel.placeholder = "Eerste mijlpaal";
-
-    const knop = document.createElement("button");
-    knop.type = "submit";
-    knop.textContent = "Eigen project toevoegen";
-
-    form.appendChild(naam);
-    form.appendChild(vak);
-    form.appendChild(mijlpaalDatum);
-    form.appendChild(mijlpaalLabel);
-    form.appendChild(knop);
-
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      if (!naam.value || !mijlpaalDatum.value || !mijlpaalLabel.value) return;
-      callbacks.onProjectToevoegen({
-        naam: naam.value,
-        vak: vak.value || null,
-        mijlpalen: [{ datum: mijlpaalDatum.value, label: mijlpaalLabel.value }],
-      });
-      form.reset();
-    });
-
-    return form;
-  }
-
-  function tekenenProjecten() {
-    const { afgevinkteMijlpalen, eigenProjecten } = laatsteCtx;
-    projectenEl.textContent = "";
-
-    const kop = document.createElement("h2");
-    kop.className = "scherm-kop";
-    kop.textContent = "Projecten";
-    projectenEl.appendChild(kop);
-
-    for (const project of projects) projectenEl.appendChild(renderProjectKaart(project, afgevinkteMijlpalen, true));
-    for (const project of eigenProjecten) projectenEl.appendChild(renderProjectKaart(project, afgevinkteMijlpalen, false));
-
-    // Het invoerformulier stond altijd open, terwijl je zelden een project
-    // toevoegt; ingeklapt kost het één regel in plaats van vijf velden.
-    const uitklap = document.createElement("details");
-    uitklap.className = "uitklap";
-    const samenvatting = document.createElement("summary");
-    samenvatting.className = "tap-target";
-    samenvatting.textContent = "Eigen project toevoegen";
-    uitklap.appendChild(samenvatting);
-    uitklap.appendChild(renderEigenProjectForm());
-    projectenEl.appendChild(uitklap);
   }
 
   function bouwRijen() {
@@ -489,10 +363,7 @@ export function initOverzichtScherm(root, callbacks) {
     const rij = document.createElement("div");
     rij.className = "overzicht-weergave-toggle";
     for (const w of WEERGAVEN) {
-      const knop = document.createElement("button");
-      knop.type = "button";
-      knop.className = "tap-target weergave-knop";
-      knop.textContent = w.label;
+      const knop = maakKnop({ label: w.label, className: "tap-target weergave-knop" });
       knop.setAttribute("aria-current", weergave === w.id ? "true" : "false");
       knop.addEventListener("click", () => zetWeergave(w.id));
       rij.appendChild(knop);
@@ -564,10 +435,7 @@ export function initOverzichtScherm(root, callbacks) {
     filtersEl.className = "overzicht-filters";
     filtersEl.appendChild(renderWeergaveToggle());
     for (const filter of FILTERS) {
-      const knop = document.createElement("button");
-      knop.type = "button";
-      knop.className = "tap-target filter-chip";
-      knop.textContent = filter.label;
+      const knop = maakKnop({ label: filter.label, className: "tap-target filter-chip" });
       knop.setAttribute("aria-current", actieveFilters.has(filter.id) ? "true" : "false");
       knop.addEventListener("click", () => {
         const nieuw = new Set(actieveFilters);
@@ -621,108 +489,13 @@ export function initOverzichtScherm(root, callbacks) {
     gemistEl.appendChild(lijst);
   }
 
-  function tekenenRuimte() {
-    ruimteEl.textContent = "";
-
-    const kop = document.createElement("div");
-    kop.className = "ruimte-kop";
-    const titel = document.createElement("h3");
-    titel.textContent = "Waar is ruimte";
-    kop.appendChild(titel);
-
-    const keuze = document.createElement("div");
-    keuze.className = "ruimte-keuze";
-    const keuzeLabel = document.createElement("span");
-    keuzeLabel.textContent = "mag kosten:";
-    keuze.appendChild(keuzeLabel);
-    for (const budget of RUIMTE_BUDGETTEN) {
-      const knop = document.createElement("button");
-      knop.type = "button";
-      knop.className = "tap-target weergave-knop";
-      knop.textContent = budget === 0 ? "niets" : meervoud(budget, "lesdag", "lesdagen");
-      knop.setAttribute("aria-current", laatsteCtx.ruimteBudget === budget ? "true" : "false");
-      knop.addEventListener("click", () => callbacks.onRuimteBudgetWijzigen(budget));
-      keuze.appendChild(knop);
-    }
-    kop.appendChild(keuze);
-    ruimteEl.appendChild(kop);
-
-    const vensters = rijenRuimte(
-      laatsteCtx.ruimteBudget,
-      laatsteCtx.vandaag,
-      laatsteCtx.pythonAfgewezen,
-      laatsteCtx.tripStatusOverrides,
-      laatsteCtx.eigenReizen
-    );
-
-    if (vensters.length === 0) {
-      const leeg = document.createElement("p");
-      leeg.className = "overzicht-leeg";
-      leeg.textContent = `Geen aaneengesloten periode van ${RUIMTE_MINIMUM_DAGEN} dagen of meer die nog komt.`;
-      ruimteEl.appendChild(leeg);
-      return;
-    }
-
-    const lijst = document.createElement("ul");
-    lijst.className = "ruimte-lijst";
-    for (const venster of vensters) lijst.appendChild(renderVenster(venster));
-    ruimteEl.appendChild(lijst);
-  }
-
-  function renderVenster(venster) {
-    const li = document.createElement("li");
-    li.className = "ruimte-rij";
-
-    const lengte = document.createElement("span");
-    lengte.className = "ruimte-lengte";
-    lengte.textContent = `${venster.length} dg`;
-    li.appendChild(lengte);
-
-    const midden = document.createElement("span");
-    midden.className = "ruimte-midden";
-
-    const bereik = document.createElement("span");
-    bereik.textContent = `${kortDatum(venster.start)} – ${kortDatum(venster.end)}`;
-    midden.appendChild(bereik);
-
-    // Alleen een prijs tonen als er een prijs is: "kost geen les" onder elke
-    // regel is dertien keer dezelfde mededeling. Geen regel betekent gratis.
-    if (venster.gemisteLessen.length > 0) {
-      const perVak = {};
-      for (const les of venster.gemisteLessen) perVak[les.course] = (perVak[les.course] ?? 0) + 1;
-      const prijs = document.createElement("span");
-      prijs.className = "ruimte-prijs";
-      prijs.textContent = `kost ${Object.entries(perVak)
-        .map(([vak, n]) => `${vakAfkorting(vak)} ${n}x`)
-        .join(", ")}`;
-      midden.appendChild(prijs);
-    }
-
-    if (venster.bevatRisicoperiode) {
-      const risico = document.createElement("span");
-      risico.className = "ruimte-risico";
-      risico.textContent = "valt deels in de flexibele week";
-      midden.appendChild(risico);
-    }
-    li.appendChild(midden);
-
-    const knop = document.createElement("button");
-    knop.type = "button";
-    knop.className = "rij-knop";
-    knop.textContent = "Inplannen";
-    knop.addEventListener("click", () => callbacks.onRuimteKiezen(venster.start, venster.end));
-    li.appendChild(knop);
-
-    return li;
-  }
-
   function render(ctx) {
     laatsteCtx = ctx;
     if (ctx.overzichtFilters) actieveFilters = new Set(ctx.overzichtFilters);
     tekenenTelkaarten();
     tekenenGemist();
-    tekenenRuimte();
-    tekenenProjecten();
+    renderRuimte(ruimteEl, ctx, callbacks);
+    renderProjecten(projectenEl, ctx, callbacks);
     tekenenFiltersEnLijst();
   }
 
