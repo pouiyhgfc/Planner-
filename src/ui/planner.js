@@ -11,6 +11,13 @@ import { trips, effectieveTripStatus, TRIP_STATUSSEN } from "../data/trips.js";
 
 const EXPORT_WAARSCHUWING_DAGEN = 14;
 
+/** Leesbare labels voor de opgeslagen statuswaarden uit trips.js. */
+const TRIP_STATUS_LABELS = {
+  geboekt: "geboekt",
+  "wijziging-aangevraagd": "wijziging aangevraagd",
+  vervallen: "vervallen",
+};
+
 /**
  * @param {HTMLElement} root
  * @param {(veld: {naam: string, start: string, end: string, status: string, notitie: string}) => void} onToevoegen
@@ -20,19 +27,13 @@ export function renderPlannerForm(root, onToevoegen, voorinvulling) {
   root.textContent = "";
   root.className = "planner-form";
 
-  const naam = veldInput("text", "Naam");
-  const start = veldInput("date", "Van");
-  const eind = veldInput("date", "Tot");
+  const naam = invoerveld("text", { verplicht: true });
+  const start = invoerveld("date");
+  const eind = invoerveld("date");
   if (voorinvulling?.start) start.value = voorinvulling.start;
   if (voorinvulling?.end) eind.value = voorinvulling.end;
-  const status = document.createElement("select");
-  for (const waarde of ["idee", "vast"]) {
-    const optie = document.createElement("option");
-    optie.value = waarde;
-    optie.textContent = waarde;
-    status.appendChild(optie);
-  }
-  const notitie = veldInput("text", "Notitie (optioneel)");
+  const status = keuzeveld(["idee", "vast"]);
+  const notitie = invoerveld("text");
 
   const waarschuwing = document.createElement("div");
   waarschuwing.className = "kosten-waarschuwing";
@@ -60,8 +61,13 @@ export function renderPlannerForm(root, onToevoegen, voorinvulling) {
   knop.textContent = "Toevoegen";
 
   const form = document.createElement("form");
-  for (const el of [naam, start, eind, status, notitie, knop]) form.appendChild(el);
+  form.appendChild(metLabel("Naam", naam));
+  form.appendChild(metLabel("Van", start));
+  form.appendChild(metLabel("Tot", eind));
+  form.appendChild(metLabel("Status", status));
+  form.appendChild(metLabel("Notitie", notitie));
   form.appendChild(waarschuwing);
+  form.appendChild(knop);
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -82,14 +88,51 @@ export function renderPlannerForm(root, onToevoegen, voorinvulling) {
 
 /**
  * @param {string} type
- * @param {string} placeholder
+ * @param {{verplicht?: boolean, placeholder?: string}} [opties]
+ * @returns {HTMLInputElement}
  */
-function veldInput(type, placeholder) {
+function invoerveld(type, opties = {}) {
   const input = document.createElement("input");
   input.type = type;
-  input.placeholder = placeholder;
-  if (type !== "date") input.required = type === "text" && placeholder === "Naam";
+  if (opties.placeholder) input.placeholder = opties.placeholder;
+  if (opties.verplicht) input.required = true;
   return input;
+}
+
+/**
+ * Zet een zichtbaar label vóór een veld. Nodig omdat een placeholder op
+ * <input type="date"> niet getoond wordt: die velden stonden daardoor
+ * naamloos in het formulier en begin- en einddatum waren niet uit elkaar
+ * te houden.
+ * @param {string} tekst
+ * @param {HTMLElement} veld
+ * @returns {HTMLLabelElement}
+ */
+function metLabel(tekst, veld) {
+  const label = document.createElement("label");
+  label.className = "veld-rij";
+  const naam = document.createElement("span");
+  naam.className = "veld-label";
+  naam.textContent = tekst;
+  label.appendChild(naam);
+  label.appendChild(veld);
+  return label;
+}
+
+/**
+ * @param {string[]} waarden
+ * @param {Record<string, string>} [labels] leesbaar label per opgeslagen waarde
+ * @returns {HTMLSelectElement}
+ */
+function keuzeveld(waarden, labels = {}) {
+  const select = document.createElement("select");
+  for (const waarde of waarden) {
+    const optie = document.createElement("option");
+    optie.value = waarde;
+    optie.textContent = labels[waarde] ?? waarde;
+    select.appendChild(optie);
+  }
+  return select;
 }
 
 const THEMA_OPTIES = [
@@ -164,14 +207,23 @@ export function renderExportRegel(root, laatsteExport, onExporteren) {
   knop.addEventListener("click", onExporteren);
   root.appendChild(knop);
 
+  // Het kale bestandsveld toont een niet-vertaalbare "Choose file / no file
+  // chosen" en zegt niet wat het doet; een label eromheen geeft het een
+  // Nederlandse naam en hetzelfde uiterlijk als de andere knoppen.
   const importInput = document.createElement("input");
   importInput.type = "file";
   importInput.accept = "application/json";
+  importInput.className = "visueel-verborgen";
   importInput.addEventListener("change", () => {
     if (importInput.files.length > 0) root.dispatchEvent(new CustomEvent("import-bestand", { detail: importInput.files[0] }));
     importInput.value = "";
   });
-  root.appendChild(importInput);
+
+  const importKnop = document.createElement("label");
+  importKnop.className = "tap-target knop-als-label";
+  importKnop.textContent = "Importeren";
+  importKnop.appendChild(importInput);
+  root.appendChild(importKnop);
 }
 
 /**
@@ -276,17 +328,10 @@ export function renderReisForm(root, onToevoegen) {
   root.textContent = "";
   root.className = "reis-form";
 
-  const naam = veldInput("text", "Naam");
-  naam.required = true;
-  const start = veldInput("date", "Van");
-  const eind = veldInput("date", "Tot");
-  const status = document.createElement("select");
-  for (const waarde of TRIP_STATUSSEN) {
-    const optie = document.createElement("option");
-    optie.value = waarde;
-    optie.textContent = waarde;
-    status.appendChild(optie);
-  }
+  const naam = invoerveld("text", { verplicht: true });
+  const start = invoerveld("date");
+  const eind = invoerveld("date");
+  const status = keuzeveld(TRIP_STATUSSEN, TRIP_STATUS_LABELS);
 
   const vluchtenWrap = document.createElement("div");
   vluchtenWrap.className = "reis-vluchten";
@@ -299,7 +344,7 @@ export function renderReisForm(root, onToevoegen) {
     datum.type = "date";
     const tijd = document.createElement("input");
     tijd.type = "time";
-    const label = veldInput("text", "Label (optioneel)");
+    const label = invoerveld("text", { placeholder: "Label" });
     const verwijder = document.createElement("button");
     verwijder.type = "button";
     verwijder.textContent = "×";
@@ -327,7 +372,10 @@ export function renderReisForm(root, onToevoegen) {
   knop.textContent = "Reis toevoegen";
 
   const form = document.createElement("form");
-  for (const el of [naam, start, eind, status]) form.appendChild(el);
+  form.appendChild(metLabel("Naam", naam));
+  form.appendChild(metLabel("Van", start));
+  form.appendChild(metLabel("Tot", eind));
+  form.appendChild(metLabel("Status", status));
   form.appendChild(vluchtenWrap);
   form.appendChild(vluchtToevoegKnop);
   form.appendChild(knop);

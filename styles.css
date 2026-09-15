@@ -161,6 +161,14 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Een eigen display-regel (bijv. display: grid) is specifieker dan de
+   display: none die de browser aan [hidden] geeft, waardoor een verborgen
+   element tóch zichtbaar blijft. Dat gebeurde met de dagkiezer in Weken.
+   Deze regel maakt hidden overal betrouwbaar. */
+[hidden] {
+  display: none !important;
+}
+
 html,
 body {
   margin: 0;
@@ -375,6 +383,21 @@ select {
   flex-direction: column;
   gap: 8px;
 }
+.veld-rij {
+  display: grid;
+  grid-template-columns: 5.5em 1fr;
+  align-items: center;
+  gap: 8px;
+}
+.veld-label {
+  color: var(--text-muted);
+  font-size: var(--fs-min);
+}
+.veld-rij input,
+.veld-rij select {
+  min-width: 0;
+  width: 100%;
+}
 .reis-vluchten {
   display: flex;
   flex-direction: column;
@@ -421,6 +444,29 @@ select {
   align-items: center;
   gap: 8px;
   font-size: var(--fs-min);
+}
+
+.visueel-verborgen {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.knop-als-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-control);
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: var(--fs-base);
+}
+.knop-als-label:active {
+  transform: scale(0.98);
 }
 
 /* fase 8C — scherm "Maand" */
@@ -574,23 +620,31 @@ select {
   background: var(--accent);
   border-radius: 0 0 var(--radius-day) var(--radius-day);
 }
+/* Geboekt = volle band in de accentkleur, aangevraagd = alleen een omlijning.
+   Het onderscheid moet in een vakje van 48px leesbaar zijn; de eerdere
+   variant (accent-bg met accent-border) was op een witte kaart praktisch
+   onzichtbaar, waardoor reizen in de maandweergave niet opvielen. */
 .dagvak-reis-band {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 6px;
-  background: var(--accent-bg);
-  border: var(--border-width) solid var(--accent-border);
-  border-bottom: none;
+  height: 5px;
+  background: var(--accent);
 }
 .dagvak-reis-band.reis-eerste {
-  border-top-left-radius: var(--radius-day);
+  left: 2px;
+  border-top-left-radius: 3px;
+  border-bottom-left-radius: 3px;
 }
 .dagvak-reis-band.reis-laatste {
-  border-top-right-radius: var(--radius-day);
+  right: 2px;
+  border-top-right-radius: 3px;
+  border-bottom-right-radius: 3px;
 }
 .dagvak-reis-band.reis-aangevraagd {
+  background: var(--accent-bg);
+  border: var(--border-width) solid var(--accent);
   border-style: dashed;
 }
 .dagvak-reis-vlucht {
@@ -631,10 +685,9 @@ select {
 }
 .legenda-swatch-reis {
   width: 14px;
-  height: 8px;
+  height: 5px;
   border-radius: 2px;
-  background: var(--accent-bg);
-  border: var(--border-width) solid var(--accent-border);
+  background: var(--accent);
 }
 
 .dagblad-paneel {
@@ -846,8 +899,7 @@ select {
   height: 6px;
 }
 .weekkaart-reis-cel.bezet {
-  background: var(--accent-bg);
-  border: var(--border-width) solid var(--accent-border);
+  background: var(--accent);
 }
 .weekkaart-reis-cel.reis-eerste {
   border-top-left-radius: 3px;
@@ -858,7 +910,8 @@ select {
   border-bottom-right-radius: 3px;
 }
 .weekkaart-reis-cel.reis-aangevraagd {
-  border-style: dashed;
+  background: var(--accent-bg);
+  border: var(--border-width) dashed var(--accent);
 }
 
 .weekkaart-uitzonderingen {

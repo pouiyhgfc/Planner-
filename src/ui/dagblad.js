@@ -234,7 +234,10 @@ function renderLesBlok(les, week, deadlinesVandaag, onNaarVak) {
 
   const balkje = document.createElement("span");
   balkje.className = "lesblok-balkje";
-  balkje.style.background = `var(--vak-${course.id.toLowerCase()}-bg)`;
+  // -text, niet -bg: de bg-tinten zijn bedoeld als vlak achter tekst en zijn
+  // als 4px streep op een witte kaart onzichtbaar. De streepjes in de
+  // maandweergave gebruiken om dezelfde reden -text.
+  balkje.style.background = `var(--vak-${course.id.toLowerCase()}-text)`;
   li.appendChild(balkje);
 
   const inhoud = document.createElement("div");

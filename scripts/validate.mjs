@@ -61,7 +61,7 @@ import {
   rijenReizen,
   rijenOpleveringen,
 } from "../src/ui/overzichtData.js";
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
@@ -857,8 +857,12 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   check("main.js registreert de service worker", mainJs.includes("serviceWorker.register"), true);
 }
 
-// sw.js: elk bestand in de app-shell-lijst moet echt bestaan (voorkomt een
-// cache.addAll() die faalt op een ontbrekend bestand, wat installatie breekt)
+// sw.js: de app-shell moet in beide richtingen kloppen. Elk vermeld bestand
+// moet bestaan (anders faalt cache.addAll() en installeert de service worker
+// niet), én elke module onder src/ moet erin staan — anders werkt de app
+// offline niet meer zodra er een bestand bijkomt. Dat laatste is precies wat
+// er in fase 9 misging: opleveringen.js, academicWeek.js en weekgewicht.js
+// kwamen erbij zonder dat iemand de lijst bijwerkte.
 {
   const swBron = readFileSync(join(PROJECT_ROOT, "sw.js"), "utf8");
   const match = swBron.match(/const APP_SHELL = \[([\s\S]*?)\];/);
@@ -868,6 +872,20 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   for (const pad of bestanden) {
     if (pad === "./") continue; // navigatie-alias voor index.html, geen los bestand
     check(`sw.js: app-shell-bestand bestaat (${pad})`, existsSync(join(PROJECT_ROOT, pad.replace(/^\.\//, ""))), true);
+  }
+
+  const gecached = new Set(bestanden.map((p) => p.replace(/^\.\//, "")));
+  const modules = [];
+  (function zoekModules(map) {
+    for (const entry of readdirSync(join(PROJECT_ROOT, map), { withFileTypes: true })) {
+      const pad = `${map}/${entry.name}`;
+      if (entry.isDirectory()) zoekModules(pad);
+      else if (entry.name.endsWith(".js")) modules.push(pad);
+    }
+  })("src");
+  check("sw.js: er zijn modules gevonden om te controleren", modules.length > 0, true);
+  for (const pad of modules) {
+    check(`sw.js: APP_SHELL cachet ${pad}`, gecached.has(pad), true);
   }
 }
 
@@ -954,16 +972,6 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   check('main.js: "donker" mapt naar data-theme="dark"', /donker:\s*"dark"/.test(mainBron), true);
 }
 
-// sw.js: de oude fase 1-6 UI-bestanden zijn vervangen, niet blijven hangen
-{
-  const swBron = readFileSync(join(PROJECT_ROOT, "sw.js"), "utf8");
-  check("sw.js: render.js niet meer gecachet (vervangen in 8B)", swBron.includes("render.js"), false);
-  check("sw.js: overzicht.js (oud) niet meer gecachet (vervangen in 8B)", swBron.includes("ui/overzicht.js"), false);
-  for (const bestand of ["nav.js", "datumlabels.js"]) {
-    check(`sw.js: APP_SHELL bevat ui/${bestand}`, swBron.includes(`ui/${bestand}`), true);
-  }
-}
-
 // =====================================================================
 // Fase 8C — scherm "Maand"
 // =====================================================================
@@ -1034,22 +1042,6 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   check("zetDeadlineAfgevinkt: uitvinken", state.afgevinkteDeadlines, []);
 }
 
-// sw.js: de fase 8C-bestanden zitten in de app-shell
-{
-  const swBron = readFileSync(join(PROJECT_ROOT, "sw.js"), "utf8");
-  for (const bestand of ["schermMaand.js", "maandGrid.js", "dagblad.js"]) {
-    check(`sw.js: APP_SHELL bevat ui/${bestand}`, swBron.includes(`ui/${bestand}`), true);
-  }
-}
-
-// Geen title-attributen in de fase 8C-bestanden
-{
-  for (const bestand of ["src/ui/maandGrid.js", "src/ui/dagblad.js", "src/ui/schermMaand.js"]) {
-    const bron = readFileSync(join(PROJECT_ROOT, bestand), "utf8");
-    check(`${bestand}: geen title-attributen`, /\.title\s*=|setAttribute\(\s*["']title["']/.test(bron), false);
-  }
-}
-
 // =====================================================================
 // Fase 8D — scherm "Weken"
 // =====================================================================
@@ -1107,22 +1099,6 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   check("dagdelenMetKleur: ochtend bezet (PSY)", dagdelen.ochtend?.kleurVar, "--vak-psy-text");
   check("dagdelenMetKleur: middag bezet (Python)", dagdelen.middag?.kleurVar, "--vak-py-text");
   check("dagdelenMetKleur: avond bezet (Chinees)", dagdelen.avond?.kleurVar, "--vak-chi-text");
-}
-
-// sw.js: de fase 8D-bestanden zitten in de app-shell
-{
-  const swBron = readFileSync(join(PROJECT_ROOT, "sw.js"), "utf8");
-  for (const bestand of ["schermWeken.js", "wekenGrid.js"]) {
-    check(`sw.js: APP_SHELL bevat ui/${bestand}`, swBron.includes(`ui/${bestand}`), true);
-  }
-}
-
-// Geen title-attributen in de fase 8D-bestanden
-{
-  for (const bestand of ["src/ui/wekenGrid.js", "src/ui/schermWeken.js"]) {
-    const bron = readFileSync(join(PROJECT_ROOT, bestand), "utf8");
-    check(`${bestand}: geen title-attributen`, /\.title\s*=|setAttribute\(\s*["']title["']/.test(bron), false);
-  }
 }
 
 // =====================================================================
@@ -1254,23 +1230,6 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   );
 }
 
-// sw.js: de fase 8E-bestanden zitten in de app-shell
-{
-  const swBron = readFileSync(join(PROJECT_ROOT, "sw.js"), "utf8");
-  for (const bestand of ["schermOverzicht.js", "overzichtData.js"]) {
-    check(`sw.js: APP_SHELL bevat ui/${bestand}`, swBron.includes(`ui/${bestand}`), true);
-  }
-  check("sw.js: APP_SHELL bevat data/projects.js", swBron.includes("data/projects.js"), true);
-}
-
-// Geen title-attributen in de fase 8E-bestanden
-{
-  for (const bestand of ["src/ui/schermOverzicht.js", "src/ui/overzichtData.js", "src/data/projects.js"]) {
-    const bron = readFileSync(join(PROJECT_ROOT, bestand), "utf8");
-    check(`${bestand}: geen title-attributen`, /\.title\s*=|setAttribute\(\s*["']title["']/.test(bron), false);
-  }
-}
-
 // =====================================================================
 // Fase 8F — scherm "Vakken" (laatste subfase)
 // =====================================================================
@@ -1397,20 +1356,13 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   check("zetVakVeld: tweede sleutel blijft naast de eerste staan", Object.keys(state.vakkenVeldwaarden).length, 2);
 }
 
-// sw.js: de fase 8F-bestanden zitten in de app-shell, het oude schermen.js niet meer
+// Geen title-attributen (tooltips bestaan niet op touch) — over élk
+// UI-bestand, niet per fase: een lijstje per fase mist precies de bestanden
+// die er later bij komen.
 {
-  const swBron = readFileSync(join(PROJECT_ROOT, "sw.js"), "utf8");
-  check("sw.js: schermen.js niet meer gecachet (vervangen in 8F)", swBron.includes("ui/schermen.js"), false);
-  for (const bestand of ["schermVakken.js", "vakkenData.js"]) {
-    check(`sw.js: APP_SHELL bevat ui/${bestand}`, swBron.includes(`ui/${bestand}`), true);
-  }
-}
-
-// Geen title-attributen in de fase 8F-bestanden
-{
-  for (const bestand of ["src/ui/schermVakken.js", "src/ui/vakkenData.js"]) {
-    const bron = readFileSync(join(PROJECT_ROOT, bestand), "utf8");
-    check(`${bestand}: geen title-attributen`, /\.title\s*=|setAttribute\(\s*["']title["']/.test(bron), false);
+  for (const bestand of readdirSync(join(PROJECT_ROOT, "src/ui")).filter((n) => n.endsWith(".js"))) {
+    const bron = readFileSync(join(PROJECT_ROOT, "src/ui", bestand), "utf8");
+    check(`src/ui/${bestand}: geen title-attributen`, /\.title\s*=|setAttribute\(\s*["']title["']/.test(bron), false);
   }
 }
 
