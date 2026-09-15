@@ -7,14 +7,88 @@
 import { toYMD, parseYMD, addDays, dayOfWeek, rangeDays } from "../lib/date.js";
 import { dayStatus } from "../lib/dayStatus.js";
 import { freeBlocks } from "../lib/blocks.js";
+import { zwareMomentenOpDag, weekgewicht } from "../lib/weekgewicht.js";
 import { appPeriod } from "../data/semester.js";
-import { courses } from "../data/courses.js";
+import { courses, courseVoor } from "../data/courses.js";
 import { WEEKDAGEN, maandNaam } from "./datumlabels.js";
+import { vakAfkorting } from "./tekst.js";
 
-const AFKORTING = { PSY: "PSY", PY: "PY", AGTECH: "AGT", RTE: "RTE", CHI: "CHI" };
+const ZWAAR_DREMPEL = 3;
+const KALENDER_WEERGAVEN = [
+  { id: "compact", label: "Compact" },
+  { id: "uitgebreid", label: "Uitgebreid" },
+];
 
-function courseVoor(id) {
-  return courses.find((c) => c.id === id);
+/**
+ * FASE-9.md B5 punt 2: het korte woord voor één zwaar moment, bijv.
+ * "midterm", "mondeling", "presentatie". CHI-tentamens hebben een eigen
+ * `onderdeel`-veld (mondeling/schriftelijk/presentatie, uit A1) — dat wint;
+ * anders wordt het label zelf gebruikt om midterm/final/exam te herkennen.
+ * @param {object} item
+ * @returns {string}
+ */
+function kortMomentType(item) {
+  if (item.type === "tentamen") {
+    if (item.onderdeel) return item.onderdeel;
+    if (/midterm/i.test(item.label)) return "midterm";
+    if (/final/i.test(item.label)) return "final";
+    if (/comprehensive|exam/i.test(item.label)) return "exam";
+    return "tentamen";
+  }
+  return "presentatie";
+}
+
+/**
+ * FASE-9.md B5 punt 2: één regel tekst voor een dag in de compacte stand.
+ * Alleen bij een tentamen, presentatie of harde deadline, of bij een vrije
+ * dag — anders null, want een gewone lesdag was juist de ruis die deze regel
+ * moest wegnemen. Bij precies één zwaar moment: vak-afkorting plus het korte
+ * type ("PSY midterm"). Bij twee of meer: het aantal plus een generiek woord,
+ * specifiek als alle zware momenten van hetzelfde soort zijn (bijv.
+ * "2 tentamens"), anders "zware momenten".
+ * @param {ReturnType<typeof dayStatus>} dag
+ * @returns {string|null}
+ */
+export function dagRegelTekst(dag) {
+  const { tentamens, presentaties, deadlines, totaal } = zwareMomentenOpDag(dag);
+  // Een feestdag of geen-lesdag was in de kalender alleen een iets grijzer
+  // vakje: je zag pas wélke vrije dag het was door erop te tikken. De naam
+  // is hier belangrijker dan de zware momenten die er toch niet zijn.
+  if (totaal === 0) return vrijeDagTekst(dag);
+  if (totaal === 1) {
+    const item = tentamens[0] ?? presentaties[0];
+    if (item) return `${vakAfkorting(item.course)} ${kortMomentType(item)}`;
+    return deadlines[0].course ? `${vakAfkorting(deadlines[0].course)} deadline` : "Deadline";
+  }
+  const woord =
+    tentamens.length === totaal ? "tentamens" : presentaties.length === totaal ? "presentaties" : deadlines.length === totaal ? "deadlines" : "zware momenten";
+  return `${totaal} ${woord}`;
+}
+
+/**
+ * De naam van een vrije dag, kort genoeg voor een dagvakje. Vakantiedagen
+ * krijgen niets: dat zijn 46 aaneengesloten dagen en de dagstatus kleurt ze
+ * al — de naam op elke dag herhalen zou juist ruis zijn.
+ * @param {ReturnType<typeof dayStatus>} dag
+ * @returns {string|null}
+ */
+function vrijeDagTekst(dag) {
+  const vrij = dag.feestdagen[0];
+  return vrij ? vrij.label : null;
+}
+
+/**
+ * FASE-9.md B5 punt 3: de onderwerpen van een dag voor de "uitgebreide"
+ * weergave, chronologisch, één regel per vak met de vakafkorting ervoor.
+ * Eén doorlopende regel met alle onderwerpen achter elkaar paste niet in een
+ * dagvakje van ~50px: daar bleven zes tekens van over. Per vak een eigen
+ * regel leest wél ("PSY Learning"), ook als de staart wegvalt.
+ * @param {ReturnType<typeof dayStatus>} dag
+ * @returns {string[]} leeg als er die dag niets is
+ */
+export function onderwerpenRegels(dag) {
+  const vrij = vrijeDagTekst(dag);
+  return [...(vrij ? [vrij] : []), ...gesorteerdOpTijd(dag.vakken).map((v) => `${vakAfkorting(v.course)} ${v.label}`)];
 }
 
 /**
@@ -83,18 +157,41 @@ function gesorteerdOpTijd(vakken) {
  * @param {HTMLElement} root
  * @param {{
  *   jaar: number, maand: number, vandaag: string, geselecteerd: string|null,
- *   items: object[], pythonAfgewezen: boolean,
+ *   items: object[], pythonAfgewezen: boolean, tripStatusOverrides: Record<string, string>,
+ *   eigenReizen: object[], kalenderWeergave: "compact"|"uitgebreid",
  * }} opts
  * @param {(ymd: string) => void} onDagKlik
  * @param {(jaar: number, maand: number) => void} onNavigeren
+ * @param {(waarde: "compact"|"uitgebreid") => void} onWeergaveWijzigen
  */
-export function renderMaandScherm(root, opts, onDagKlik, onNavigeren) {
-  const { jaar, maand, vandaag, geselecteerd, items, pythonAfgewezen } = opts;
+export function renderMaandScherm(root, opts, onDagKlik, onNavigeren, onWeergaveWijzigen) {
+  const { jaar, maand, vandaag, geselecteerd, items, pythonAfgewezen, tripStatusOverrides = {}, eigenReizen = [], kalenderWeergave = "compact" } = opts;
   root.textContent = "";
 
   root.appendChild(renderHeader(jaar, maand, vandaag, onNavigeren));
-  root.appendChild(renderGrid(jaar, maand, vandaag, geselecteerd, items, pythonAfgewezen, onDagKlik));
+  root.appendChild(renderWeergaveToggle(kalenderWeergave, onWeergaveWijzigen));
+  root.appendChild(renderGrid(jaar, maand, vandaag, geselecteerd, items, pythonAfgewezen, tripStatusOverrides, eigenReizen, kalenderWeergave, onDagKlik));
   root.appendChild(renderLegenda());
+}
+
+/**
+ * FASE-9.md B5 punt 3: schakelaar compact/uitgebreid boven de kalender.
+ * @param {"compact"|"uitgebreid"} huidig
+ * @param {(waarde: "compact"|"uitgebreid") => void} onWijzigen
+ */
+function renderWeergaveToggle(huidig, onWijzigen) {
+  const rij = document.createElement("div");
+  rij.className = "maand-weergave-toggle";
+  for (const w of KALENDER_WEERGAVEN) {
+    const knop = document.createElement("button");
+    knop.type = "button";
+    knop.className = "tap-target weergave-knop";
+    knop.textContent = w.label;
+    knop.setAttribute("aria-current", huidig === w.id ? "true" : "false");
+    knop.addEventListener("click", () => onWijzigen(w.id));
+    rij.appendChild(knop);
+  }
+  return rij;
 }
 
 function renderHeader(jaar, maand, vandaag, onNavigeren) {
@@ -144,12 +241,14 @@ function renderHeader(jaar, maand, vandaag, onNavigeren) {
   return wrap;
 }
 
-function renderGrid(jaar, maand, vandaag, geselecteerd, items, pythonAfgewezen, onDagKlik) {
+function renderGrid(jaar, maand, vandaag, geselecteerd, items, pythonAfgewezen, tripStatusOverrides, eigenReizen, kalenderWeergave, onDagKlik) {
   const weken = maandWeken(jaar, maand);
   const frag = document.createDocumentFragment();
 
   const dagkoppen = document.createElement("div");
   dagkoppen.className = "maand-dagkoppen";
+  const gewichtSpacer = document.createElement("span");
+  dagkoppen.appendChild(gewichtSpacer);
   for (const naam of WEEKDAGEN) {
     const kop = document.createElement("span");
     kop.textContent = naam;
@@ -157,31 +256,37 @@ function renderGrid(jaar, maand, vandaag, geselecteerd, items, pythonAfgewezen, 
   }
   frag.appendChild(dagkoppen);
 
-  const grid = document.createElement("div");
-  grid.className = "maand-grid";
-
   let lesmomenten = 0;
   let tentamens = 0;
 
   for (const week of weken) {
+    const weekrij = document.createElement("div");
+    weekrij.className = "maand-weekrij";
+
+    // FASE-9.md B5 punt 1: weekgewicht — weeknummer plus het aantal zware
+    // momenten (tentamens, presentaties, harde deadlines) die kalenderweek,
+    // ongeacht welke maand hier getoond wordt (dus incl. buiten-maand-dagen).
+    const gewicht = weekgewicht(week[0], pythonAfgewezen, tripStatusOverrides, eigenReizen);
+    weekrij.appendChild(renderWeekgewicht(gewicht));
+
     for (const ymd of week) {
       const { m } = parseYMD(ymd);
       const buitenPeriode = ymd < appPeriod.start || ymd > appPeriod.end;
       const buitenMaand = m !== maand;
-      grid.appendChild(
-        renderDagvak(ymd, buitenPeriode, buitenMaand, vandaag, geselecteerd, items, pythonAfgewezen, onDagKlik, (dag) => {
+      weekrij.appendChild(
+        renderDagvak(ymd, buitenPeriode, buitenMaand, vandaag, geselecteerd, items, pythonAfgewezen, tripStatusOverrides, eigenReizen, kalenderWeergave, onDagKlik, (dag) => {
           if (buitenMaand || buitenPeriode) return;
           lesmomenten += dag.vakken.filter((v) => v.type === "les").length;
           tentamens += dag.vakken.filter((v) => v.type === "tentamen").length;
         })
       );
     }
+    frag.appendChild(weekrij);
   }
-  frag.appendChild(grid);
 
   const eersteDag = toYMD({ y: jaar, m: maand, d: 1 });
   const laatsteDag = laatsteDagVanMaand(jaar, maand);
-  const vrijeBlokken = freeBlocks(pythonAfgewezen).filter((b) => b.start >= eersteDag && b.start <= laatsteDag).length;
+  const vrijeBlokken = freeBlocks(pythonAfgewezen, tripStatusOverrides, eigenReizen).filter((b) => b.start >= eersteDag && b.start <= laatsteDag).length;
 
   const telling = document.createElement("p");
   telling.className = "maand-telling";
@@ -191,7 +296,34 @@ function renderGrid(jaar, maand, vandaag, geselecteerd, items, pythonAfgewezen, 
   return frag;
 }
 
-function renderDagvak(ymd, buitenPeriode, buitenMaand, vandaag, geselecteerd, items, pythonAfgewezen, onDagKlik, telMee) {
+/**
+ * FASE-9.md B5 punt 1: smalle kolom links van elke weekrij. 0 blijft leeg,
+ * niet "0"; drie of meer zware momenten krijgt een rand in --danger-border.
+ * Geen collegeweek van toepassing (vakantie, buiten het semester) → leeg.
+ * @param {ReturnType<typeof weekgewicht>} gewicht
+ */
+function renderWeekgewicht(gewicht) {
+  const el = document.createElement("div");
+  el.className = "maand-weekgewicht";
+  if (gewicht.week === null) return el;
+
+  const weekEl = document.createElement("span");
+  weekEl.className = "maand-weekgewicht-week";
+  weekEl.textContent = String(gewicht.week);
+  el.appendChild(weekEl);
+
+  if (gewicht.totaal > 0) {
+    const getalEl = document.createElement("span");
+    getalEl.className = "maand-weekgewicht-getal";
+    getalEl.textContent = String(gewicht.totaal);
+    el.appendChild(getalEl);
+    if (gewicht.totaal >= ZWAAR_DREMPEL) el.classList.add("zwaar");
+  }
+
+  return el;
+}
+
+function renderDagvak(ymd, buitenPeriode, buitenMaand, vandaag, geselecteerd, items, pythonAfgewezen, tripStatusOverrides, eigenReizen, kalenderWeergave, onDagKlik, telMee) {
   const { d } = parseYMD(ymd);
   const knop = document.createElement("button");
   knop.type = "button";
@@ -211,12 +343,14 @@ function renderDagvak(ymd, buitenPeriode, buitenMaand, vandaag, geselecteerd, it
     return knop;
   }
 
-  const dag = dayStatus(ymd, pythonAfgewezen);
+  const dag = dayStatus(ymd, pythonAfgewezen, tripStatusOverrides, eigenReizen);
   telMee(dag);
 
   if (dag.status === "feestdag" || dag.status === "geen-les") knop.classList.add("status-gemarkeerd");
   if (ymd === vandaag) knop.dataset.vandaag = "true";
   if (ymd === geselecteerd) knop.classList.add("geselecteerd");
+
+  renderReisElementen(knop, dag, ymd);
 
   const streepjes = document.createElement("span");
   streepjes.className = "dagvak-streepjes";
@@ -227,6 +361,25 @@ function renderDagvak(ymd, buitenPeriode, buitenMaand, vandaag, geselecteerd, it
     streepjes.appendChild(el);
   }
   knop.appendChild(streepjes);
+
+  // FASE-9.md B5 punt 2/3: compact toont alleen de zware-momentenregel
+  // (leeg bij een gewone lesdag); uitgebreid toont elke dag de onderwerpen.
+  if (kalenderWeergave === "uitgebreid") {
+    for (const regelTekst of onderwerpenRegels(dag)) {
+      const regel = document.createElement("span");
+      regel.className = "dagvak-onderwerp";
+      regel.textContent = regelTekst;
+      knop.appendChild(regel);
+    }
+  } else {
+    const regelTekst = dagRegelTekst(dag);
+    if (regelTekst) {
+      const regel = document.createElement("span");
+      regel.className = "dagvak-regel";
+      regel.textContent = regelTekst;
+      knop.appendChild(regel);
+    }
+  }
 
   const heeftEigenItem = items.some((item) => item.start <= ymd && ymd <= item.end);
   if (heeftEigenItem) {
@@ -239,7 +392,47 @@ function renderDagvak(ymd, buitenPeriode, buitenMaand, vandaag, geselecteerd, it
   return knop;
 }
 
+/**
+ * Reisband (fase 9 B1): een doorlopende band over de volle breedte voor elke
+ * dag binnen een reis (`--accent-bg`/`--accent-border` — geen vakkleur, geen
+ * `--purple-*`, dat is Python), afgeronde hoek op de eerste/laatste reisdag,
+ * streepjesrand bij status "wijziging-aangevraagd". Een losse vlucht (geen
+ * bijbehorend bereik die dag) krijgt een gevulde ruit, geen emoji.
+ * @param {HTMLElement} knop
+ * @param {ReturnType<typeof dayStatus>} dag
+ * @param {string} ymd
+ */
+function renderReisElementen(knop, dag, ymd) {
+  const boeking = dag.vasteBoekingen.find((v) => v.type === "vaste-boeking");
+  if (boeking) {
+    const band = document.createElement("span");
+    band.className = "dagvak-reis-band";
+    if (boeking.start === ymd) band.classList.add("reis-eerste");
+    if (boeking.end === ymd) band.classList.add("reis-laatste");
+    if (boeking.status === "wijziging-aangevraagd") band.classList.add("reis-aangevraagd");
+    knop.appendChild(band);
+  }
+
+  if (dag.vasteBoekingen.some((v) => v.type === "vlucht")) {
+    const ruit = document.createElement("span");
+    ruit.className = "dagvak-reis-vlucht";
+    knop.appendChild(ruit);
+  }
+}
+
+/**
+ * De legenda legt de kleurcodering uit: nuttig als je de app net gebruikt,
+ * daarna zes regels die onder elke maand blijven staan. Ingeklapt kost hij
+ * één regel en is hij nog steeds één tik weg.
+ */
 function renderLegenda() {
+  const uitklap = document.createElement("details");
+  uitklap.className = "uitklap maand-legenda-uitklap";
+  const samenvatting = document.createElement("summary");
+  samenvatting.className = "tap-target";
+  samenvatting.textContent = "Legenda";
+  uitklap.appendChild(samenvatting);
+
   const lijst = document.createElement("ul");
   lijst.className = "maand-legenda";
   for (const c of courses) {
@@ -252,10 +445,21 @@ function renderLegenda() {
 
     const tekst = document.createElement("span");
     const dagen = c.weekdays.map((w) => WEEKDAGEN[w]).join(" + ");
-    tekst.textContent = `${AFKORTING[c.id]} — ${c.name} — ${dagen} ${c.start}–${c.end}`;
+    tekst.textContent = `${vakAfkorting(c.id)} — ${c.name} — ${dagen} ${c.start}–${c.end}`;
     li.appendChild(tekst);
 
     lijst.appendChild(li);
   }
-  return lijst;
+
+  const reisLi = document.createElement("li");
+  const reisSwatch = document.createElement("span");
+  reisSwatch.className = "legenda-swatch legenda-swatch-reis";
+  reisLi.appendChild(reisSwatch);
+  const reisTekst = document.createElement("span");
+  reisTekst.textContent = "Reis — volle band = geboekt, gestreepte omlijning = wijziging aangevraagd, ruit = losse vlucht";
+  reisLi.appendChild(reisTekst);
+  lijst.appendChild(reisLi);
+
+  uitklap.appendChild(lijst);
+  return uitklap;
 }

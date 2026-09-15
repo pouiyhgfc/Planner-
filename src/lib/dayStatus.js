@@ -7,12 +7,11 @@ import { rangeDays, dayOfWeek, isoWeek } from "./date.js";
 import { appPeriod, semesterMarkers } from "../data/semester.js";
 import { holidays } from "../data/holidays.js";
 import { courses } from "../data/courses.js";
-import { psyDates, agtechDates, rteDates, pythonDates, chineseLessons, chineseMogelijkeTentamens, rteActionItems } from "../data/coursedates.js";
-import { trips } from "../data/trips.js";
-import { chinaVisaFreeDeadline, flexWeekAnnouncementDeadline, academicDeadlines } from "../data/deadlines.js";
+import { alleVakItems, rteActionItems } from "../data/coursedates.js";
+import { alleTripItems, effectieveTripStatus } from "../data/trips.js";
+import { chinaVisaFreeDeadline, flexWeekAnnouncementDeadline, academicDeadlines, japanUitersteTerugkomstDeadline } from "../data/deadlines.js";
 
-const alleVakItems = [...psyDates, ...agtechDates, ...rteDates, ...pythonDates, ...chineseLessons];
-const alleDeadlineItems = [...rteActionItems, ...academicDeadlines, chinaVisaFreeDeadline, flexWeekAnnouncementDeadline];
+const alleDeadlineItems = [...rteActionItems, ...academicDeadlines, chinaVisaFreeDeadline, flexWeekAnnouncementDeadline, japanUitersteTerugkomstDeadline];
 
 export const DAGDEEL_NAMEN = ["ochtend", "middag", "avond"];
 const OCHTEND_EINDE = "12:10";
@@ -50,22 +49,36 @@ function legeDagdelen() {
  * @param {boolean} [pythonAfgewezen] Python-inschrijving afgewezen op het scherm "Vakken"
  *   (fase 8F) — het vak telt dan niet meer mee. Standaard false: geen gedragswijziging
  *   voor bestaande aanroepen.
+ * @param {Record<string, string>} [tripStatusOverrides] state.tripStatusOverrides
+ *   (FASE-9.md A2) — overschrijft de standaardstatus van een reisvariant, bijv.
+ *   nadat de gebruiker een omboeking bevestigt. Standaard {}: elke reisvariant
+ *   gebruikt dan zijn eigen status-veld uit trips.js, dus geen gedragswijziging
+ *   voor bestaande aanroepen.
+ * @param {object[]} [eigenReizen] state.eigenReizen (FASE-9.md B1 punt 5) —
+ *   door de gebruiker zelf toegevoegde reizen, dezelfde vorm als trips.js
+ *   na eigenReisItems(). Standaard []: geen gedragswijziging voor bestaande aanroepen.
  * @returns {object} status van één dag
  */
-export function dayStatus(ymd, pythonAfgewezen = false) {
+export function dayStatus(ymd, pythonAfgewezen = false, tripStatusOverrides = {}, eigenReizen = []) {
   const weekday = dayOfWeek(ymd);
   const { isoYear, week } = isoWeek(ymd);
 
-  const vasteBoekingen = trips.filter((t) => valtOpDatum(ymd, t));
+  // Alle niet-vervallen reisitems zijn zichtbaar (FASE-9.md A2 punt 3), maar
+  // alleen "geboekt" telt mee voor de dagstatus en de bezette dagdelen —
+  // "wijziging-aangevraagd" is een vergelijking, geen vervanging (A2 punt 5).
+  const vasteBoekingen = alleTripItems(eigenReizen)
+    .filter((t) => valtOpDatum(ymd, t))
+    .map((t) => ({ ...t, status: effectieveTripStatus(t, tripStatusOverrides) }))
+    .filter((t) => t.status !== "vervallen");
+  const geboekteBoekingen = vasteBoekingen.filter((t) => t.status === "geboekt");
   const vakken = alleVakItems.filter((v) => valtOpDatum(ymd, v) && !(pythonAfgewezen && v.course === "PY"));
   const deadlines = alleDeadlineItems.filter((d) => valtOpDatum(ymd, d));
   const feestdagen = holidays.filter((h) => valtOpDatum(ymd, h));
-  const mogelijkeTentamens = chineseMogelijkeTentamens.filter((t) => valtOpDatum(ymd, t));
   const vakantie = semesterMarkers.some((m) => m.type === "vakantie" && valtOpDatum(ymd, m));
   const tentamenperiode = semesterMarkers.some((m) => m.type === "tentamenperiode" && valtOpDatum(ymd, m));
   const risicoperiode = semesterMarkers.some((m) => m.type === "risicoperiode" && valtOpDatum(ymd, m));
 
-  const heeftVasteBoeking = vasteBoekingen.length > 0;
+  const heeftVasteBoeking = geboekteBoekingen.length > 0;
   const heeftTentamen = vakken.some((v) => v.type === "tentamen");
   const heeftFeestdag = feestdagen.some((h) => h.type === "feestdag");
   const heeftGeenLes = feestdagen.some((h) => h.type === "geen-les");
@@ -85,7 +98,7 @@ export function dayStatus(ymd, pythonAfgewezen = false) {
   if (heeftVasteBoeking) {
     for (const naam of DAGDEEL_NAMEN) {
       dagdelen[naam].bezet = true;
-      dagdelen[naam].redenen.push(...vasteBoekingen.map((v) => v.label));
+      dagdelen[naam].redenen.push(...geboekteBoekingen.map((v) => v.label));
     }
   } else {
     for (const v of vakken) {
@@ -108,7 +121,6 @@ export function dayStatus(ymd, pythonAfgewezen = false) {
     deadlines,
     vasteBoekingen,
     feestdagen,
-    mogelijkeTentamens,
     tentamenperiode,
     risicoperiode,
   };
@@ -116,8 +128,10 @@ export function dayStatus(ymd, pythonAfgewezen = false) {
 
 /**
  * @param {boolean} [pythonAfgewezen]
+ * @param {Record<string, string>} [tripStatusOverrides]
+ * @param {object[]} [eigenReizen]
  * @returns {ReturnType<typeof dayStatus>[]} status van alle 181 dagen in de app-periode
  */
-export function genereerKalenderDagen(pythonAfgewezen = false) {
-  return rangeDays(appPeriod.start, appPeriod.end).map((ymd) => dayStatus(ymd, pythonAfgewezen));
+export function genereerKalenderDagen(pythonAfgewezen = false, tripStatusOverrides = {}, eigenReizen = []) {
+  return rangeDays(appPeriod.start, appPeriod.end).map((ymd) => dayStatus(ymd, pythonAfgewezen, tripStatusOverrides, eigenReizen));
 }

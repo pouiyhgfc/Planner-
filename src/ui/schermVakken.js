@@ -4,18 +4,17 @@
  * lesoverzicht.
  */
 
-import { courses } from "../data/courses.js";
+import { courses, courseVoor } from "../data/courses.js";
+import { PYTHON_INSCHRIJVING_WAARDEN } from "../state/schema.js";
+import { alleVakItems } from "../data/coursedates.js";
 import { WEEKDAGEN, kortDatum } from "./datumlabels.js";
+import { meervoud } from "./tekst.js";
 import { lesoverzicht, gemisteSessies, chineseAbsentieStand } from "./vakkenData.js";
-import { alleDeadlineItems } from "./overzichtData.js";
-import { deadlineSleutel } from "./dagblad.js";
+import { zichtbareDeadlines, zichtbareOpleveringen } from "./overzichtData.js";
+import { deadlineSleutel, verbergKnop, verborgenDeadlineSleutel, verborgenOpleveringSleutel } from "./dagblad.js";
 
 function veldSleutel(vakId, veldnaam) {
   return `${vakId}.${veldnaam}`;
-}
-
-function courseVoor(id) {
-  return courses.find((c) => c.id === id);
 }
 
 function sectieKop(tekst) {
@@ -25,12 +24,19 @@ function sectieKop(tekst) {
   return kop;
 }
 
+/**
+ * @param {string} sleutel
+ * @param {string|null} label null waar de naam van het veld er al naast staat
+ *   (in de definitielijst van de kop), anders stond die er twee keer
+ * @param {string|undefined} huidigeWaarde
+ * @param {(sleutel: string, waarde: string) => void} onWijzigen
+ */
 function renderOnbekendVeld(sleutel, label, huidigeWaarde, onWijzigen) {
   const wrap = document.createElement("span");
   wrap.className = "onbekend-veld";
   const labelEl = document.createElement("span");
   labelEl.className = "onbekend-label";
-  labelEl.textContent = `${label}: onbekend — `;
+  labelEl.textContent = label ? `${label}: onbekend` : "onbekend";
   const input = document.createElement("input");
   input.type = "text";
   input.placeholder = "zelf aanvullen";
@@ -41,6 +47,11 @@ function renderOnbekendVeld(sleutel, label, huidigeWaarde, onWijzigen) {
   return wrap;
 }
 
+/**
+ * Sinds de loting bekend is (DATA.md §3.5) begint deze stand op "bevestigd" in
+ * plaats van "onbevestigd". Daarom een knop voor elke andere stand: vanuit
+ * "bevestigd" naar "afgewezen" kostte anders twee klikken via "onbevestigd".
+ */
 function renderInschrijvingBadge(pythonInschrijving, onWijzigen) {
   const wrap = document.createElement("div");
   wrap.className = "inschrijving-badge";
@@ -49,23 +60,12 @@ function renderInschrijvingBadge(pythonInschrijving, onWijzigen) {
   label.textContent = `Inschrijving ${pythonInschrijving}`;
   wrap.appendChild(label);
 
-  if (pythonInschrijving === "onbevestigd") {
-    const bevestig = document.createElement("button");
-    bevestig.type = "button";
-    bevestig.textContent = "Zet op bevestigd";
-    bevestig.addEventListener("click", () => onWijzigen("bevestigd"));
-    const afwijzen = document.createElement("button");
-    afwijzen.type = "button";
-    afwijzen.textContent = "Zet op afgewezen";
-    afwijzen.addEventListener("click", () => onWijzigen("afgewezen"));
-    wrap.appendChild(bevestig);
-    wrap.appendChild(afwijzen);
-  } else {
-    const terug = document.createElement("button");
-    terug.type = "button";
-    terug.textContent = "Terug naar onbevestigd";
-    terug.addEventListener("click", () => onWijzigen("onbevestigd"));
-    wrap.appendChild(terug);
+  for (const waarde of PYTHON_INSCHRIJVING_WAARDEN.filter((w) => w !== pythonInschrijving)) {
+    const knop = document.createElement("button");
+    knop.type = "button";
+    knop.textContent = `Zet op ${waarde}`;
+    knop.addEventListener("click", () => onWijzigen(waarde));
+    wrap.appendChild(knop);
   }
   return wrap;
 }
@@ -78,11 +78,6 @@ function renderKopSectie(course, veldwaarden, ctx, callbacks) {
     wrap.appendChild(renderInschrijvingBadge(ctx.pythonInschrijving, callbacks.onInschrijvingWijzigen));
   }
 
-  const naam = document.createElement("h2");
-  naam.className = "vak-detail-naam";
-  naam.textContent = course.name;
-  wrap.appendChild(naam);
-
   const regels = document.createElement("dl");
   regels.className = "vak-detail-regels";
 
@@ -94,7 +89,7 @@ function renderKopSectie(course, veldwaarden, ctx, callbacks) {
       dd.textContent = waarde;
     } else {
       const sleutel = veldSleutel(course.id, veldnaam);
-      dd.appendChild(renderOnbekendVeld(sleutel, label, veldwaarden[sleutel], callbacks.onVeldWijzigen));
+      dd.appendChild(renderOnbekendVeld(sleutel, null, veldwaarden[sleutel], callbacks.onVeldWijzigen));
     }
     regels.appendChild(dt);
     regels.appendChild(dd);
@@ -116,6 +111,12 @@ function renderKopSectie(course, veldwaarden, ctx, callbacks) {
   return wrap;
 }
 
+/**
+ * Weging: de balken plus de letterlijke beoordelingstekst eronder. Die tekst
+ * stond eerder in de Absentie-sectie, waar hij de percentages herhaalde die
+ * hier al als balk staan — dezelfde zin dus twee keer op één pagina. Hij is
+ * niet weggegooid maar verplaatst naar de plek waar hij over gaat.
+ */
 function renderWegingSectie(course) {
   const wrap = document.createElement("div");
   wrap.appendChild(sectieKop("Weging"));
@@ -135,6 +136,12 @@ function renderWegingSectie(course) {
     rij.appendChild(balkWrap);
     wrap.appendChild(rij);
   }
+
+  const tekst = document.createElement("p");
+  tekst.className = "vak-detail-klein";
+  tekst.textContent = course.beoordeling.tekst;
+  wrap.appendChild(tekst);
+
   return wrap;
 }
 
@@ -178,18 +185,22 @@ function renderAbsentieSectie(course, items, pythonAfgewezen) {
   const wrap = document.createElement("div");
   wrap.appendChild(sectieKop("Absentie"));
 
-  const regelsTekst = course.id === "PY" ? course.absentieregels.tekst : course.beoordeling.tekst;
-  const regels = document.createElement("p");
-  regels.className = "vak-detail-klein";
-  regels.textContent = regelsTekst;
-  wrap.appendChild(regels);
+  // Alleen vakken met eigen absentieregels hebben hier tekst. Voor de andere
+  // vakken staat het beleid in de beoordelingstekst onder Weging; dat hier
+  // herhalen leverde exact dezelfde alinea twee keer op dezelfde pagina op.
+  if (course.absentieregels?.tekst) {
+    const regels = document.createElement("p");
+    regels.className = "vak-detail-klein";
+    regels.textContent = course.absentieregels.tekst;
+    wrap.appendChild(regels);
+  }
 
   const gemist = gemisteSessies(course.id, items, pythonAfgewezen);
 
   if (course.id === "RTE") {
     const standKop = document.createElement("p");
     standKop.textContent =
-      gemist.length === 0 ? "Nog geen in-class momenten gemist (op basis van geplande absenties)." : `${gemist.length} in-class moment(en) gemist:`;
+      gemist.length === 0 ? "Nog geen in-class momenten gemist (op basis van geplande absenties)." : `${meervoud(gemist.length, "in-class moment", "in-class momenten")} gemist:`;
     wrap.appendChild(standKop);
     if (gemist.length > 0) {
       const lijst = document.createElement("ul");
@@ -202,19 +213,126 @@ function renderAbsentieSectie(course, items, pythonAfgewezen) {
     }
   } else {
     const stand = document.createElement("p");
-    stand.textContent = `Huidige stand: ${gemist.length} sessie(s) gemist (op basis van geplande absenties).`;
+    stand.textContent = `Huidige stand: ${meervoud(gemist.length, "sessie", "sessies")} gemist (op basis van geplande absenties).`;
     wrap.appendChild(stand);
   }
 
   return wrap;
 }
 
-function renderDeadlinesSectie(vakId, afgevinkteDeadlines, onToggle) {
-  const relevant = alleDeadlineItems.filter((d) => d.course === vakId);
+/**
+ * FASE-9.md B3: tentamens apart van lesdagen, per vak — dezelfde items als
+ * elders (coursedates.js alleVakItems, incl. chineseTentamens), hier alleen
+ * gefilterd en zonder de lesdagen ertussen.
+ * @param {string} vakId
+ * @returns {HTMLElement|null}
+ */
+function renderTentamensSectie(vakId) {
+  const relevant = alleVakItems.filter((v) => v.course === vakId && v.type === "tentamen");
   if (relevant.length === 0) return null;
 
   const wrap = document.createElement("div");
-  wrap.appendChild(sectieKop("Deadlines"));
+  wrap.appendChild(sectieKop("Tentamens"));
+  const lijst = document.createElement("ul");
+  for (const tentamen of [...relevant].sort((a, b) => a.date.localeCompare(b.date))) {
+    const li = document.createElement("li");
+    li.textContent = `${kortDatum(tentamen.date)} — ${tentamen.label}`;
+    lijst.appendChild(li);
+  }
+  wrap.appendChild(lijst);
+  return wrap;
+}
+
+/**
+ * FASE-9.md B3: opleveringen (presentaties, verslagen, opdrachten die
+ * meetellen) apart van tentamens en lesdagen, met — waar bekend — hun
+ * weging. Een item zonder vaste datum (mogelijkeData of volledig ONBEKEND)
+ * krijgt een invulveld via vakkenVeldwaarden, net als de andere
+ * onbekend-velden op dit scherm.
+ * @param {string} vakId
+ * @param {string[]} afgevinkteOpleveringen
+ * @param {Record<string, string>} veldwaarden
+ * @param {string[]} verborgenItems
+ * @param {(sleutel: string, waarde: string) => void} onVeldWijzigen
+ * @param {(id: string, afgevinkt: boolean) => void} onOpleveringToggle
+ * @returns {HTMLElement|null}
+ */
+function renderOpleveringenSectie(vakId, afgevinkteOpleveringen, veldwaarden, verborgenItems, onVeldWijzigen, onOpleveringToggle, onVerbergen) {
+  const relevant = zichtbareOpleveringen(verborgenItems).filter((o) => o.vak === vakId);
+  if (relevant.length === 0) return null;
+
+  const wrap = document.createElement("div");
+  wrap.appendChild(sectieKop("Opleveringen"));
+  const lijst = document.createElement("ul");
+  for (const item of relevant) {
+    const li = document.createElement("li");
+    const label = document.createElement("label");
+    const vinkje = document.createElement("input");
+    vinkje.type = "checkbox";
+    vinkje.checked = afgevinkteOpleveringen.includes(item.id);
+    vinkje.addEventListener("change", () => onOpleveringToggle(item.id, vinkje.checked));
+    label.appendChild(vinkje);
+
+    const tekst = document.createElement("span");
+    const wegingTekst = item.weging !== null ? ` (${item.weging}%)` : "";
+    tekst.textContent = ` ${item.naam}${wegingTekst}`;
+    label.appendChild(tekst);
+    li.appendChild(label);
+
+    const datumSleutel = `${item.id}.datum`;
+    if (item.datum) {
+      const datumEl = document.createElement("span");
+      datumEl.className = "vak-detail-klein";
+      datumEl.textContent = ` — ${kortDatum(item.datum)}`;
+      li.appendChild(datumEl);
+    } else {
+      const veldWrap = document.createElement("span");
+      veldWrap.className = "onbekend-veld";
+      const veldLabel = document.createElement("span");
+      veldLabel.className = "onbekend-label";
+      veldLabel.textContent = item.mogelijkeData
+        ? ` datum onbekend (mogelijk: ${item.mogelijkeData.map(kortDatum).join(" of ")}) — `
+        : " datum onbekend — ";
+      const input = document.createElement("input");
+      input.type = "date";
+      input.value = veldwaarden[datumSleutel] ?? "";
+      input.addEventListener("change", () => onVeldWijzigen(datumSleutel, input.value));
+      veldWrap.appendChild(veldLabel);
+      veldWrap.appendChild(input);
+      li.appendChild(veldWrap);
+    }
+
+    if (item.opmerking) {
+      const opmerking = document.createElement("p");
+      opmerking.className = "vak-detail-klein";
+      opmerking.textContent = item.opmerking;
+      li.appendChild(opmerking);
+    }
+
+    li.appendChild(verbergKnop(verborgenOpleveringSleutel(item.id), onVerbergen));
+    lijst.appendChild(li);
+  }
+  wrap.appendChild(lijst);
+  return wrap;
+}
+
+/**
+ * FASE-9.md B3: hernoemd van "Deadlines" naar "Opdrachten en deadlines", en
+ * gefilterd op items die al als een eigen regel in Opleveringen staan (via
+ * dedupLabel) — hetzelfde onderdeel hoort maar één keer op dit scherm.
+ * @param {string} vakId
+ * @param {string[]} afgevinkteDeadlines
+ * @param {string[]} verborgenItems
+ * @param {(sleutel: string, afgevinkt: boolean) => void} onToggle
+ * @returns {HTMLElement|null}
+ */
+function renderOpdrachtenEnDeadlinesSectie(vakId, afgevinkteDeadlines, verborgenItems, onToggle, onVerbergen) {
+  const dedupLabels = new Set(zichtbareOpleveringen(verborgenItems).filter((o) => o.vak === vakId && o.dedupLabel).map((o) => o.dedupLabel));
+  const relevant = zichtbareDeadlines(verborgenItems).filter((d) => d.course === vakId && !dedupLabels.has(d.label));
+  if (relevant.length === 0) return null;
+
+  const wrap = document.createElement("div");
+  wrap.appendChild(sectieKop("Opdrachten en deadlines"));
   const lijst = document.createElement("ul");
   for (const deadline of [...relevant].sort((a, b) => (a.date ?? a.start).localeCompare(b.date ?? b.start))) {
     const sleutel = deadlineSleutel(deadline);
@@ -229,6 +347,7 @@ function renderDeadlinesSectie(vakId, afgevinkteDeadlines, onToggle) {
     tekst.textContent = ` ${kortDatum(deadline.date ?? deadline.start)} — ${deadline.label}`;
     label.appendChild(tekst);
     li.appendChild(label);
+    li.appendChild(verbergKnop(verborgenDeadlineSleutel(deadline), onVerbergen));
     lijst.appendChild(li);
   }
   wrap.appendChild(lijst);
@@ -245,7 +364,7 @@ function renderTellersSectie(course, veldwaarden, onVeldWijzigen) {
     wrap.appendChild(p);
   } else if (course.id === "CHI") {
     const p = document.createElement("p");
-    p.textContent = "Dictee-quizzen: beste 15 tellen.";
+    p.textContent = `Elke les een dictee, elke week huiswerk — de beste ${course.weektoetsen.besteAantalTelt} dictees tellen. Datums staan op NTU COOL.`;
     wrap.appendChild(p);
   } else if (course.id === "PY") {
     const ingeleverdSleutel = veldSleutel("PY", "opdrachtenIngeleverd");
@@ -265,7 +384,7 @@ function renderTellersSectie(course, veldwaarden, onVeldWijzigen) {
 
     rij.appendChild(ingeleverdInput);
     rij.appendChild(scheiding);
-    const totaal = veldwaarden[totaalSleutel];
+    const totaal = veldwaarden[totaalSleutel] || (course.opdrachten.aantal ? String(course.opdrachten.aantal) : "");
     if (totaal) {
       const totaalEl = document.createElement("span");
       totaalEl.textContent = totaal;
@@ -274,6 +393,11 @@ function renderTellersSectie(course, veldwaarden, onVeldWijzigen) {
       rij.appendChild(renderOnbekendVeld(totaalSleutel, "totaal opdrachten", null, onVeldWijzigen));
     }
     wrap.appendChild(rij);
+
+    const toelichting = document.createElement("p");
+    toelichting.className = "vak-detail-klein";
+    toelichting.textContent = `${course.opdrachten.tekst} (${course.opdrachten.zekerheid})`;
+    wrap.appendChild(toelichting);
   } else {
     return null;
   }
@@ -315,8 +439,14 @@ function renderCursusrestrictiesSectie(course) {
 function renderDetail(root, course, ctx, callbacks) {
   root.textContent = "";
 
+  // Vaknaam en Sluiten op één regel; de knop stond eerder alleen op een lege
+  // regel met de naam eronder.
   const kopRij = document.createElement("div");
   kopRij.className = "dagblad-kop-rij";
+  const naam = document.createElement("h2");
+  naam.className = "vak-detail-naam";
+  naam.textContent = course.name;
+  kopRij.appendChild(naam);
   const sluit = document.createElement("button");
   sluit.type = "button";
   sluit.className = "tap-target";
@@ -331,8 +461,20 @@ function renderDetail(root, course, ctx, callbacks) {
   root.appendChild(renderWegingSectie(course));
   const restrictiesSectie = renderCursusrestrictiesSectie(course);
   if (restrictiesSectie) root.appendChild(restrictiesSectie);
+  const tentamensSectie = renderTentamensSectie(course.id);
+  if (tentamensSectie) root.appendChild(tentamensSectie);
   root.appendChild(renderAbsentieSectie(course, ctx.items, pythonAfgewezen));
-  const deadlinesSectie = renderDeadlinesSectie(course.id, ctx.afgevinkteDeadlines, callbacks.onDeadlineToggle);
+  const opleveringenSectie = renderOpleveringenSectie(
+    course.id,
+    ctx.afgevinkteOpleveringen,
+    ctx.vakkenVeldwaarden,
+    ctx.verborgenItems,
+    callbacks.onVeldWijzigen,
+    callbacks.onOpleveringToggle,
+    callbacks.onVerbergen
+  );
+  if (opleveringenSectie) root.appendChild(opleveringenSectie);
+  const deadlinesSectie = renderOpdrachtenEnDeadlinesSectie(course.id, ctx.afgevinkteDeadlines, ctx.verborgenItems, callbacks.onDeadlineToggle, callbacks.onVerbergen);
   if (deadlinesSectie) root.appendChild(deadlinesSectie);
   const tellersSectie = renderTellersSectie(course, ctx.vakkenVeldwaarden, callbacks.onVeldWijzigen);
   if (tellersSectie) root.appendChild(tellersSectie);
@@ -356,8 +498,9 @@ function renderVakKaart(course, onKlik) {
  *   onVeldWijzigen: (sleutel: string, waarde: string) => void,
  *   onInschrijvingWijzigen: (waarde: string) => void,
  *   onDeadlineToggle: (sleutel: string, afgevinkt: boolean) => void,
+ *   onOpleveringToggle: (id: string, afgevinkt: boolean) => void,
  * }} callbacks
- * @returns {{render: (ctx: object) => void}}
+ * @returns {{render: (ctx: object) => void, openVak: (vakId: string) => void}}
  */
 export function initVakkenScherm(root, callbacks) {
   const lijstEl = document.createElement("div");
@@ -393,6 +536,8 @@ export function initVakkenScherm(root, callbacks) {
         onVeldWijzigen: callbacks.onVeldWijzigen,
         onInschrijvingWijzigen: callbacks.onInschrijvingWijzigen,
         onDeadlineToggle: callbacks.onDeadlineToggle,
+        onOpleveringToggle: callbacks.onOpleveringToggle,
+        onVerbergen: callbacks.onVerbergen,
       });
     }
   }
@@ -402,5 +547,5 @@ export function initVakkenScherm(root, callbacks) {
     tekenen();
   }
 
-  return { render };
+  return { render, openVak: toonVak };
 }

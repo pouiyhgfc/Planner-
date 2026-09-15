@@ -161,6 +161,14 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Een eigen display-regel (bijv. display: grid) is specifieker dan de
+   display: none die de browser aan [hidden] geeft, waardoor een verborgen
+   element tóch zichtbaar blijft. Dat gebeurde met de dagkiezer in Weken.
+   Deze regel maakt hidden overal betrouwbaar. */
+[hidden] {
+  display: none !important;
+}
+
 html,
 body {
   margin: 0;
@@ -236,12 +244,20 @@ select {
   font-size: var(--fs-min);
 }
 
+/* Op een breed scherm rekte alles mee: dagvakjes van bijna 200px met een
+   datumcijfer en drie streepjes erin. De inhoud houdt nu een leesbare
+   kolombreedte aan en staat gecentreerd; op een telefoon verandert er niets,
+   want daar wint de ondergrens van de padding. */
+:root {
+  --leesbreedte: 880px;
+}
+
 #topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 8px 12px;
+  padding: 8px max(12px, calc((100% - var(--leesbreedte)) / 2));
   border-bottom: var(--border-width) solid var(--border);
   background: var(--card);
   flex-shrink: 0;
@@ -278,7 +294,7 @@ select {
 .scherm {
   height: 100%;
   overflow-y: auto;
-  padding: 16px;
+  padding: 16px max(16px, calc((100% - var(--leesbreedte)) / 2));
   position: relative;
 }
 
@@ -298,6 +314,7 @@ select {
   border-top: var(--border-width) solid var(--border);
   background: var(--card);
   flex-shrink: 0;
+  padding-inline: max(0px, calc((100% - var(--leesbreedte)) / 2));
 }
 .navknop {
   flex: 1;
@@ -331,6 +348,8 @@ select {
   box-shadow: 0 1px 3px var(--shadow);
   padding: 16px;
   width: 100%;
+  max-width: var(--leesbreedte);
+  margin: 0 auto;
   max-height: 85vh;
   overflow-y: auto;
   display: flex;
@@ -346,6 +365,70 @@ select {
   font-family: var(--ff-head);
   font-size: 18px;
 }
+/* Het paneel was één doorlopende kolom; per onderwerp een blok met een kop
+   en een scheidingslijn maakt zichtbaar waar het een over het ander gaat. */
+.instellingen-sectie {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: var(--border-width) solid var(--border-soft);
+}
+.instellingen-sectie h3 {
+  font-size: 15px;
+}
+.instellingen-sectie .uitklap {
+  margin-top: 0;
+  border-top: none;
+}
+/* Openstaande vragen (Instellingen): dicht, één regel per punt, met de
+   toelichting eronder zodat duidelijk is waarom het veld leeg staat. */
+.vragen-stand {
+  color: var(--text-muted);
+  font-size: var(--fs-min);
+  margin: 0;
+}
+.vragen-groep {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+}
+.vragen-groep h4 {
+  margin: 0;
+  font-size: var(--fs-min);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+.vraag-rij {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 8px;
+  border-left: 2px solid var(--border-soft);
+}
+.vraag-rij.vraag-beantwoord {
+  border-left-color: var(--accent);
+}
+.vraag-rij label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.vraag-tekst {
+  font-size: var(--fs-min);
+}
+.vraag-rij input {
+  width: 100%;
+  min-width: 0;
+}
+.vraag-toelichting {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-min);
+}
+
 .eigen-items-lijst ul {
   list-style: none;
   margin: 0;
@@ -369,10 +452,40 @@ select {
   color: var(--danger-text);
 }
 
-#planner-form form {
+#planner-form form,
+.reis-form form {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+.veld-rij {
+  display: grid;
+  grid-template-columns: 5.5em 1fr;
+  align-items: center;
+  gap: 8px;
+}
+.veld-label {
+  color: var(--text-muted);
+  font-size: var(--fs-min);
+}
+.veld-rij input,
+.veld-rij select {
+  min-width: 0;
+  width: 100%;
+}
+.reis-vluchten {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.reis-vlucht-rij {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.reis-vlucht-rij input {
+  min-width: 0;
+  flex: 1;
 }
 .kosten-waarschuwing {
   background: var(--danger-bg);
@@ -387,12 +500,48 @@ select {
   gap: 4px;
   font-size: var(--fs-min);
 }
+.reisstatus-paneel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.reisstatus-rij {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: var(--fs-min);
+}
 #export-regel {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   font-size: var(--fs-min);
+}
+
+.visueel-verborgen {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.knop-als-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-control);
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: var(--fs-base);
+}
+.knop-als-label:active {
+  transform: scale(0.98);
 }
 
 /* fase 8C — scherm "Maand" */
@@ -417,9 +566,21 @@ select {
   padding: 8px 10px;
 }
 
+.maand-weekbalk {
+  margin: 0 0 8px;
+  color: var(--text-muted);
+  font-size: var(--fs-min);
+}
+
+.maand-weergave-toggle {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
 .maand-dagkoppen {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: 28px repeat(7, 1fr);
   gap: 2px;
   margin-bottom: 2px;
   text-align: center;
@@ -427,14 +588,56 @@ select {
   font-size: var(--fs-min);
 }
 
-.maand-grid {
+.maand-weekrij {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: 28px repeat(7, 1fr);
   gap: 2px;
+  margin-bottom: 2px;
 }
 
+/* FASE-9.md B5 punt 1 — weekgewicht: weeknummer + aantal zware momenten.
+   Twee kale cijfers onder elkaar lazen als twee weeknummers; het aantal
+   staat nu in een eigen rondje, zodat duidelijk is wat wat is. */
+.maand-weekgewicht {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border-radius: var(--radius-day);
+}
+.maand-weekgewicht-week {
+  font-family: var(--ff-display);
+  font-size: 10px;
+  color: var(--text-faint);
+}
+.maand-weekgewicht-getal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  background: var(--card2);
+  border: var(--border-width) solid var(--border);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.maand-weekgewicht.zwaar {
+  border: var(--border-width) solid var(--danger-border);
+}
+.maand-weekgewicht.zwaar .maand-weekgewicht-getal {
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+  color: var(--danger-text);
+}
+
+/* min-height in plaats van aspect-ratio: een vierkant vakje is op een
+   telefoon grotendeels leeg in de compacte stand, en te krap zodra er in de
+   uitgebreide stand tekst in staat. Nu is een rij precies zo hoog als zijn
+   inhoud nodig heeft. */
 .dagvak {
-  aspect-ratio: 1;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -445,7 +648,8 @@ select {
   background: var(--card);
   padding: 4px;
   min-width: 0;
-  min-height: 0;
+  min-height: 46px;
+  overflow: hidden;
 }
 .dagvak.buiten-maand {
   opacity: 0.45;
@@ -488,6 +692,31 @@ select {
   height: 6px;
   border-radius: 50%;
 }
+/* Twee regels in plaats van één afgeknipte: op één regel bleef er in een
+   vakje van ~50px maar zo'n zes tekens over ("General…"), wat niets zegt. */
+.dagvak-regel {
+  width: 100%;
+  margin-top: 2px;
+  font-size: 9px;
+  line-height: 1.15;
+  color: var(--text-muted);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+/* Uitgebreide stand: per vak een eigen regel, elk afgekapt op de breedte van
+   het vakje — zo blijft in elk geval de afkorting plus het begin leesbaar. */
+.dagvak-onderwerp {
+  width: 100%;
+  margin-top: 1px;
+  font-size: 9px;
+  line-height: 1.2;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .dagvak-eigen-balk {
   position: absolute;
   left: 0;
@@ -497,6 +726,42 @@ select {
   background: var(--accent);
   border-radius: 0 0 var(--radius-day) var(--radius-day);
 }
+/* Geboekt = volle band in de accentkleur, aangevraagd = alleen een omlijning.
+   Het onderscheid moet in een vakje van 48px leesbaar zijn; de eerdere
+   variant (accent-bg met accent-border) was op een witte kaart praktisch
+   onzichtbaar, waardoor reizen in de maandweergave niet opvielen. */
+.dagvak-reis-band {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: var(--accent);
+}
+.dagvak-reis-band.reis-eerste {
+  left: 2px;
+  border-top-left-radius: 3px;
+  border-bottom-left-radius: 3px;
+}
+.dagvak-reis-band.reis-laatste {
+  right: 2px;
+  border-top-right-radius: 3px;
+  border-bottom-right-radius: 3px;
+}
+.dagvak-reis-band.reis-aangevraagd {
+  background: var(--accent-bg);
+  border: var(--border-width) solid var(--accent);
+  border-style: dashed;
+}
+.dagvak-reis-vlucht {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  transform: rotate(45deg);
+}
 
 .maand-telling {
   color: var(--text-muted);
@@ -504,9 +769,22 @@ select {
   margin: 8px 0 0;
 }
 
+.uitklap {
+  margin-top: 12px;
+  border-top: var(--border-width) solid var(--border-soft);
+}
+.uitklap > summary {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  color: var(--text-muted);
+  font-size: var(--fs-min);
+  cursor: pointer;
+}
+
 .maand-legenda {
   list-style: none;
-  margin: 16px 0 0;
+  margin: 4px 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -524,23 +802,49 @@ select {
   border-radius: 50%;
   flex-shrink: 0;
 }
+.legenda-swatch-reis {
+  width: 14px;
+  height: 5px;
+  border-radius: 2px;
+  background: var(--accent);
+}
 
 .dagblad-paneel {
   position: absolute;
   inset: 0;
   background: var(--bg);
   overflow-y: auto;
-  padding: 16px;
+  padding: 16px max(16px, calc((100% - var(--leesbreedte)) / 2));
 }
 .dagblad-kop-rij {
   display: flex;
-  justify-content: flex-end;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
   margin-bottom: 8px;
+}
+.dagblad-kop-rij > button {
+  flex-shrink: 0;
+}
+.dagblad-bladeren {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+.dagblad-pijl {
+  font-family: var(--ff-display);
+  padding: 8px 10px;
+}
+.dagblad-pijl:disabled {
+  color: var(--text-faint);
+  cursor: default;
 }
 .dagblad-datum {
   font-family: var(--ff-head);
-  font-size: 18px;
-  margin: 0 0 8px;
+  font-size: 17px;
+  line-height: 1.2;
+  margin: 0;
+  min-width: 0;
 }
 .dagblad-kop {
   font-family: var(--ff-head);
@@ -551,6 +855,84 @@ select {
   color: var(--text-muted);
   font-size: var(--fs-min);
 }
+.dagblad-onbekende-velden {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: var(--fs-min);
+  color: var(--text-muted);
+}
+.dagblad-onbekende-velden input {
+  width: 8em;
+}
+
+/* FASE-9.md B4 — lesblokken in het dagblad */
+.lesblok {
+  display: flex;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: var(--border-width) solid var(--border-soft);
+}
+.lesblok-balkje {
+  flex-shrink: 0;
+  width: 4px;
+  border-radius: 2px;
+}
+.lesblok-inhoud {
+  flex: 1;
+  min-width: 0;
+}
+.lesblok-kop {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--ff-head);
+}
+.lesblok-vak {
+  font-size: 15px;
+}
+.lesblok-tijd {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-min);
+}
+.lesblok-meta {
+  margin: 2px 0;
+  color: var(--text-muted);
+  font-size: var(--fs-min);
+}
+.lesblok-onderwerp {
+  margin: 4px 0;
+}
+.lesblok-acties {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  font-size: var(--fs-min);
+  color: var(--danger-text);
+}
+.lesblok-naar-vak {
+  margin-top: 6px;
+  font-size: var(--fs-min);
+  padding: 4px 8px;
+}
+.dagblad-moment {
+  padding: 8px 0;
+  border-bottom: var(--border-width) solid var(--border-soft);
+}
+
+/* Knoppen die bij een regel horen: klein en terughoudend, want ze staan
+   naast elke rij in een dichte lijst. */
+.verberg-knop,
+.rij-knop {
+  margin-left: 8px;
+  padding: 2px 8px;
+  font-size: var(--fs-min);
+  color: var(--text-muted);
+}
+
 .dagblad-acties {
   display: flex;
   flex-wrap: wrap;
@@ -599,10 +981,6 @@ select {
   margin-bottom: 12px;
 }
 
-.weken-invoeg:not(:empty) {
-  margin-bottom: 12px;
-}
-
 .weekkaart {
   padding: 12px;
   margin-bottom: 12px;
@@ -648,6 +1026,17 @@ select {
   text-align: center;
   color: var(--text-muted);
   font-size: var(--fs-min);
+  background: none;
+  border: none;
+  border-radius: var(--radius-control);
+  padding: 2px 0;
+  font-family: inherit;
+  cursor: pointer;
+}
+.weekkaart-dagkop:hover,
+.weekkaart-dagkop:focus-visible {
+  background: var(--card2);
+  color: var(--text);
 }
 .weekkaart-dagdeelkop {
   color: var(--text-muted);
@@ -658,6 +1047,24 @@ select {
   height: 14px;
   border-radius: 3px;
   background: var(--border-soft);
+}
+.weekkaart-reis-cel {
+  height: 6px;
+}
+.weekkaart-reis-cel.bezet {
+  background: var(--accent);
+}
+.weekkaart-reis-cel.reis-eerste {
+  border-top-left-radius: 3px;
+  border-bottom-left-radius: 3px;
+}
+.weekkaart-reis-cel.reis-laatste {
+  border-top-right-radius: 3px;
+  border-bottom-right-radius: 3px;
+}
+.weekkaart-reis-cel.reis-aangevraagd {
+  background: var(--accent-bg);
+  border: var(--border-width) dashed var(--accent);
 }
 
 .weekkaart-uitzonderingen {
@@ -675,6 +1082,16 @@ select {
   display: flex;
   gap: 8px;
   margin-top: 10px;
+}
+.weekkaart-dagkiezer {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-top: 8px;
+}
+.weekkaart-dagkiezer button {
+  font-size: var(--fs-min);
+  padding: 6px 2px;
 }
 
 /* fase 8E — scherm "Overzicht" */
@@ -741,6 +1158,23 @@ select {
   margin: 12px 0 20px;
 }
 
+.overzicht-weergave-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+  margin-bottom: 6px;
+}
+.weergave-knop {
+  font-size: var(--fs-min);
+  padding: 6px 10px;
+}
+.weergave-knop[aria-current="true"] {
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+  color: var(--accent-text);
+}
+
 .overzicht-filters {
   display: flex;
   flex-wrap: wrap;
@@ -755,6 +1189,25 @@ select {
   background: var(--accent-bg);
   border-color: var(--accent-border);
   color: var(--accent-text);
+}
+
+.overzicht-vak-kop {
+  font-family: var(--ff-head);
+  font-size: 15px;
+  margin: 16px 0 8px;
+}
+.vak-chip {
+  flex-shrink: 0;
+  min-width: 32px;
+  text-align: center;
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.overzicht-vak-kop:first-child {
+  margin-top: 0;
 }
 
 .overzicht-lijst {
@@ -811,7 +1264,8 @@ select {
 .vak-detail-naam {
   font-family: var(--ff-head);
   font-size: 20px;
-  margin: 8px 0 12px;
+  margin: 0;
+  min-width: 0;
 }
 .vak-detail-regels {
   display: grid;

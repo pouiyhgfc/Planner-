@@ -10,6 +10,14 @@ import {
   verwijderProject,
   zetPythonInschrijving,
   zetVakVeld,
+  zetOpleveringAfgevinkt,
+  zetKalenderWeergave,
+  zetTripStatus,
+  voegReisToe,
+  verwijderReis,
+  wijzigItem,
+  wijzigReis,
+  zetItemVerborgen,
   vraagPersistentOpslagAan,
   bereidExportVoor,
   bereidSamenvoegingVoor,
@@ -22,14 +30,20 @@ import { initMaandScherm } from "./schermMaand.js";
 import { initWekenScherm } from "./schermWeken.js";
 import { initOverzichtScherm } from "./schermOverzicht.js";
 import { initVakkenScherm } from "./schermVakken.js";
+import { verborgenOmschrijving } from "./verborgen.js";
 import {
   renderThemaRegel,
   renderPersistRegel,
   renderExportRegel,
   renderConflictenPaneel,
+  renderReisstatusPaneel,
+  renderReisForm,
+  renderEigenReizenLijst,
   renderPlannerForm,
   renderEigenItemsLijst,
+  renderVerborgenLijst,
 } from "./planner.js";
+import { renderOpenstaandeVragen } from "./openstaandeVragen.js";
 
 const foutEl = document.getElementById("fout-melding");
 window.addEventListener("error", (e) => toonFout(e.error ?? e.message));
@@ -49,8 +63,15 @@ const themaEl = document.getElementById("thema-regel");
 const persistEl = document.getElementById("persist-regel");
 const exportEl = document.getElementById("export-regel");
 const conflictenEl = document.getElementById("conflicten-paneel");
+const reisstatusEl = document.getElementById("reisstatus-paneel");
+const reisFormEl = document.getElementById("reis-form");
+const eigenReizenEl = document.getElementById("eigen-reizen-lijst");
 const formEl = document.getElementById("planner-form");
 const eigenItemsEl = document.getElementById("eigen-items-lijst");
+const verborgenEl = document.getElementById("verborgen-lijst");
+const vragenEl = document.getElementById("vragen-paneel");
+const reisUitklapEl = document.getElementById("reis-uitklap");
+const itemUitklapEl = document.getElementById("item-uitklap");
 
 const schermEls = Object.fromEntries(SCHERMEN.map((s) => [s, document.getElementById(`scherm-${s}`)]));
 const navKnopEls = [...document.querySelectorAll(".navknop")];
@@ -58,6 +79,10 @@ const navKnopEls = [...document.querySelectorAll(".navknop")];
 let state = await laadState();
 let openstaandeConflicten = [];
 let persistToegekend = null;
+// Welk eigen item of welke eigen reis op dit moment bewerkt wordt; null =
+// het formulier staat in "toevoegen"-stand.
+let bewerktItemId = null;
+let bewerkteReisId = null;
 
 const THEMA_ATTRIBUUT = { licht: "light", donker: "dark" };
 
@@ -88,11 +113,39 @@ function themaWeergeven() {
 
 function instellingenWeergeven() {
   themaWeergeven();
+  renderOpenstaandeVragen(vragenEl, state.vakkenVeldwaarden, zetVakVeldEnHerteken);
   renderPersistRegel(persistEl, persistToegekend);
   renderExportRegel(exportEl, state.laatsteExport, exporteer);
   renderConflictenPaneel(conflictenEl, openstaandeConflicten, pasConflictenToe);
-  renderPlannerForm(formEl, (veld) => voegItemEnHerteken(veld));
-  renderEigenItemsLijst(eigenItemsEl, state.items, (id) => verwijderItemEnHerteken(id));
+  renderReisstatusPaneel(reisstatusEl, state.tripStatusOverrides, (variant, nieuweStatus) => zetTripStatusEnHerteken(variant, nieuweStatus));
+  const bewerkteReis = state.eigenReizen.find((r) => r.id === bewerkteReisId) ?? null;
+  renderReisForm(reisFormEl, (veld) => reisOpslaan(veld), bewerkteReis);
+  // Het formulier zit in een ingeklapt blok; bij bewerken moet het openstaan,
+  // anders lijkt "Bewerken" niets te doen.
+  zetUitklap(reisUitklapEl, Boolean(bewerkteReis), bewerkteReis ? "Reis bewerken" : "Reis toevoegen");
+  renderEigenReizenLijst(eigenReizenEl, state.eigenReizen, (id) => verwijderReisEnHerteken(id), (id) => startReisBewerken(id));
+
+  const bewerktItem = state.items.find((i) => i.id === bewerktItemId) ?? null;
+  renderPlannerForm(formEl, (veld) => itemOpslaan(veld), bewerktItem ? { item: bewerktItem } : undefined);
+  zetUitklap(itemUitklapEl, Boolean(bewerktItem), bewerktItem ? "Item bewerken" : "Item toevoegen");
+  renderEigenItemsLijst(eigenItemsEl, state.items, (id) => verwijderItemEnHerteken(id), (id) => startItemBewerken(id));
+
+  renderVerborgenLijst(
+    verborgenEl,
+    state.verborgenItems.map((sleutel) => ({ sleutel, omschrijving: verborgenOmschrijving(sleutel) })),
+    (sleutel) => verbergEnHerteken(sleutel, false)
+  );
+}
+
+/**
+ * @param {HTMLDetailsElement} el
+ * @param {boolean} openen alleen afdwingen, nooit dichtklappen wat de
+ *   gebruiker zelf heeft opengezet
+ * @param {string} titel
+ */
+function zetUitklap(el, openen, titel) {
+  if (openen) el.open = true;
+  el.querySelector("summary").textContent = titel;
 }
 
 function pythonAfgewezen() {
@@ -112,12 +165,83 @@ function maandWeergeven() {
     vandaag: huidigeYMD(),
     items: state.items,
     afgevinkteDeadlines: state.afgevinkteDeadlines,
+    afgevinkteOpleveringen: state.afgevinkteOpleveringen,
+    afgevinkteMijlpalen: state.afgevinkteMijlpalen,
+    eigenProjecten: state.eigenProjecten,
     pythonAfgewezen: pythonAfgewezen(),
+    tripStatusOverrides: state.tripStatusOverrides,
+    eigenReizen: state.eigenReizen,
+    vakkenVeldwaarden: state.vakkenVeldwaarden,
+    kalenderWeergave: state.kalenderWeergave,
+    verborgenItems: state.verborgenItems,
   });
 }
 
+/**
+ * Alle zes de weergaven opnieuw tekenen. Stond eerder vijf keer als dezelfde
+ * reeks aanroepen uitgeschreven, met per plek net een andere volgorde of een
+ * vergeten scherm.
+ */
+function allesWeergeven() {
+  instellingenWeergeven();
+  topbarWeergeven();
+  maandWeergeven();
+  wekenWeergeven();
+  overzichtWeergeven();
+  vakkenWeergeven();
+}
+
+function startItemBewerken(id) {
+  bewerktItemId = id;
+  instellingenWeergeven();
+}
+
+function startReisBewerken(id) {
+  bewerkteReisId = id;
+  instellingenWeergeven();
+}
+
+/** Opslaan is toevoegen óf bijwerken, afhankelijk van wat er in bewerking is. */
+async function itemOpslaan(veld) {
+  state = bewerktItemId ? wijzigItem(state, bewerktItemId, veld) : voegItemToe(state, veld);
+  bewerktItemId = null;
+  await bewaarState(state);
+  allesWeergeven();
+}
+
+async function reisOpslaan(veld) {
+  state = bewerkteReisId ? wijzigReis(state, bewerkteReisId, veld) : voegReisToe(state, veld);
+  bewerkteReisId = null;
+  await bewaarState(state);
+  allesWeergeven();
+}
+
+/**
+ * Een vast item (deadline of oplevering) wegzetten als niet van toepassing,
+ * of die keuze terugdraaien. De data in src/data/ blijft ongemoeid.
+ * @param {string} sleutel
+ * @param {boolean} verborgen
+ */
+async function verbergEnHerteken(sleutel, verborgen = true) {
+  state = zetItemVerborgen(state, sleutel, verborgen);
+  await bewaarState(state);
+  allesWeergeven();
+}
+
+async function zetKalenderWeergaveEnHerteken(waarde) {
+  state = zetKalenderWeergave(state, waarde);
+  await bewaarState(state);
+  maandWeergeven();
+}
+
 function wekenWeergeven() {
-  wekenScherm.render({ weekWeergave: state.weekWeergave, vandaag: huidigeYMD(), pythonAfgewezen: pythonAfgewezen() });
+  wekenScherm.render({
+    weekWeergave: state.weekWeergave,
+    vandaag: huidigeYMD(),
+    pythonAfgewezen: pythonAfgewezen(),
+    tripStatusOverrides: state.tripStatusOverrides,
+    eigenReizen: state.eigenReizen,
+  });
 }
 
 async function wijzigWeekWeergave(nieuweWeekWeergave) {
@@ -131,14 +255,41 @@ function openWeekInMaand(ymd) {
   maandScherm.openDag(ymd);
 }
 
+/**
+ * FASE-9.md B4: het lesblok in het dagblad heeft een tikdoel "Naar vak" dat
+ * rechtstreeks naar de detailpagina van dat vak springt.
+ * @param {string} vakId
+ */
+function naarVak(vakId) {
+  navigatie.naarScherm("vakken");
+  vakkenScherm.openVak(vakId);
+}
+
+/**
+ * FASE-9.md B2: "Item erbij" (met het invoerformulier al open) en de
+ * tikbare dagcellen in de weekstrip openen allebei het dagblad van de
+ * gekozen dag op Maand, en keren bij sluiten terug naar Weken.
+ * @param {string} ymd
+ * @param {{formOpenen: boolean}} opties
+ */
+function dagKiezenVanuitWeken(ymd, opties) {
+  navigatie.naarScherm("maand");
+  maandScherm.openDag(ymd, { formOpenen: opties.formOpenen, terugNaarScherm: "weken" });
+}
+
 function overzichtWeergeven() {
   overzichtScherm.render({
     vandaag: huidigeYMD(),
     items: state.items,
     afgevinkteDeadlines: state.afgevinkteDeadlines,
     afgevinkteMijlpalen: state.afgevinkteMijlpalen,
+    afgevinkteOpleveringen: state.afgevinkteOpleveringen,
     eigenProjecten: state.eigenProjecten,
     pythonAfgewezen: pythonAfgewezen(),
+    tripStatusOverrides: state.tripStatusOverrides,
+    eigenReizen: state.eigenReizen,
+    vakkenVeldwaarden: state.vakkenVeldwaarden,
+    verborgenItems: state.verborgenItems,
   });
 }
 
@@ -146,15 +297,55 @@ function vakkenWeergeven() {
   vakkenScherm.render({
     items: state.items,
     afgevinkteDeadlines: state.afgevinkteDeadlines,
+    afgevinkteOpleveringen: state.afgevinkteOpleveringen,
     pythonInschrijving: state.pythonInschrijving,
     vakkenVeldwaarden: state.vakkenVeldwaarden,
+    verborgenItems: state.verborgenItems,
   });
+}
+
+async function zetOpleveringEnHerteken(id, afgevinkt) {
+  state = zetOpleveringAfgevinkt(state, id, afgevinkt);
+  await bewaarState(state);
+  overzichtWeergeven();
+  vakkenWeergeven();
+  maandWeergeven();
 }
 
 async function zetVakVeldEnHerteken(sleutel, waarde) {
   state = zetVakVeld(state, sleutel, waarde);
   await bewaarState(state);
   vakkenWeergeven();
+  maandWeergeven();
+  overzichtWeergeven();
+  instellingenWeergeven();
+}
+
+async function zetTripStatusEnHerteken(variant, nieuweStatus) {
+  state = zetTripStatus(state, variant, nieuweStatus);
+  await bewaarState(state);
+  instellingenWeergeven();
+  maandWeergeven();
+  wekenWeergeven();
+  overzichtWeergeven();
+}
+
+async function voegReisEnHerteken(veld) {
+  state = voegReisToe(state, veld);
+  await bewaarState(state);
+  instellingenWeergeven();
+  maandWeergeven();
+  wekenWeergeven();
+  overzichtWeergeven();
+}
+
+async function verwijderReisEnHerteken(id) {
+  state = verwijderReis(state, id);
+  await bewaarState(state);
+  instellingenWeergeven();
+  maandWeergeven();
+  wekenWeergeven();
+  overzichtWeergeven();
 }
 
 async function zetPythonInschrijvingEnHerteken(waarde) {
@@ -183,28 +374,19 @@ async function zetMijlpaalEnHerteken(sleutel, afgevinkt) {
   state = zetMijlpaalAfgevinkt(state, sleutel, afgevinkt);
   await bewaarState(state);
   overzichtWeergeven();
+  maandWeergeven();
 }
 
 async function voegItemEnHerteken(veld) {
   state = voegItemToe(state, veld);
   await bewaarState(state);
-  instellingenWeergeven();
-  topbarWeergeven();
-  maandWeergeven();
-  wekenWeergeven();
-  overzichtWeergeven();
-  vakkenWeergeven();
+  allesWeergeven();
 }
 
 async function verwijderItemEnHerteken(id) {
   state = verwijderItem(state, id);
   await bewaarState(state);
-  instellingenWeergeven();
-  topbarWeergeven();
-  maandWeergeven();
-  wekenWeergeven();
-  overzichtWeergeven();
-  vakkenWeergeven();
+  allesWeergeven();
 }
 
 async function zetDeadlineEnHerteken(sleutel, afgevinkt) {
@@ -240,12 +422,7 @@ async function importeerBestand(bestand) {
   state = { ...state, items };
   await bewaarState(state);
   openstaandeConflicten = conflicten;
-  instellingenWeergeven();
-  topbarWeergeven();
-  maandWeergeven();
-  wekenWeergeven();
-  overzichtWeergeven();
-  vakkenWeergeven();
+  allesWeergeven();
 }
 exportEl.addEventListener("import-bestand", (e) => importeerBestand(e.detail));
 
@@ -253,12 +430,7 @@ async function pasConflictenToe(keuzes) {
   state = { ...state, items: pasConflictKeuzesToe(state.items, openstaandeConflicten, keuzes) };
   openstaandeConflicten = [];
   await bewaarState(state);
-  instellingenWeergeven();
-  topbarWeergeven();
-  maandWeergeven();
-  wekenWeergeven();
-  overzichtWeergeven();
-  vakkenWeergeven();
+  allesWeergeven();
 }
 
 pasThemaToe(state.ui.thema);
@@ -277,12 +449,19 @@ const maandScherm = initMaandScherm(schermEls.maand, {
   onItemToevoegen: voegItemEnHerteken,
   onVerwijderItem: verwijderItemEnHerteken,
   onDeadlineToggle: zetDeadlineEnHerteken,
+  onOpleveringToggle: zetOpleveringEnHerteken,
+  onMijlpaalToggle: zetMijlpaalEnHerteken,
+  onVeldWijzigen: zetVakVeldEnHerteken,
+  onTerugNaarScherm: (naam) => navigatie.naarScherm(naam),
+  onNaarVak: naarVak,
+  onKalenderWeergaveWijzigen: zetKalenderWeergaveEnHerteken,
+  onVerbergen: (sleutel) => verbergEnHerteken(sleutel),
 });
 
 const wekenScherm = initWekenScherm(schermEls.weken, {
   onWeekWeergaveWijzigen: wijzigWeekWeergave,
   onOpenWeek: openWeekInMaand,
-  onItemToevoegen: voegItemEnHerteken,
+  onDagKiezen: dagKiezenVanuitWeken,
 });
 
 const overzichtScherm = initOverzichtScherm(schermEls.overzicht, {
@@ -290,12 +469,15 @@ const overzichtScherm = initOverzichtScherm(schermEls.overzicht, {
   onMijlpaalToggle: zetMijlpaalEnHerteken,
   onProjectToevoegen: voegProjectEnHerteken,
   onProjectVerwijderen: verwijderProjectEnHerteken,
+  onOpleveringToggle: zetOpleveringEnHerteken,
 });
 
 const vakkenScherm = initVakkenScherm(schermEls.vakken, {
   onVeldWijzigen: zetVakVeldEnHerteken,
   onInschrijvingWijzigen: zetPythonInschrijvingEnHerteken,
   onDeadlineToggle: zetDeadlineEnHerteken,
+  onOpleveringToggle: zetOpleveringEnHerteken,
+  onVerbergen: (sleutel) => verbergEnHerteken(sleutel),
 });
 
 topbarWeergeven();

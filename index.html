@@ -40,15 +40,50 @@
       <h2>Instellingen</h2>
       <button id="instellingen-sluit" type="button" class="tap-target">Sluiten</button>
     </div>
-    <div id="thema-regel"></div>
-    <div id="persist-regel"></div>
-    <div id="export-regel"></div>
-    <div id="conflicten-paneel" hidden></div>
-    <div id="eigen-items-kop">
+    <section class="instellingen-sectie">
+      <h3>Weergave</h3>
+      <div id="thema-regel"></div>
+    </section>
+
+    <section class="instellingen-sectie">
+      <h3>Openstaande vragen</h3>
+      <div id="vragen-paneel"></div>
+    </section>
+
+    <section class="instellingen-sectie">
+      <h3>Opslag en back-up</h3>
+      <div id="persist-regel"></div>
+      <div id="export-regel"></div>
+      <div id="conflicten-paneel" hidden></div>
+    </section>
+
+    <section class="instellingen-sectie">
+      <h3>Reisstatus</h3>
+      <div id="reisstatus-paneel"></div>
+    </section>
+
+    <section class="instellingen-sectie">
+      <h3>Eigen reizen</h3>
+      <div id="eigen-reizen-lijst"></div>
+      <details class="uitklap" id="reis-uitklap">
+        <summary class="tap-target">Reis toevoegen</summary>
+        <div id="reis-form"></div>
+      </details>
+    </section>
+
+    <section class="instellingen-sectie">
+      <h3>Verborgen</h3>
+      <div id="verborgen-lijst"></div>
+    </section>
+
+    <section class="instellingen-sectie">
       <h3>Eigen items</h3>
-    </div>
-    <div id="planner-form"></div>
-    <div id="eigen-items-lijst"></div>
+      <div id="eigen-items-lijst"></div>
+      <details class="uitklap" id="item-uitklap">
+        <summary class="tap-target">Item toevoegen</summary>
+        <div id="planner-form"></div>
+      </details>
+    </section>
   </div>
 </div>
 

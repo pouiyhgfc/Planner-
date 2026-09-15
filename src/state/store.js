@@ -3,7 +3,8 @@
  * localStorage — zie CLAUDE.md §4.
  */
 
-import { leegState, migrate, valideerItem, valideerProject, CURRENT_SCHEMA_VERSION } from "./schema.js";
+import { leegState, migrate, valideerItem, valideerProject, valideerReis, CURRENT_SCHEMA_VERSION } from "./schema.js";
+import { trips, TRIP_STATUSSEN } from "../data/trips.js";
 
 const DB_NAAM = "planner";
 const DB_VERSIE = 1;
@@ -108,6 +109,60 @@ export function zetMijlpaalAfgevinkt(state, sleutel, afgevinkt) {
 }
 
 /**
+ * Verbergt of toont een vast item (een deadline of oplevering uit src/data/)
+ * dat niet van toepassing is. Het item zelf blijft in de data staan —
+ * kalenderfeiten worden niet weggegooid (CLAUDE.md §5) — dit is alleen een
+ * weergavekeuze, en omkeerbaar via Instellingen.
+ * @param {{verborgenItems: string[]}} state
+ * @param {string} sleutel met soortprefix, zie schema.js v12
+ * @param {boolean} verborgen
+ * @returns {{verborgenItems: string[]}}
+ */
+export function zetItemVerborgen(state, sleutel, verborgen) {
+  const zonder = state.verborgenItems.filter((s) => s !== sleutel);
+  return { ...state, verborgenItems: verborgen ? [...zonder, sleutel] : zonder };
+}
+
+/**
+ * @param {{items: object[]}} state
+ * @param {string} id
+ * @param {{naam: string, start: string, end: string, status: string, notitie: string}} veld
+ * @returns {{items: object[]}}
+ */
+export function wijzigItem(state, id, veld) {
+  const bestaand = state.items.find((item) => item.id === id);
+  if (!bestaand) throw new Error(`onbekend item: ${id}`);
+  const gewijzigd = { ...bestaand, ...veld, id, bijgewerkt: huidigeYMD() };
+  valideerItem(gewijzigd);
+  return { ...state, items: state.items.map((item) => (item.id === id ? gewijzigd : item)) };
+}
+
+/**
+ * @param {{eigenReizen: object[]}} state
+ * @param {string} id
+ * @param {{naam: string, start: string, end: string, status: string, vluchten?: object[]}} veld
+ * @returns {{eigenReizen: object[]}}
+ */
+export function wijzigReis(state, id, veld) {
+  const bestaand = state.eigenReizen.find((reis) => reis.id === id);
+  if (!bestaand) throw new Error(`onbekende reis: ${id}`);
+  const gewijzigd = { ...bestaand, ...veld, id };
+  valideerReis(gewijzigd);
+  return { ...state, eigenReizen: state.eigenReizen.map((reis) => (reis.id === id ? gewijzigd : reis)) };
+}
+
+/**
+ * @param {{afgevinkteOpleveringen: string[]}} state
+ * @param {string} id een src/data/opleveringen.js item-id
+ * @param {boolean} afgevinkt
+ * @returns {{afgevinkteOpleveringen: string[]}}
+ */
+export function zetOpleveringAfgevinkt(state, id, afgevinkt) {
+  const zonder = state.afgevinkteOpleveringen.filter((i) => i !== id);
+  return { ...state, afgevinkteOpleveringen: afgevinkt ? [...zonder, id] : zonder };
+}
+
+/**
  * @param {{eigenProjecten: object[]}} state
  * @param {{naam: string, vak: string, mijlpalen: {datum: string, label: string}[]}} veld
  * @returns {{eigenProjecten: object[]}}
@@ -128,6 +183,37 @@ export function verwijderProject(state, id) {
 }
 
 /**
+ * FASE-9.md B1 punt 5: een eigen reis toevoegen (niet in src/data/, wordt in
+ * dayStatus.js/blocks.js meegenomen via eigenReisItems()).
+ * @param {{eigenReizen: object[]}} state
+ * @param {{naam: string, start: string, end: string, status: string, vluchten?: {datum: string, tijd?: string|null, label?: string}[]}} veld
+ * @returns {{eigenReizen: object[]}}
+ */
+export function voegReisToe(state, veld) {
+  const reis = { id: crypto.randomUUID(), vluchten: [], ...veld };
+  valideerReis(reis);
+  return { ...state, eigenReizen: [...state.eigenReizen, reis] };
+}
+
+/**
+ * @param {{eigenReizen: object[]}} state
+ * @param {string} id
+ * @returns {{eigenReizen: object[]}}
+ */
+export function verwijderReis(state, id) {
+  return { ...state, eigenReizen: state.eigenReizen.filter((r) => r.id !== id) };
+}
+
+/**
+ * @param {{kalenderWeergave: string}} state
+ * @param {"compact"|"uitgebreid"} waarde
+ * @returns {{kalenderWeergave: string}}
+ */
+export function zetKalenderWeergave(state, waarde) {
+  return { ...state, kalenderWeergave: waarde };
+}
+
+/**
  * @param {{pythonInschrijving: string}} state
  * @param {"onbevestigd"|"bevestigd"|"afgewezen"} waarde
  * @returns {{pythonInschrijving: string}}
@@ -144,6 +230,32 @@ export function zetPythonInschrijving(state, waarde) {
  */
 export function zetVakVeld(state, sleutel, waarde) {
   return { ...state, vakkenVeldwaarden: { ...state.vakkenVeldwaarden, [sleutel]: waarde } };
+}
+
+/**
+ * Zet de status van één reisvariant (FASE-9.md A2). Zet je een variant op
+ * "geboekt", dan gaat elke andere variant binnen dezelfde reis (groep) die
+ * op dat moment "geboekt" is automatisch naar "vervallen" — er kan maar één
+ * variant tegelijk de actieve, geboekte reis zijn.
+ * @param {{tripStatusOverrides: Record<string, string>}} state
+ * @param {string} variant een trips.js variant-id, bijv. "japan-omboeking"
+ * @param {string} nieuweStatus
+ * @returns {{tripStatusOverrides: Record<string, string>}}
+ */
+export function zetTripStatus(state, variant, nieuweStatus) {
+  if (!TRIP_STATUSSEN.includes(nieuweStatus)) throw new Error(`ongeldige status: ${nieuweStatus}`);
+  const item = trips.find((t) => t.variant === variant);
+  if (!item) throw new Error(`onbekende reisvariant: ${variant}`);
+
+  const overrides = { ...state.tripStatusOverrides, [variant]: nieuweStatus };
+  if (nieuweStatus === "geboekt") {
+    for (const t of trips) {
+      if (t.groep !== item.groep || t.variant === variant) continue;
+      const huidigeStatus = overrides[t.variant] ?? t.status;
+      if (huidigeStatus === "geboekt") overrides[t.variant] = "vervallen";
+    }
+  }
+  return { ...state, tripStatusOverrides: overrides };
 }
 
 /**

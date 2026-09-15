@@ -6,32 +6,47 @@
 
 import { costOfRange } from "../lib/blocks.js";
 import { diffDays } from "../lib/date.js";
+import { kortDatum } from "./datumlabels.js";
+import { meervoud } from "./tekst.js";
 import { huidigeYMD } from "../state/store.js";
+import { trips, effectieveTripStatus, TRIP_STATUSSEN } from "../data/trips.js";
 
 const EXPORT_WAARSCHUWING_DAGEN = 14;
 
+/** Leesbare labels voor de opgeslagen statuswaarden uit trips.js. */
+const TRIP_STATUS_LABELS = {
+  geboekt: "geboekt",
+  "wijziging-aangevraagd": "wijziging aangevraagd",
+  vervallen: "vervallen",
+};
+
 /**
  * @param {HTMLElement} root
- * @param {(veld: {naam: string, start: string, end: string, status: string, notitie: string}) => void} onToevoegen
- * @param {{start?: string, end?: string}} [voorinvulling] datumbereik dat al is ingevuld (bijv. vanuit het dagblad)
+ * @param {(veld: {naam: string, start: string, end: string, status: string, notitie: string}) => void} onOpslaan
+ * @param {{start?: string, end?: string, item?: object}} [opties] voorinvulling
+ *   van het datumbereik (bijv. vanuit het dagblad), of een bestaand item om
+ *   te bewerken — dat kon eerder niet: je kon alleen toevoegen en weggooien.
  */
-export function renderPlannerForm(root, onToevoegen, voorinvulling) {
+export function renderPlannerForm(root, onOpslaan, opties) {
   root.textContent = "";
   root.className = "planner-form";
 
-  const naam = veldInput("text", "Naam");
-  const start = veldInput("date", "Van");
-  const eind = veldInput("date", "Tot");
-  if (voorinvulling?.start) start.value = voorinvulling.start;
-  if (voorinvulling?.end) eind.value = voorinvulling.end;
-  const status = document.createElement("select");
-  for (const waarde of ["idee", "vast"]) {
-    const optie = document.createElement("option");
-    optie.value = waarde;
-    optie.textContent = waarde;
-    status.appendChild(optie);
+  const bewerkt = opties?.item ?? null;
+  const naam = invoerveld("text", { verplicht: true });
+  const start = invoerveld("date");
+  const eind = invoerveld("date");
+  if (bewerkt) {
+    naam.value = bewerkt.naam;
+    start.value = bewerkt.start;
+    eind.value = bewerkt.end;
+  } else {
+    if (opties?.start) start.value = opties.start;
+    if (opties?.end) eind.value = opties.end;
   }
-  const notitie = veldInput("text", "Notitie (optioneel)");
+  const status = keuzeveld(["idee", "vast"]);
+  if (bewerkt) status.value = bewerkt.status;
+  const notitie = invoerveld("text");
+  if (bewerkt) notitie.value = bewerkt.notitie ?? "";
 
   const waarschuwing = document.createElement("div");
   waarschuwing.className = "kosten-waarschuwing";
@@ -56,16 +71,21 @@ export function renderPlannerForm(root, onToevoegen, voorinvulling) {
 
   const knop = document.createElement("button");
   knop.type = "submit";
-  knop.textContent = "Toevoegen";
+  knop.textContent = bewerkt ? "Opslaan" : "Toevoegen";
 
   const form = document.createElement("form");
-  for (const el of [naam, start, eind, status, notitie, knop]) form.appendChild(el);
+  form.appendChild(metLabel("Naam", naam));
+  form.appendChild(metLabel("Van", start));
+  form.appendChild(metLabel("Tot", eind));
+  form.appendChild(metLabel("Status", status));
+  form.appendChild(metLabel("Notitie", notitie));
   form.appendChild(waarschuwing);
+  form.appendChild(knop);
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     if (!naam.value || !start.value || !eind.value) return;
-    onToevoegen({
+    onOpslaan({
       naam: naam.value,
       start: start.value,
       end: eind.value,
@@ -81,14 +101,51 @@ export function renderPlannerForm(root, onToevoegen, voorinvulling) {
 
 /**
  * @param {string} type
- * @param {string} placeholder
+ * @param {{verplicht?: boolean, placeholder?: string}} [opties]
+ * @returns {HTMLInputElement}
  */
-function veldInput(type, placeholder) {
+function invoerveld(type, opties = {}) {
   const input = document.createElement("input");
   input.type = type;
-  input.placeholder = placeholder;
-  if (type !== "date") input.required = type === "text" && placeholder === "Naam";
+  if (opties.placeholder) input.placeholder = opties.placeholder;
+  if (opties.verplicht) input.required = true;
   return input;
+}
+
+/**
+ * Zet een zichtbaar label vóór een veld. Nodig omdat een placeholder op
+ * <input type="date"> niet getoond wordt: die velden stonden daardoor
+ * naamloos in het formulier en begin- en einddatum waren niet uit elkaar
+ * te houden.
+ * @param {string} tekst
+ * @param {HTMLElement} veld
+ * @returns {HTMLLabelElement}
+ */
+function metLabel(tekst, veld) {
+  const label = document.createElement("label");
+  label.className = "veld-rij";
+  const naam = document.createElement("span");
+  naam.className = "veld-label";
+  naam.textContent = tekst;
+  label.appendChild(naam);
+  label.appendChild(veld);
+  return label;
+}
+
+/**
+ * @param {string[]} waarden
+ * @param {Record<string, string>} [labels] leesbaar label per opgeslagen waarde
+ * @returns {HTMLSelectElement}
+ */
+function keuzeveld(waarden, labels = {}) {
+  const select = document.createElement("select");
+  for (const waarde of waarden) {
+    const optie = document.createElement("option");
+    optie.value = waarde;
+    optie.textContent = labels[waarde] ?? waarde;
+    select.appendChild(optie);
+  }
+  return select;
 }
 
 const THEMA_OPTIES = [
@@ -152,7 +209,7 @@ export function renderExportRegel(root, laatsteExport, onExporteren) {
     tekst.classList.add("export-waarschuwing");
   } else {
     const dagenGeleden = diffDays(laatsteExport, huidigeYMD());
-    tekst.textContent = `Laatste export: ${laatsteExport} (${dagenGeleden} dagen geleden)`;
+    tekst.textContent = `Laatste export: ${kortDatum(laatsteExport)} (${meervoud(dagenGeleden, "dag", "dagen")} geleden)`;
     if (dagenGeleden > EXPORT_WAARSCHUWING_DAGEN) tekst.classList.add("export-waarschuwing");
   }
   root.appendChild(tekst);
@@ -163,14 +220,23 @@ export function renderExportRegel(root, laatsteExport, onExporteren) {
   knop.addEventListener("click", onExporteren);
   root.appendChild(knop);
 
+  // Het kale bestandsveld toont een niet-vertaalbare "Choose file / no file
+  // chosen" en zegt niet wat het doet; een label eromheen geeft het een
+  // Nederlandse naam en hetzelfde uiterlijk als de andere knoppen.
   const importInput = document.createElement("input");
   importInput.type = "file";
   importInput.accept = "application/json";
+  importInput.className = "visueel-verborgen";
   importInput.addEventListener("change", () => {
     if (importInput.files.length > 0) root.dispatchEvent(new CustomEvent("import-bestand", { detail: importInput.files[0] }));
     importInput.value = "";
   });
-  root.appendChild(importInput);
+
+  const importKnop = document.createElement("label");
+  importKnop.className = "tap-target knop-als-label";
+  importKnop.textContent = "Importeren";
+  importKnop.appendChild(importInput);
+  root.appendChild(importKnop);
 }
 
 /**
@@ -189,7 +255,7 @@ export function renderConflictenPaneel(root, conflicten, onOplossen) {
   root.hidden = false;
 
   const kop = document.createElement("div");
-  kop.textContent = `${conflicten.length} conflict(en) bij import — kies per item welke versie moet blijven:`;
+  kop.textContent = `${meervoud(conflicten.length, "conflict", "conflicten")} bij import — kies per item welke versie moet blijven:`;
   root.appendChild(kop);
 
   const keuzes = {};
@@ -229,38 +295,237 @@ export function renderConflictenPaneel(root, conflicten, onOplossen) {
 }
 
 /**
+ * Eén rij per reisvariant (FASE-9.md A2) met zijn effectieve status en, als
+ * die niet al "geboekt" is, een knop om hem dat te maken — zet je die, dan
+ * gaat elke andere variant binnen dezelfde reis die nu "geboekt" is
+ * automatisch naar "vervallen" (state/store.js:zetTripStatus).
+ * @param {HTMLElement} root
+ * @param {Record<string, string>} tripStatusOverrides
+ * @param {(variant: string, nieuweStatus: string) => void} onWijzigen
+ */
+export function renderReisstatusPaneel(root, tripStatusOverrides, onWijzigen) {
+  root.className = "reisstatus-paneel";
+  root.textContent = "";
+
+  for (const item of trips.filter((t) => t.type === "vaste-boeking")) {
+    const status = effectieveTripStatus(item, tripStatusOverrides);
+
+    const rij = document.createElement("div");
+    rij.className = "reisstatus-rij";
+
+    const tekst = document.createElement("span");
+    tekst.textContent = `${item.label} (${kortDatum(item.start)} → ${kortDatum(item.end)}) — ${TRIP_STATUS_LABELS[status] ?? status}`;
+    rij.appendChild(tekst);
+
+    if (status !== "geboekt") {
+      const knop = document.createElement("button");
+      knop.type = "button";
+      knop.textContent = "Zet op geboekt";
+      knop.addEventListener("click", () => onWijzigen(item.variant, "geboekt"));
+      rij.appendChild(knop);
+    }
+
+    root.appendChild(rij);
+  }
+}
+
+/**
+ * FASE-9.md B1 punt 5: eigen reis toevoegen — naam, begin/eind, status en
+ * optioneel losse vluchten (datum + tijd + label). Landt in state.eigenReizen,
+ * niet in src/data/ (src/data/trips.js:eigenReisItems() maakt hem daarna
+ * visueel identiek aan een reis uit trips.js).
+ * @param {HTMLElement} root
+ * @param {(veld: {naam: string, start: string, end: string, status: string, vluchten: {datum: string, tijd: string|null, label: string}[]}) => void} onOpslaan
+ * @param {object} [bewerkt] een bestaande reis om te bewerken
+ */
+export function renderReisForm(root, onOpslaan, bewerkt) {
+  root.textContent = "";
+  root.className = "reis-form";
+
+  const naam = invoerveld("text", { verplicht: true });
+  const start = invoerveld("date");
+  const eind = invoerveld("date");
+  const status = keuzeveld(TRIP_STATUSSEN, TRIP_STATUS_LABELS);
+  if (bewerkt) {
+    naam.value = bewerkt.naam;
+    start.value = bewerkt.start;
+    eind.value = bewerkt.end;
+    status.value = bewerkt.status;
+  }
+
+  const vluchtenWrap = document.createElement("div");
+  vluchtenWrap.className = "reis-vluchten";
+  const vluchtRijen = [];
+
+  function voegVluchtRijToe() {
+    const rij = document.createElement("div");
+    rij.className = "reis-vlucht-rij";
+    const datum = document.createElement("input");
+    datum.type = "date";
+    const tijd = document.createElement("input");
+    tijd.type = "time";
+    const label = invoerveld("text", { placeholder: "Label" });
+    const verwijder = document.createElement("button");
+    verwijder.type = "button";
+    verwijder.textContent = "×";
+    verwijder.setAttribute("aria-label", "Verwijder deze vlucht");
+    rij.appendChild(datum);
+    rij.appendChild(tijd);
+    rij.appendChild(label);
+    rij.appendChild(verwijder);
+    vluchtenWrap.appendChild(rij);
+    const rijData = { datum, tijd, label };
+    vluchtRijen.push(rijData);
+    verwijder.addEventListener("click", () => {
+      rij.remove();
+      vluchtRijen.splice(vluchtRijen.indexOf(rijData), 1);
+    });
+  }
+
+  const vluchtToevoegKnop = document.createElement("button");
+  vluchtToevoegKnop.type = "button";
+  vluchtToevoegKnop.textContent = "Losse vlucht toevoegen";
+  vluchtToevoegKnop.addEventListener("click", voegVluchtRijToe);
+
+  const knop = document.createElement("button");
+  knop.type = "submit";
+  knop.textContent = bewerkt ? "Reis opslaan" : "Reis toevoegen";
+
+  const form = document.createElement("form");
+  form.appendChild(metLabel("Naam", naam));
+  form.appendChild(metLabel("Van", start));
+  form.appendChild(metLabel("Tot", eind));
+  form.appendChild(metLabel("Status", status));
+  form.appendChild(vluchtenWrap);
+  form.appendChild(vluchtToevoegKnop);
+  form.appendChild(knop);
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (!naam.value || !start.value || !eind.value) return;
+    const vluchten = vluchtRijen
+      .filter((r) => r.datum.value)
+      .map((r) => ({ datum: r.datum.value, tijd: r.tijd.value || null, label: r.label.value || "" }));
+    onOpslaan({ naam: naam.value, start: start.value, end: eind.value, status: status.value, vluchten });
+    form.reset();
+    vluchtenWrap.textContent = "";
+    vluchtRijen.length = 0;
+  });
+
+  root.appendChild(form);
+}
+
+/**
+ * @param {HTMLElement} root
+ * @param {object[]} reizen
+ * @param {(id: string) => void} onVerwijderen
+ */
+export function renderEigenReizenLijst(root, reizen, onVerwijderen, onBewerken) {
+  renderVerwijderbareLijst(root, reizen, onVerwijderen, onBewerken, "Nog geen eigen reizen.", (reis) => {
+    const vluchten = reis.vluchten?.length > 0 ? ` — ${meervoud(reis.vluchten.length, "vlucht", "vluchten")}` : "";
+    return `${kortDatum(reis.start)} → ${kortDatum(reis.end)} — ${reis.naam} (${TRIP_STATUS_LABELS[reis.status] ?? reis.status})${vluchten}`;
+  });
+}
+
+/**
  * @param {HTMLElement} root
  * @param {object[]} items
  * @param {(id: string) => void} onVerwijderen
  */
-export function renderEigenItemsLijst(root, items, onVerwijderen) {
+export function renderEigenItemsLijst(root, items, onVerwijderen, onBewerken) {
+  renderVerwijderbareLijst(root, items, onVerwijderen, onBewerken, "Nog geen eigen items.", (item) => {
+    const bereik = item.start === item.end ? kortDatum(item.start) : `${kortDatum(item.start)} → ${kortDatum(item.end)}`;
+    return `${bereik} — ${item.naam} (${item.status})`;
+  });
+}
+
+/**
+ * Eigen reizen en eigen items zijn dezelfde lijst met een andere regeltekst:
+ * op datum gesorteerd, per rij een kruisje om te verwijderen, en een zin als
+ * er nog niets is.
+ * @param {HTMLElement} root
+ * @param {{id: string, naam: string, start: string}[]} rijen
+ * @param {(id: string) => void} onVerwijderen
+ * @param {(id: string) => void} onBewerken
+ * @param {string} legeTekst
+ * @param {(rij: object) => string} regelTekst
+ */
+function renderVerwijderbareLijst(root, rijen, onVerwijderen, onBewerken, legeTekst, regelTekst) {
   root.className = "eigen-items-lijst";
   root.textContent = "";
 
-  if (items.length === 0) {
+  if (rijen.length === 0) {
     const leeg = document.createElement("p");
     leeg.className = "eigen-items-leeg";
-    leeg.textContent = "Nog geen eigen items.";
+    leeg.textContent = legeTekst;
     root.appendChild(leeg);
     return;
   }
 
   const lijst = document.createElement("ul");
-  for (const item of [...items].sort((a, b) => a.start.localeCompare(b.start))) {
+  for (const rij of [...rijen].sort((a, b) => a.start.localeCompare(b.start))) {
     const li = document.createElement("li");
     li.className = "eigen-item-rij";
 
     const tekst = document.createElement("span");
-    const bereik = item.start === item.end ? item.start : `${item.start} → ${item.end}`;
-    tekst.textContent = `${bereik} — ${item.naam} (${item.status})`;
+    tekst.textContent = regelTekst(rij);
     li.appendChild(tekst);
+
+    const bewerk = document.createElement("button");
+    bewerk.type = "button";
+    bewerk.className = "rij-knop";
+    bewerk.textContent = "Bewerken";
+    bewerk.addEventListener("click", () => onBewerken(rij.id));
+    li.appendChild(bewerk);
 
     const verwijder = document.createElement("button");
     verwijder.type = "button";
+    verwijder.className = "rij-knop";
     verwijder.textContent = "×";
-    verwijder.setAttribute("aria-label", `Verwijder "${item.naam}"`);
-    verwijder.addEventListener("click", () => onVerwijderen(item.id));
+    verwijder.setAttribute("aria-label", `Verwijder "${rij.naam}"`);
+    verwijder.addEventListener("click", () => onVerwijderen(rij.id));
     li.appendChild(verwijder);
+
+    lijst.appendChild(li);
+  }
+  root.appendChild(lijst);
+}
+
+/**
+ * Wat je hebt weggezet als niet van toepassing. De items zelf staan nog
+ * gewoon in src/data/ — dit is de plek om die keuze terug te draaien, zodat
+ * verbergen nooit definitief voelt.
+ * @param {HTMLElement} root
+ * @param {{sleutel: string, omschrijving: string}[]} verborgen
+ * @param {(sleutel: string) => void} onWeerTonen
+ */
+export function renderVerborgenLijst(root, verborgen, onWeerTonen) {
+  root.className = "eigen-items-lijst";
+  root.textContent = "";
+
+  if (verborgen.length === 0) {
+    const leeg = document.createElement("p");
+    leeg.className = "eigen-items-leeg";
+    leeg.textContent = "Niets verborgen.";
+    root.appendChild(leeg);
+    return;
+  }
+
+  const lijst = document.createElement("ul");
+  for (const rij of verborgen) {
+    const li = document.createElement("li");
+    li.className = "eigen-item-rij";
+
+    const tekst = document.createElement("span");
+    tekst.textContent = rij.omschrijving;
+    li.appendChild(tekst);
+
+    const knop = document.createElement("button");
+    knop.type = "button";
+    knop.className = "rij-knop";
+    knop.textContent = "Weer tonen";
+    knop.addEventListener("click", () => onWeerTonen(rij.sleutel));
+    li.appendChild(knop);
 
     lijst.appendChild(li);
   }

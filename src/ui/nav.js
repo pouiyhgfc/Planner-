@@ -25,7 +25,10 @@ const SCROLL_BEWAAR_VERTRAGING_MS = 400;
 export function initNavigatie(opts) {
   const { schermEls, navKnopEls, instellingenKnopEl, instellingenPaneelEl, instellingenSluitEl, onUiWijzigen } = opts;
   let ui = opts.ui;
-  let scrollTimer = null;
+  // Eén timer per scherm, niet gedeeld — anders annuleert het scroll-event van
+  // het ene scherm de nog-niet-opgeslagen positie van een ander scherm dat
+  // vlak daarvoor (bijv. door tonScherm()) ook een scroll-event vuurde.
+  const scrollTimers = {};
 
   function toonScherm(naam) {
     for (const s of SCHERMEN) schermEls[s].hidden = s !== naam;
@@ -46,9 +49,14 @@ export function initNavigatie(opts) {
 
   for (const naam of SCHERMEN) {
     schermEls[naam].addEventListener("scroll", () => {
-      clearTimeout(scrollTimer);
+      // Een scherm verbergen (hidden = true) reset scrollTop naar 0 en kan dat
+      // zelf als scroll-event laten vuren — geen echte gebruikersactie, dus
+      // niet plannen om op te slaan (zou de bewaarde positie overschrijven).
+      if (schermEls[naam].hidden) return;
+      clearTimeout(scrollTimers[naam]);
       const positie = schermEls[naam].scrollTop;
-      scrollTimer = setTimeout(() => {
+      scrollTimers[naam] = setTimeout(() => {
+        if (schermEls[naam].hidden) return;
         ui = { ...ui, scrollPositions: { ...ui.scrollPositions, [naam]: positie } };
         onUiWijzigen(ui);
       }, SCROLL_BEWAAR_VERTRAGING_MS);
@@ -87,17 +95,18 @@ export function renderTopbar({ weekEl, absentieEl }, { vandaag, absenties }, onA
     weekEl.appendChild(weekSpan);
   }
 
+  // Zonder absenties is er niets te melden; een knop die permanent "geen
+  // absenties" zegt, kost ruimte in de topbalk zonder iets toe te voegen.
+  // Het scherm Vakken blijft gewoon via de tabbalk bereikbaar.
   absentieEl.textContent = "";
+  const entries = Object.entries(absenties).filter(([, n]) => n > 0);
+  if (entries.length === 0) return;
+
+  const totaal = entries.reduce((som, [, n]) => som + n, 0);
   const knop = document.createElement("button");
   knop.type = "button";
   knop.className = "tap-target absentie-knop";
-  const entries = Object.entries(absenties).filter(([, n]) => n > 0);
-  if (entries.length === 0) {
-    knop.textContent = "geen absenties";
-  } else {
-    const totaal = entries.reduce((som, [, n]) => som + n, 0);
-    knop.textContent = `${entries.map(([vak, n]) => `${vak} ${n}`).join(" · ")} · totaal ${totaal}`;
-  }
+  knop.textContent = `${entries.map(([vak, n]) => `${vak} ${n}`).join(" · ")} · totaal ${totaal}`;
   knop.addEventListener("click", onAbsentieTik);
   absentieEl.appendChild(knop);
 }

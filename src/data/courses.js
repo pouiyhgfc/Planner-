@@ -5,6 +5,22 @@
  * (DATA.md §9) — die velden staan hieronder op `null`, nooit gegokt.
  */
 
+/**
+ * @param {string} id vak-id zoals "PSY"
+ * @returns {object|undefined}
+ */
+export function courseVoor(id) {
+  return courses.find((c) => c.id === id);
+}
+
+/**
+ * @param {string} id
+ * @returns {string} de volledige vaknaam, of het id zelf als het vak niet bestaat
+ */
+export function courseNaam(id) {
+  return courseVoor(id)?.name ?? id;
+}
+
 export const courses = [
   {
     id: "PSY",
@@ -15,13 +31,13 @@ export const courses = [
     end: "12:10",
     room: "博雅 101",
     docent: "周珮雯 (Catherine P. Chou)",
-    studiepunten: null,
-    onbekendeVelden: ["studiepunten"],
-    opmerking: "Docentnaam komt uit VAKKEN.md §3 — de syllabus zelf noemt geen naam, alleen dat de docent het recht op wijziging behoudt.",
+    studiepunten: 3,
+    onbekendeVelden: [],
+    opmerking: "Studiepunten (3) komen uit de opgave van Idries; de syllabus zelf noemt ze niet. Docentnaam komt uit VAKKEN.md §3 — de syllabus zelf noemt geen naam, alleen dat de docent het recht op wijziging behoudt. Vak wordt in het Engels gegeven en telt als Liberal Education Course A58.",
     bron: "syllabus PSY1007-09",
     zekerheid: "ZEKER",
     beoordeling: {
-      tekst: "Midterm 35%, final 35%, 4 opdrachten 20%, participatie 10%. Te laat inleveren: −10% per dag inclusief weekend, na 1 week geen punten. Tentamens niet cumulatief. Gemist tentamen zonder documentatie = 0.",
+      tekst: "Midterm 35%, final 35%, 4 opdrachten 20%, participatie 10%. De vier opdrachten zijn de enige inlevermomenten: de syllabus noemt geen wekelijks huiswerk en geen paper. Inleveren gaat uitsluitend via NTU COOL — per e-mail insturen levert 0 punten op. Te laat inleveren: −10% per dag inclusief weekend, na 1 week geen punten. Tentamens niet cumulatief (meerkeuzevragen). Gemist tentamen zonder documentatie = 0.",
       weging: [
         { label: "Midterm", percentage: 35 },
         { label: "Final", percentage: 35 },
@@ -41,9 +57,9 @@ export const courses = [
     end: "12:10",
     room: null,
     docent: "Chih-Wei Tung (programmadirecteur MS Global ATGS)",
-    studiepunten: null,
-    onbekendeVelden: ["code", "room", "studiepunten"],
-    opmerking: "De eerder aangenomen code 946 U0060 (ser. 52089) bleek bij Computer Programming in Python te horen, niet bij AgTech — FASE-8-1.md 0B, correctie 1. AgTech's eigen code is ONBEKEND. Docentnaam (Chih-Wei Tung) komt uit VAKKEN.md §5, eerder ONBEKEND.",
+    studiepunten: 3,
+    onbekendeVelden: ["code", "room"],
+    opmerking: "Studiepunten (3) komen uit de opgave van Idries; de presentatie noemt ze niet. De eerder aangenomen code 946 U0060 (ser. 52089) bleek bij Computer Programming in Python te horen, niet bij AgTech — FASE-8-1.md 0B, correctie 1. AgTech's eigen code is ONBEKEND. Docentnaam (Chih-Wei Tung) komt uit VAKKEN.md §5, eerder ONBEKEND.",
     bron: "presentatie 20260910-_Global_AgTech_Foresight.pdf",
     zekerheid: "ZEKER",
     beoordeling: {
@@ -66,8 +82,9 @@ export const courses = [
     end: "17:20",
     room: "新 103",
     docent: "Yung-Cheng (Rex) Lai",
-    studiepunten: null,
-    onbekendeVelden: ["studiepunten"],
+    studiepunten: 3,
+    onbekendeVelden: [],
+    opmerking: "Studiepunten (3) komen uit de opgave van Idries; de syllabus zelf noemt ze niet.",
     bron: "2026-NTU_RTE_Syllabus_ver_1.docx",
     zekerheid: "ZEKER",
     beoordeling: {
@@ -100,7 +117,7 @@ export const courses = [
     bron: "NTU Course-pagina + syllabus PTCSL7908-23",
     zekerheid: "ZEKER",
     beoordeling: {
-      tekst: "Aanwezigheid/participatie 15%, huiswerk 20%, quizzen/toetsen 20%, midterm 20%, final 25%. Huiswerk te laat: −10 punten, na 1 week 0. Dictee-quizzen geen herkansing, beste 15 tellen. Midterm+final (45%) geen ruime regeling: herkansing alleen met melding ≥1 dag vooraf, medische verklaring en afgeronde online verlofprocedure, dan binnen 3 dagen — anders 0 punten. Gedragsregels: vanaf de 4e waarschuwing −1 punt (telt onder aanwezigheid).",
+      tekst: "Aanwezigheid/participatie 15%, huiswerk 20%, quizzen/toetsen 20%, midterm 20%, final 25%. Midterm en final bestaan elk uit een schriftelijk deel, een luistertoets, een mondeling en een individuele presentatie, verdeeld over drie lesdagen; hoe de 20% en de 25% over die onderdelen verdeeld zijn, staat niet in de syllabus. Huiswerk te laat: −10 punten, na 1 week 0. Dictee-quizzen geen herkansing, beste 15 tellen. Midterm+final (45%) geen ruime regeling: herkansing alleen met melding ≥1 dag vooraf, medische verklaring en afgeronde online verlofprocedure, dan binnen 3 dagen — anders 0 punten. Gedragsregels: vanaf de 4e waarschuwing −1 punt (telt onder aanwezigheid).",
       weging: [
         { label: "Aanwezigheid/participatie", percentage: 15 },
         { label: "Huiswerk", percentage: 20 },
@@ -109,6 +126,17 @@ export const courses = [
         { label: "Final", percentage: 25 },
       ],
       bron: "syllabus PTCSL7908-23",
+      zekerheid: "ZEKER",
+    },
+    weektoetsen: {
+      tekst: "Vanaf week 4 loopt dit elke week door: elke les een dictee, elke week huiswerk, en na elke afgeronde les een herhalingstoets in het laatste lesuur. De beste 15 dictees tellen mee. Exacte datums staan op NTU COOL en worden per les aangekondigd — de app genereert er geen.",
+      vanafWeek: 4,
+      besteAantalTelt: 15,
+      dicteeElkeLes: true,
+      huiswerkElkeWeek: true,
+      datums: null,
+      onbekendeVelden: ["datums"],
+      bron: "opgave Idries + syllabus PTCSL7908-23",
       zekerheid: "ZEKER",
     },
     absentieregels: {
@@ -140,8 +168,8 @@ export const courses = [
     docent: "LIN, TSE-YU",
     studiepunten: 3,
     onbekendeVelden: ["room"],
-    inschrijving: "onbevestigd",
-    opmerking: "Inschrijving liep via een Google Form, deadline 2026-09-13 09:13 (Taipei) inmiddels verstreken; permissienummers worden verloot, uitkomst onbekend. Telt desondanks wel mee in de bezetting van woensdagmiddag totdat de status wijzigt (DATA.md §3.5). Half jaar, max. 80 studenten.",
+    inschrijving: "bevestigd",
+    opmerking: "Inschrijving liep via een Google Form met loting onder de permissienummers. Idries was al lid en heeft daarmee een plek — de loting was voor hem geen drempel (opgave Idries). Half jaar, max. 80 studenten.",
     bron: "NTU-cursuspagina (FASE-8-1.md 0B, correctie 2)",
     zekerheid: "ZEKER",
     beoordeling: {
@@ -154,17 +182,26 @@ export const courses = [
       bron: "NTU-cursuspagina",
       zekerheid: "ZEKER",
     },
+    opdrachten: {
+      tekst: "Ongeveer 12 opdrachten, waarvan de beste 10 meetellen voor de 65%. Aantallen zijn een schatting van Idries en niet in de cursuspagina terug te vinden; de inleverdatums staan op NTU COOL en zijn ONBEKEND.",
+      aantal: 12,
+      aantalTelt: 10,
+      datums: null,
+      onbekendeVelden: ["datums"],
+      bron: "opgave Idries",
+      zekerheid: "TE VERIFIËREN",
+    },
     absentieregels: {
       tekst: "Minstens drie presentiecontroles, mogelijk meer dan één per week. Verlof uitsluitend vóór de les aanvragen via MyNTU; achteraf niet geaccepteerd. Bewijsstukken vereist behalve bij mentale gezondheid en menstruatieverlof. Weken 12 t/m 16 gelden als tentamenperiode; dan alleen bepaalde verlofsoorten. Geen losse tentamendatum, weken 14-16 zijn projectpresentaties.",
       bron: "NTU-cursuspagina",
       zekerheid: "ZEKER",
     },
     groepsproject: {
-      tekst: "Verplicht in groepsverband, individueel werk niet geaccepteerd. Geen groep binnen de termijn vormen betekent een F voor het hele vak. Groepsgrootte en vormingstermijn worden in de les aangekondigd.",
+      tekst: "Verplicht in groepsverband, individueel werk niet geaccepteerd. Geen groep binnen de termijn vormen betekent een F voor het hele vak. Groepsgrootte en vormingstermijn worden in de les aangekondigd. Idries heeft al een groepsgenoot, dus het F-risico van die regel is afgedekt (opgave Idries).",
       groepsgrootte: null,
       vormingstermijn: null,
       onbekendeVelden: ["groepsgrootte", "vormingstermijn"],
-      bron: "NTU-cursuspagina",
+      bron: "NTU-cursuspagina + opgave Idries",
       zekerheid: "ZEKER",
     },
     // Drie afzonderlijke cursusrestricties uit VAKKEN.md §4 — eerder stond hier
