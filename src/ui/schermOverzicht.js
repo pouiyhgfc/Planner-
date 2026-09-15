@@ -10,6 +10,7 @@ import { projects } from "../data/projects.js";
 import { courses, courseVoor } from "../data/courses.js";
 import { vakAfkorting, vakKleuren, meervoud } from "./tekst.js";
 import { bevestigKnop } from "./knoppen.js";
+import { gemisteSessies } from "./vakkenData.js";
 import {
   volgendeTentamenOfPresentatie,
   aantalOpenstaandeDeadlines,
@@ -93,7 +94,14 @@ export function initOverzichtScherm(root, callbacks) {
   filtersUitklap.appendChild(filtersSamenvatting);
   filtersUitklap.appendChild(filtersEl);
 
+  // Bewust niet per vakblok: een vak zonder zichtbare regels krijgt geen blok,
+  // en dan zou juist het vak dat je gaat missen uit beeld vallen. Hier staat
+  // het los van filters en van de gekozen weergave.
+  const gemistEl = document.createElement("div");
+  gemistEl.className = "overzicht-gemist";
+
   root.appendChild(toevoegenEl);
+  root.appendChild(gemistEl);
   root.appendChild(lijstEl);
   root.appendChild(filtersUitklap);
   root.appendChild(telkaartenUitklap);
@@ -512,6 +520,7 @@ export function initOverzichtScherm(root, callbacks) {
       kop.appendChild(telling);
       blok.appendChild(kop);
 
+
       blok.addEventListener("toggle", () => {
         if (blok.open) ingeklapteVakken.delete(vakId);
         else ingeklapteVakken.add(vakId);
@@ -565,10 +574,35 @@ export function initOverzichtScherm(root, callbacks) {
     lijstEl.appendChild(lijst);
   }
 
+  function tekenenGemist() {
+    gemistEl.textContent = "";
+    const regels = courses
+      .map((c) => ({ course: c, gemist: gemisteSessies(c.id, laatsteCtx.items, laatsteCtx.pythonAfgewezen) }))
+      .filter((r) => r.gemist.length > 0);
+    gemistEl.hidden = regels.length === 0;
+    if (regels.length === 0) return;
+
+    const kop = document.createElement("h3");
+    kop.textContent = "Lessen die je mist";
+    gemistEl.appendChild(kop);
+
+    const lijst = document.createElement("ul");
+    for (const { course, gemist } of regels) {
+      const li = document.createElement("li");
+      li.appendChild(vakChip(course.id));
+      const tekst = document.createElement("span");
+      tekst.textContent = ` ${meervoud(gemist.length, "les", "lessen")} — ${gemist.map((g) => kortDatum(g.date)).join(", ")}`;
+      li.appendChild(tekst);
+      lijst.appendChild(li);
+    }
+    gemistEl.appendChild(lijst);
+  }
+
   function render(ctx) {
     laatsteCtx = ctx;
     if (ctx.overzichtFilters) actieveFilters = new Set(ctx.overzichtFilters);
     tekenenTelkaarten();
+    tekenenGemist();
     tekenenProjecten();
     tekenenFiltersEnLijst();
   }
