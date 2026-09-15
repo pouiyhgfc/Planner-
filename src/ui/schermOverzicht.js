@@ -99,6 +99,8 @@ export function initOverzichtScherm(root, callbacks) {
   root.appendChild(telkaartenUitklap);
   root.appendChild(projectenEl);
 
+  // Begint leeg; render() vult hem uit de state (schema v14), zodat een
+  // uitgezette soort een herlaad overleeft.
   let actieveFilters = new Set(STANDAARD_AAN);
   // Welke vakblokken dichtgeklapt staan; blijft bewaard zolang het scherm leeft
   // zodat een hertekening (bijv. na afvinken) niet alles weer openzet.
@@ -108,6 +110,7 @@ export function initOverzichtScherm(root, callbacks) {
 
   function zetFilters(nieuw) {
     actieveFilters = nieuw;
+    callbacks.onFiltersWijzigen([...nieuw]);
     tekenenFiltersEnLijst();
   }
 
@@ -378,12 +381,26 @@ export function initOverzichtScherm(root, callbacks) {
     if (rij.categorie === "eigenItems" && rij.item) {
       acties.push({ label: "Bewerken", actie: () => callbacks.onItemBewerken(rij.item.id) });
       acties.push({ label: "Verwijderen", bevestigen: true, actie: () => callbacks.onItemVerwijderen(rij.item.id) });
-    }
-    if (rij.categorie === "deadlines" && rij.deadline) {
+    } else if (rij.reis?.bron === "eigen invoer") {
+      acties.push({ label: "Bewerken", actie: () => callbacks.onReisBewerken(rij.reis.variant) });
+      acties.push({ label: "Verwijderen", bevestigen: true, actie: () => callbacks.onReisVerwijderen(rij.reis.variant) });
+    } else if (rij.categorie === "deadlines" && rij.deadline) {
       acties.push({ label: "Verbergen", actie: () => callbacks.onVerbergen(verborgenDeadlineSleutel(rij.deadline)) });
-    }
-    if (rij.oplevering) {
+    } else if (rij.oplevering) {
       acties.push({ label: "Verbergen", actie: () => callbacks.onVerbergen(verborgenOpleveringSleutel(rij.oplevering.id)) });
+    } else {
+      // Vrije blokken, feestdagen, schooldagen en vaste boekingen zijn geen
+      // losse items maar berekende regels: eentje wegstrepen heeft geen
+      // betekenis, hij staat er bij de volgende berekening weer. Wat wél kan is
+      // die hele soort uitzetten — dat is dezelfde knop als de filterchip,
+      // maar dan bereikbaar vanaf de regel die je stoort.
+      const filter = FILTERS.find((f) => f.id === rij.categorie);
+      if (filter) {
+        acties.push({
+          label: `Verberg alle ${filter.label.toLowerCase()}`,
+          actie: () => zetFilters(new Set([...actieveFilters].filter((f) => f !== filter.id))),
+        });
+      }
     }
     acties.push({ label: "Naar die dag", actie: () => callbacks.onDagKiezen(rij.datum, { formOpenen: false }) });
     acties.push({ label: "Item op die dag", actie: () => callbacks.onDagKiezen(rij.datum, { formOpenen: true }) });
@@ -550,6 +567,7 @@ export function initOverzichtScherm(root, callbacks) {
 
   function render(ctx) {
     laatsteCtx = ctx;
+    if (ctx.overzichtFilters) actieveFilters = new Set(ctx.overzichtFilters);
     tekenenTelkaarten();
     tekenenProjecten();
     tekenenFiltersEnLijst();

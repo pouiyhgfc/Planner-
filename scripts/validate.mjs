@@ -40,6 +40,7 @@ import {
   bereidExportVoor,
   bereidSamenvoegingVoor,
   pasConflictKeuzesToe,
+  zetOverzichtFilters,
 } from "../src/state/store.js";
 import { chinaAftelling, flexWeekStatus, cnyDrukte, resterendeBlokken, absentieTotaal } from "../src/lib/overzicht.js";
 import { seizoensdataLabel } from "../src/data/season.js";
@@ -2136,6 +2137,32 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   const zonderPy = conflictenVoorRange("2026-09-30", "2026-09-30", true);
   check("conflicten: Python telt mee als het vak aanstaat", metPy.lessenPerVak.PY, 1);
   check("conflicten: Python telt niet mee als het vak is afgewezen", zonderPy.lessenPerVak.PY, undefined);
+}
+
+// =====================================================================
+// overzichtFilters (schema v14): de filterkeuze overleeft een herlaad
+// =====================================================================
+
+{
+  const leeg = leegState();
+  check("leegState: overzichtFilters heeft de vier standaardsoorten", leeg.overzichtFilters.join(","), "tentamens,deadlines,vrijeBlokken,reizen");
+
+  const zonder = zetOverzichtFilters(leeg, ["tentamens", "deadlines"]);
+  check("zetOverzichtFilters: nieuwe keuze opgeslagen", zonder.overzichtFilters.join(","), "tentamens,deadlines");
+  check("zetOverzichtFilters: laat de rest van de state met rust", zonder.items, leeg.items);
+  check("zetOverzichtFilters: kopieert de lijst (geen gedeelde referentie)", zonder.overzichtFilters === leeg.overzichtFilters, false);
+
+  // v13 -> v14: een oude state krijgt de standaardkeuze, niets gaat verloren
+  const v13 = { ...leeg, schemaVersion: 13, kalenderWeergave: "uitgebreid" };
+  delete v13.overzichtFilters;
+  const gemigreerd = migrate(v13);
+  check("migrate v13->v14: schemaVersion is bijgewerkt", gemigreerd.schemaVersion, CURRENT_SCHEMA_VERSION);
+  check("migrate v13->v14: standaardfilters ingevuld", gemigreerd.overzichtFilters.join(","), "tentamens,deadlines,vrijeBlokken,reizen");
+  check("migrate v13->v14: andere keuzes blijven staan", gemigreerd.kalenderWeergave, "uitgebreid");
+
+  // Een bewaarde keuze wordt niet overschreven, onbekende namen vallen weg
+  const bewaard = migrate({ ...leeg, schemaVersion: 13, overzichtFilters: ["tentamens", "bestaat-niet"] });
+  check("migrate: bewaarde filterkeuze blijft staan", bewaard.overzichtFilters.join(","), "tentamens");
 }
 
 console.log(`\n${passed} geslaagd, ${failures} mislukt.`);

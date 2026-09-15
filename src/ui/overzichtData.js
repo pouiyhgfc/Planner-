@@ -96,6 +96,9 @@ export function rijenReizen(tripStatusOverrides = {}, eigenReizen = []) {
       datum: t.start,
       inhoud: t.end !== t.start ? `${t.label} (${kortDatum(t.start)} t/m ${kortDatum(t.end)}) — ${t.status}` : `${t.label} — ${t.status}`,
       vak: null,
+      // De reis zelf erbij, zodat het ⋯-menu een eigen reis kan laten bewerken
+      // en verwijderen en een vaste boeking uit trips.js met rust laat.
+      reis: t,
     }));
 }
 
