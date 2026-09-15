@@ -5,6 +5,7 @@
  */
 
 import { courses, courseVoor } from "../data/courses.js";
+import { PYTHON_INSCHRIJVING_WAARDEN } from "../state/schema.js";
 import { alleVakItems } from "../data/coursedates.js";
 import { WEEKDAGEN, kortDatum } from "./datumlabels.js";
 import { meervoud } from "./tekst.js";
@@ -46,6 +47,11 @@ function renderOnbekendVeld(sleutel, label, huidigeWaarde, onWijzigen) {
   return wrap;
 }
 
+/**
+ * Sinds de loting bekend is (DATA.md §3.5) begint deze stand op "bevestigd" in
+ * plaats van "onbevestigd". Daarom een knop voor elke andere stand: vanuit
+ * "bevestigd" naar "afgewezen" kostte anders twee klikken via "onbevestigd".
+ */
 function renderInschrijvingBadge(pythonInschrijving, onWijzigen) {
   const wrap = document.createElement("div");
   wrap.className = "inschrijving-badge";
@@ -54,23 +60,12 @@ function renderInschrijvingBadge(pythonInschrijving, onWijzigen) {
   label.textContent = `Inschrijving ${pythonInschrijving}`;
   wrap.appendChild(label);
 
-  if (pythonInschrijving === "onbevestigd") {
-    const bevestig = document.createElement("button");
-    bevestig.type = "button";
-    bevestig.textContent = "Zet op bevestigd";
-    bevestig.addEventListener("click", () => onWijzigen("bevestigd"));
-    const afwijzen = document.createElement("button");
-    afwijzen.type = "button";
-    afwijzen.textContent = "Zet op afgewezen";
-    afwijzen.addEventListener("click", () => onWijzigen("afgewezen"));
-    wrap.appendChild(bevestig);
-    wrap.appendChild(afwijzen);
-  } else {
-    const terug = document.createElement("button");
-    terug.type = "button";
-    terug.textContent = "Terug naar onbevestigd";
-    terug.addEventListener("click", () => onWijzigen("onbevestigd"));
-    wrap.appendChild(terug);
+  for (const waarde of PYTHON_INSCHRIJVING_WAARDEN.filter((w) => w !== pythonInschrijving)) {
+    const knop = document.createElement("button");
+    knop.type = "button";
+    knop.textContent = `Zet op ${waarde}`;
+    knop.addEventListener("click", () => onWijzigen(waarde));
+    wrap.appendChild(knop);
   }
   return wrap;
 }
@@ -369,7 +364,7 @@ function renderTellersSectie(course, veldwaarden, onVeldWijzigen) {
     wrap.appendChild(p);
   } else if (course.id === "CHI") {
     const p = document.createElement("p");
-    p.textContent = "Dictee-quizzen: beste 15 tellen.";
+    p.textContent = `Elke les een dictee, elke week huiswerk — de beste ${course.weektoetsen.besteAantalTelt} dictees tellen. Datums staan op NTU COOL.`;
     wrap.appendChild(p);
   } else if (course.id === "PY") {
     const ingeleverdSleutel = veldSleutel("PY", "opdrachtenIngeleverd");
@@ -389,7 +384,7 @@ function renderTellersSectie(course, veldwaarden, onVeldWijzigen) {
 
     rij.appendChild(ingeleverdInput);
     rij.appendChild(scheiding);
-    const totaal = veldwaarden[totaalSleutel];
+    const totaal = veldwaarden[totaalSleutel] || (course.opdrachten.aantal ? String(course.opdrachten.aantal) : "");
     if (totaal) {
       const totaalEl = document.createElement("span");
       totaalEl.textContent = totaal;
@@ -398,6 +393,11 @@ function renderTellersSectie(course, veldwaarden, onVeldWijzigen) {
       rij.appendChild(renderOnbekendVeld(totaalSleutel, "totaal opdrachten", null, onVeldWijzigen));
     }
     wrap.appendChild(rij);
+
+    const toelichting = document.createElement("p");
+    toelichting.className = "vak-detail-klein";
+    toelichting.textContent = `${course.opdrachten.tekst} (${course.opdrachten.zekerheid})`;
+    wrap.appendChild(toelichting);
   } else {
     return null;
   }

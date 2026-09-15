@@ -462,10 +462,10 @@ function renderProjectMijlpaalRij(project, mijlpaal, afgevinkteMijlpalen, onTogg
 
 /**
  * Eén reisrij (fase 9 B1): label, of het de eerste/laatste/enige/
- * tussenliggende dag is, de status, en de vlucht als die op deze dag valt.
+ * tussenliggende dag is, de status, en elke vlucht die op deze dag valt.
  * Eigen reizen (bron "eigen invoer") krijgen een klein onderscheid; een reis
- * met onbekendeVelden (bijv. Filipijnen — vluchtnummer/luchthavens/
- * overnachtingen) krijgt invulbare velden, geen gok.
+ * met onbekendeVelden (bijv. Filipijnen — overnachtingen) krijgt invulbare
+ * velden, geen gok.
  * @param {object} reis
  * @param {string} ymd
  * @param {object[]} vluchtenVandaag
@@ -482,11 +482,12 @@ function renderReisRij(reis, ymd, vluchtenVandaag, vakkenVeldwaarden, onVeldWijz
   naamRegel.textContent = `${reis.label} — ${positie} — ${reis.status}${herkomst}`;
   li.appendChild(naamRegel);
 
-  const vluchtVandaag = vluchtenVandaag.find((v) => v.variant === reis.variant);
-  if (vluchtVandaag) {
+  // Meerdere vluchten op één dag komen echt voor (Filipijnen-heenreis:
+  // TPE → MNL → DVO op 2026-09-25), dus alle vluchten van deze reis tonen.
+  for (const vlucht of vluchtenVandaag.filter((v) => v.variant === reis.variant)) {
     const vluchtRegel = document.createElement("div");
     vluchtRegel.className = "dagblad-klein";
-    vluchtRegel.textContent = vluchtVandaag.label;
+    vluchtRegel.textContent = vlucht.label;
     li.appendChild(vluchtRegel);
   }
 

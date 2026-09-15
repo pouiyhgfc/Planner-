@@ -37,13 +37,18 @@ export const psyDates = [
 // Sprekers uit VAKKEN.md §5 — daar staat ook een spreker-kolom die coursedates.js
 // eerder niet vastlegde. null waar VAKKEN.md zelf "ONBEKEND" zegt (uitgenodigde
 // sprekers bij "Invited talk") of geen spreker noemt (excursie, TBA).
+//
+// Week 5 en 6 stonden hier ingekort ten opzichte van de weekindeling in het
+// brondocument zelf ("... Agriculture" zonder System, "field monitoring"
+// i.p.v. "From Field Plant Monitoring"). Nu letterlijk overgenomen uit de
+// tabel op pagina 3 van de presentatie.
 export const agtechDates = [
   { date: "2026-09-10", week: 1, type: "les", course: "AGTECH", label: "Course introduction", spreker: "Chih-Wei Tung", bron: BRON_AGTECH, zekerheid: "ZEKER" },
   { date: "2026-09-17", week: 2, type: "les", course: "AGTECH", label: "From domestication to design crops", spreker: "Chih-Wei Tung", bron: BRON_AGTECH, zekerheid: "ZEKER" },
   { date: "2026-09-24", week: 3, type: "les", course: "AGTECH", label: "Invited talk", spreker: null, bron: BRON_AGTECH, zekerheid: "ZEKER" },
   { date: "2026-10-01", week: 4, type: "les", course: "AGTECH", label: "Smart technologies in Taiwan Vanilla Lab", spreker: "George Lin / Li-Yu Liu", bron: BRON_AGTECH, zekerheid: "ZEKER" },
-  { date: "2026-10-08", week: 5, type: "les", course: "AGTECH", label: "Intelligent Circular Controlled Environment Agriculture", spreker: "Kuan-Chong Ting", bron: BRON_AGTECH, zekerheid: "ZEKER" },
-  { date: "2026-10-15", week: 6, type: "les", course: "AGTECH", label: "Smart Agriculture: field monitoring to postharvest quality evaluation", spreker: "Shih-Fang Chen", bron: BRON_AGTECH, zekerheid: "ZEKER" },
+  { date: "2026-10-08", week: 5, type: "les", course: "AGTECH", label: "Intelligent Circular Controlled Environment Agriculture System", spreker: "Kuan-Chong Ting", bron: BRON_AGTECH, zekerheid: "ZEKER" },
+  { date: "2026-10-15", week: 6, type: "les", course: "AGTECH", label: "Smart Agriculture: From Field Plant Monitoring to Postharvest Quality Evaluation", spreker: "Shih-Fang Chen", bron: BRON_AGTECH, zekerheid: "ZEKER" },
   { date: "2026-10-22", week: 7, type: "les", course: "AGTECH", label: "Invited talk", spreker: null, bron: BRON_AGTECH, zekerheid: "ZEKER" },
   { date: "2026-10-29", week: 8, type: "les", course: "AGTECH", label: "Global Pest Management Technologies and Trends", spreker: "Yu-Hsien Lin", bron: BRON_AGTECH, zekerheid: "ZEKER" },
   { date: "2026-11-05", week: 9, type: "les", course: "AGTECH", label: "Pepper Breeding for Smallholder Farmers", spreker: "Derek Barchenger", bron: BRON_AGTECH, zekerheid: "ZEKER" },

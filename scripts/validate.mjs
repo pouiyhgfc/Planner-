@@ -275,14 +275,14 @@ for (const c of courses) {
 {
   const agtech = courses.find((c) => c.id === "AGTECH");
   check("AGTECH: code is null (was foutief 946 U0060)", agtech.code, null);
-  check("AGTECH: onbekendeVelden bevat code, room en studiepunten", [...agtech.onbekendeVelden].sort().join(","), "code,room,studiepunten");
+  check("AGTECH: onbekendeVelden bevat code en room (studiepunten zijn bekend)", [...agtech.onbekendeVelden].sort().join(","), "code,room");
 
   const py = courses.find((c) => c.id === "PY");
   check("PY: vak bestaat", Boolean(py), true);
   check("PY: weekdays === [woensdag]", py.weekdays.join(","), "2");
   check("PY: start === 13:20", py.start, "13:20");
   check("PY: end === 16:20", py.end, "16:20");
-  check("PY: inschrijving === onbevestigd", py.inschrijving, "onbevestigd");
+  check("PY: inschrijving === bevestigd (loting geen drempel, Idries was al lid)", py.inschrijving, "bevestigd");
   check("PY: room ONBEKEND", py.room, null);
   check("PY: groepsgrootte ONBEKEND", py.groepsproject.groepsgrootte, null);
   check("PY: vormingstermijn ONBEKEND (niet verzonnen)", py.groepsproject.vormingstermijn, null);
@@ -1341,11 +1341,11 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   delete v6.vakkenVeldwaarden;
   const gemigreerd = migrate(v6);
   check("migrate v6->v7: schemaVersion wordt de actuele versie", gemigreerd.schemaVersion, CURRENT_SCHEMA_VERSION);
-  check("migrate v6->v7: pythonInschrijving default onbevestigd", gemigreerd.pythonInschrijving, "onbevestigd");
+  check("migrate v6->v7: pythonInschrijving default komt uit courses.js", gemigreerd.pythonInschrijving, courses.find((c) => c.id === "PY").inschrijving);
   check("migrate v6->v7: vakkenVeldwaarden default leeg object", Object.keys(gemigreerd.vakkenVeldwaarden).length, 0);
 
   const ongeldigeWaarde = migrate({ ...leegState(), pythonInschrijving: "iets-anders" });
-  check("migrate: ongeldige pythonInschrijving valt terug op onbevestigd", ongeldigeWaarde.pythonInschrijving, "onbevestigd");
+  check("migrate: ongeldige pythonInschrijving valt terug op de datawaarde", ongeldigeWaarde.pythonInschrijving, courses.find((c) => c.id === "PY").inschrijving);
 }
 
 // zetPythonInschrijving() / zetVakVeld(): pure state-transformaties
@@ -1380,7 +1380,8 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
 // letterlijke titel in VAKKEN.md §5, plus de nieuw toegevoegde sprekerdata.
 {
   const gevonden = Object.fromEntries(agtechDates.map((d) => [d.week, d]));
-  check("AGTECH wk6: volledige titel (was afgekort met een pijl)", gevonden[6].label, "Smart Agriculture: field monitoring to postharvest quality evaluation");
+  check("AGTECH wk6: letterlijke titel uit de presentatietabel", gevonden[6].label, "Smart Agriculture: From Field Plant Monitoring to Postharvest Quality Evaluation");
+  check("AGTECH wk5: letterlijke titel uit de presentatietabel (miste 'System')", gevonden[5].label, "Intelligent Circular Controlled Environment Agriculture System");
   check("AGTECH wk6: spreker Shih-Fang Chen", gevonden[6].spreker, "Shih-Fang Chen");
   check("AGTECH wk8: volledige titel (miste 'and Trends')", gevonden[8].label, "Global Pest Management Technologies and Trends");
   check("AGTECH wk10: volledige titel (was 'FarmiSpace / DATAYOO')", gevonden[10].label, "Unlocking the Infinite Possibilities of Agriculture using FarmiSpace");
@@ -1421,11 +1422,11 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
 // Docenten die 8F als ONBEKEND markeerde, zijn nu bekend (zie hierboven, fase
 // 8F-sectie) — hier alleen de studiepunten-aanvulling die VAKKEN.md §1 gaf.
 {
-  check("CHI: studiepunten = 3 (VAKKEN.md §1)", courses.find((c) => c.id === "CHI").studiepunten, 3);
-  check("PY: studiepunten = 3 (VAKKEN.md §1)", courses.find((c) => c.id === "PY").studiepunten, 3);
-  check("PSY: studiepunten blijft ONBEKEND (VAKKEN.md §1 geeft geen waarde)", courses.find((c) => c.id === "PSY").studiepunten, null);
-  check("AGTECH: studiepunten blijft ONBEKEND", courses.find((c) => c.id === "AGTECH").studiepunten, null);
-  check("RTE: studiepunten blijft ONBEKEND", courses.find((c) => c.id === "RTE").studiepunten, null);
+  // Alle vijf de vakken tellen 3 studiepunten: CHI en PY uit VAKKEN.md §1, de
+  // andere drie uit de opgave van Idries (DATA.md §1) — geen enkel vak heeft
+  // hier nog een leeg veld.
+  for (const c of courses) check(`${c.id}: studiepunten = 3`, c.studiepunten, 3);
+  check("geen enkel vak heeft studiepunten nog als onbekend veld", courses.some((c) => c.onbekendeVelden.includes("studiepunten")), false);
 }
 
 // RTE termproject: beschrijvende tekst die er nog niet stond
@@ -1450,7 +1451,7 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
 
 // trips.js: structuur — status/variant/groep per item, geen boeking overschreven
 {
-  check("trips: precies 7 items (3 japan-origineel + 3 japan-omboeking + 1 filipijnen)", trips.length, 7);
+  check("trips: precies 11 items (3 japan-origineel + 3 japan-omboeking + 1 filipijnen-verblijf + 4 filipijnen-vluchten)", trips.length, 11);
   check("TRIP_STATUSSEN bevat de drie statussen", TRIP_STATUSSEN, ["geboekt", "wijziging-aangevraagd", "vervallen"]);
   check("trips: elk item heeft een geldige status", trips.every((t) => TRIP_STATUSSEN.includes(t.status)), true);
   check("trips: elk item heeft variant + groep", trips.every((t) => typeof t.variant === "string" && typeof t.groep === "string"), true);
@@ -1466,7 +1467,9 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   const omboekingVerblijf = japanOmboeking.find((t) => t.type === "vaste-boeking");
   check("japan-omboeking: verblijf 2026-11-06 → 2026-11-16", `${omboekingVerblijf.start} → ${omboekingVerblijf.end}`, "2026-11-06 → 2026-11-16");
 
-  check("filipijnen: nog altijd 1 item, status geboekt, datums ongewijzigd", trips.find((t) => t.variant === "filipijnen-geboekt").start, "2026-09-25");
+  const filipijnenItems = trips.filter((t) => t.variant === "filipijnen-geboekt");
+  check("filipijnen: 5 items (verblijf + 4 vluchten), allemaal geboekt", filipijnenItems.length === 5 && filipijnenItems.every((t) => t.status === "geboekt"), true);
+  check("filipijnen: verblijfsdatums ongewijzigd", filipijnenItems.find((t) => t.type === "vaste-boeking").start, "2026-09-25");
 }
 
 // effectieveTripStatus(): override wint van het standaardveld
@@ -1656,12 +1659,21 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
 // Filipijnen: alleen bereik + terugkomsttijd zijn ZEKER, de rest is ONBEKEND
 // als invulbare velden (niet verzonnen).
 {
-  const filipijnen = trips.find((t) => t.variant === "filipijnen-geboekt");
+  const filipijnen = trips.find((t) => t.id === "filipijnen-geboekt");
   check(
-    "Filipijnen: onbekendeVelden = vluchtnummer, luchthavens, overnachtingen",
+    "Filipijnen: alleen overnachtingen nog ONBEKEND (vluchten staan nu vast)",
     [...filipijnen.onbekendeVelden].sort().join(","),
-    "luchthavens,overnachtingen,vluchtnummer"
+    "overnachtingen"
   );
+
+  // Vier vluchten uit boekingsbevestiging 838759427, met een overstap in
+  // Manila in beide richtingen. De heenreis heeft er twee op één dag.
+  const vluchten = trips.filter((t) => t.variant === "filipijnen-geboekt" && t.type === "vlucht");
+  check("Filipijnen: 4 vluchtitems", vluchten.length, 4);
+  check("Filipijnen: 2 vluchten op de heenreisdag 2026-09-25", vluchten.filter((v) => v.date === "2026-09-25").length, 2);
+  check("Filipijnen: nachtvlucht vertrekt 2026-09-29 uit Davao", vluchten.some((v) => v.date === "2026-09-29" && v.label.startsWith("DVO → MNL")), true);
+  check("Filipijnen: laatste vlucht landt op de terugkomstdag 2026-09-30", vluchten.some((v) => v.date === "2026-09-30" && v.label.includes("10:00")), true);
+  check("Filipijnen: elke vluchtdatum ligt binnen de verblijfsperiode", vluchten.every((v) => v.date >= filipijnen.start && v.date <= filipijnen.end), true);
 }
 
 // eigenReisItems(): zet een eigen reis om naar dezelfde vorm als trips.js
@@ -2000,6 +2012,72 @@ for (const m of [9, 10, 11, 12, 1, 2]) {
   check("wijzigReis: id blijft hetzelfde", reisState.eigenReizen[0].id, reisId);
   check("wijzigReis: status bijgewerkt", reisState.eigenReizen[0].status, "wijziging-aangevraagd");
   check("wijzigReis: vluchten blijven behouden als ze niet meegegeven worden", Array.isArray(reisState.eigenReizen[0].vluchten), true);
+}
+
+// =====================================================================
+// Antwoorden van Idries op de openstaande vragen (DATA.md §9)
+// =====================================================================
+
+// Chinees: elke les een dictee, elke week huiswerk. De verdeling van de 20%
+// en 25% over de tentamenonderdelen blijft ONBEKEND — niet gedeeld door drie.
+{
+  const chi = courses.find((c) => c.id === "CHI");
+  check("CHI: dictee elke les", chi.weektoetsen.dicteeElkeLes, true);
+  check("CHI: huiswerk elke week", chi.weektoetsen.huiswerkElkeWeek, true);
+  check("CHI: toetsdatums blijven ONBEKEND (staan op NTU COOL)", chi.weektoetsen.datums, null);
+  check("CHI: beoordelingstekst noemt de luistertoets", chi.beoordeling.tekst.includes("luistertoets"), true);
+  check(
+    "CHI: beoordelingstekst zegt dat de verdeling over de onderdelen niet vastligt",
+    chi.beoordeling.tekst.includes("staat niet in de syllabus"),
+    true
+  );
+  const percentages = Object.fromEntries(chi.beoordeling.weging.map((w) => [w.label, w.percentage]));
+  check("CHI: midterm blijft ongedeeld 20%", percentages.Midterm, 20);
+  check("CHI: final blijft ongedeeld 25%", percentages.Final, 25);
+}
+
+// Python: loting geen drempel, groep al gevormd, presenteren niet verplicht,
+// ~12 opdrachten waarvan 10 meetellen (schatting → TE VERIFIËREN).
+{
+  const py = courses.find((c) => c.id === "PY");
+  check("PY: ~12 opdrachten", py.opdrachten.aantal, 12);
+  check("PY: daarvan tellen er 10 mee", py.opdrachten.aantalTelt, 10);
+  check("PY: aantallen zijn een schatting van Idries", py.opdrachten.zekerheid, "TE VERIFIËREN");
+  check("PY: inleverdatums blijven ONBEKEND", py.opdrachten.datums, null);
+  checkBronZekerheid("courses: PY.opdrachten", py.opdrachten);
+  check("PY: groepsgrootte blijft ONBEKEND", py.groepsproject.groepsgrootte, null);
+  check("PY: groepsprojecttekst meldt dat de groep rond is", py.groepsproject.tekst.includes("groepsgenoot"), true);
+
+  const pyProject = projects.find((p) => p.id === "PY_GROEPSPROJECT");
+  check("PY_GROEPSPROJECT: waarschuwing meldt dat het F-risico is afgedekt", pyProject.waarschuwing.includes("afgedekt"), true);
+
+  const presentatie = opleveringen.find((o) => o.id === "PY-PROJECTPRESENTATIE");
+  check("PY-projectpresentatie: geen verplichting", presentatie.opmerking.includes("geen verplichting"), true);
+  check("PY-projectpresentatie: datum blijft ONBEKEND", presentatie.datum, null);
+}
+
+// PSY: vier opdrachten zijn de enige inlevermomenten (geen wekelijks huiswerk,
+// geen paper — de syllabus noemt ze niet). Inleverdatums blijven ONBEKEND.
+{
+  const psyOpdrachten = opleveringen.filter((o) => o.vak === "PSY");
+  check("PSY: 4 opdrachten", psyOpdrachten.length, 4);
+  check("PSY: geen enkele opdracht heeft een verzonnen datum", psyOpdrachten.every((o) => o.datum === null), true);
+  check("PSY: opmerking sluit wekelijks huiswerk en een paper uit", psyOpdrachten.every((o) => o.opmerking.includes("geen wekelijks huiswerk, geen paper")), true);
+  check(
+    "PSY: beoordelingstekst noemt NTU COOL als enige inleverweg",
+    courses.find((c) => c.id === "PSY").beoordeling.tekst.includes("NTU COOL"),
+    true
+  );
+}
+
+// Wat Idries niet beantwoord heeft, blijft leeg — geen gok ingevuld.
+{
+  const agtech = courses.find((c) => c.id === "AGTECH");
+  check("AGTECH: vakcode blijft ONBEKEND", agtech.code, null);
+  check("AGTECH: zaal blijft ONBEKEND", agtech.room, null);
+  check("PY: zaal blijft ONBEKEND", courses.find((c) => c.id === "PY").room, null);
+  const excursie = agtechDates.find((d) => d.week === 14);
+  check("AGTECH: de excursie staat op 2026-12-10 zonder verzonnen tijd of locatie", excursie.date === "2026-12-10" && excursie.spreker === null, true);
 }
 
 console.log(`\n${passed} geslaagd, ${failures} mislukt.`);

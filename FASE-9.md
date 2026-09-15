@@ -320,20 +320,40 @@ van het semester. **STOP.**
 Blijven `ONBEKEND` in de app. Zet ze bij elkaar in een paneel onder
 instellingen, met een invoerveld per punt.
 
-1. Verdeling van de 20% en 25% over mondeling, schriftelijk en presentatie (CHI)
-2. Datums van de quizzes en weektoetsen vanaf week 4 (CHI)
-3. Vluchtgegevens en overnachtingen van de Filipijnen-reis
-4. Zaal van Python en van AgTech; vakcode en serienummer van AgTech
-5. Inleverdatums van de vier PSY-opdrachten, en of er daarnaast wekelijks
-   huiswerk of een paper is
-6. Onderwerp, vorm, lengte en verslagplicht van de AgTech-presentatie
-7. In welke week de Python-projectpresentatie van Idries valt
-8. Groepsgrootte en vormingstermijn van het Python-groepsproject
-9. Uitkomst van de Python-inschrijvingsloting
-10. Aantal en datums van de Python-opdrachten
-11. Datum, tijd en locatie van de AgTech-excursie (week 14) en de RTE
-    technical visit (2026-11-19)
-12. Studiepunten van PSY, AgTech en RTE
+**Stand op 2026-09-15: Idries heeft er acht beantwoord.** De antwoorden staan
+in DATA.md (§1, §3.1, §3.2, §3.4, §3.5, §4.0) en in `src/data/`. Hieronder de
+oorspronkelijke twaalf, met wat er nog van over is.
+
+1. Verdeling van de 20% en 25% over mondeling, schriftelijk en presentatie
+   (CHI) — **open.** De syllabus noemt vier onderdelen (schriftelijk,
+   luistertoets, mondeling, individuele presentatie) maar geen percentages.
+2. ~~Datums van de quizzes en weektoetsen vanaf week 4 (CHI)~~ — **beantwoord:**
+   elke les een dictee, elke week huiswerk; datums staan op NTU COOL en worden
+   per les aangekondigd. Losse datums zijn daarmee niet meer nodig.
+3. Vluchtgegevens ~~en overnachtingen~~ van de Filipijnen-reis — **vluchten
+   beantwoord** (boekingsbevestiging 838759427, DATA.md §4.0); de
+   **overnachtingen** zijn nog open.
+4. ~~Zaal van Python en van AgTech~~; vakcode en serienummer van AgTech —
+   **zalen vervallen** (locaties zijn voor de planning niet van belang); de
+   **vakcode van AgTech** is nog open.
+5. Inleverdatums van de vier PSY-opdrachten — **open**, de syllabus noemt ze
+   niet. ~~En of er daarnaast wekelijks huiswerk of een paper is~~ —
+   **beantwoord: nee**, de vier opdrachten zijn de enige inlevermomenten.
+6. Onderwerp, vorm, lengte en verslagplicht van de AgTech-presentatie —
+   **open.** Staat niet in de presentatie-pdf.
+7. ~~In welke week de Python-projectpresentatie van Idries valt~~ —
+   **vervallen:** presenteren is geen verplichting, dus er is geen week.
+8. ~~Groepsgrootte en vormingstermijn van het Python-groepsproject~~ —
+   **geen risico meer:** de groep is al gevormd. De twee velden blijven leeg.
+9. ~~Uitkomst van de Python-inschrijvingsloting~~ — **bevestigd**, Idries was
+   al lid.
+10. Aantal ~~en datums~~ van de Python-opdrachten — **aantal beantwoord**
+    (ca. 12, waarvan 10 meetellen, TE VERIFIËREN); de **datums** zijn nog open.
+11. Datum, tijd ~~en locatie~~ van de AgTech-excursie (week 14) en de RTE
+    technical visit (2026-11-19) — **datums staan vast**, locaties zijn niet
+    van belang; de **tijden** zijn nog open.
+12. ~~Studiepunten van PSY, AgTech en RTE~~ — **beantwoord: 3 elk**, net als
+    CHI en PY.
 
 ---
 

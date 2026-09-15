@@ -14,6 +14,7 @@ export const TRIP_STATUSSEN = ["geboekt", "wijziging-aangevraagd", "vervallen"];
 
 const BRON = "vaste boekingen (Peach Aviation)";
 const BRON_FILIPIJNEN = "opgave Idries";
+const BRON_FILIPIJNEN_VLUCHTEN = "boekingsbevestiging 838759427 (Booking.com)";
 const BRON_OMBOEKING = "opgave Idries (omboeking bevestigd, na FASE-9.md A2)";
 
 export const trips = [
@@ -31,10 +32,11 @@ export const trips = [
   { id: "japan-omboeking-verblijf", variant: "japan-omboeking", groep: "japan", start: "2026-11-06", end: "2026-11-16", type: "vaste-boeking", label: "Japan (omboeking)", status: "geboekt", bron: BRON_OMBOEKING, zekerheid: "ZEKER" },
   { id: "japan-omboeking-terug", variant: "japan-omboeking", groep: "japan", date: "2026-11-16", type: "vlucht", label: "NRT → TPE (Peach Aviation, 12:25)", status: "geboekt", bron: BRON_OMBOEKING, zekerheid: "ZEKER" },
 
-  // Filipijnen — enige variant, geboekt. Alleen het bereik en de terugkomsttijd
-  // staan vast (DATA.md §4/FASE-9.md B1); vluchtnummer, luchthavens en
-  // overnachtingen zijn ONBEKEND — invulbare velden, niet verzonnen (zie
-  // dagblad.js, gebruikt dezelfde vakkenVeldwaarden-opslag als src/ui/schermVakken.js).
+  // Filipijnen — enige variant, geboekt. Bestemming Davao, met een
+  // overstap in Manila in beide richtingen: vier losse vluchten, waarvan er
+  // twee op de heenreisdag vallen. De overnachtingen zijn nog ONBEKEND —
+  // invulbaar veld, niet verzonnen (zie dagblad.js, gebruikt dezelfde
+  // vakkenVeldwaarden-opslag als src/ui/schermVakken.js).
   {
     id: "filipijnen-geboekt",
     variant: "filipijnen-geboekt",
@@ -42,12 +44,16 @@ export const trips = [
     start: "2026-09-25",
     end: "2026-09-30",
     type: "vaste-boeking",
-    label: "Filipijnen-trip (terug ± 10:00 op woensdag)",
+    label: "Filipijnen-trip: Davao (terug 10:00 op woensdag)",
     status: "geboekt",
-    onbekendeVelden: ["vluchtnummer", "luchthavens", "overnachtingen"],
+    onbekendeVelden: ["overnachtingen"],
     bron: BRON_FILIPIJNEN,
     zekerheid: "ZEKER",
   },
+  { id: "filipijnen-heen-1", variant: "filipijnen-geboekt", groep: "filipijnen", date: "2026-09-25", type: "vlucht", label: "TPE → MNL (Philippines AirAsia Z2125, 10:40–12:50)", status: "geboekt", bron: BRON_FILIPIJNEN_VLUCHTEN, zekerheid: "ZEKER" },
+  { id: "filipijnen-heen-2", variant: "filipijnen-geboekt", groep: "filipijnen", date: "2026-09-25", type: "vlucht", label: "MNL → DVO (Cebu Pacific 5J955, 17:20–19:20)", status: "geboekt", bron: BRON_FILIPIJNEN_VLUCHTEN, zekerheid: "ZEKER" },
+  { id: "filipijnen-terug-1", variant: "filipijnen-geboekt", groep: "filipijnen", date: "2026-09-29", type: "vlucht", label: "DVO → MNL (Philippine Airlines PR2824, uitgevoerd door PAL Express, 23:20 → 01:10 de volgende dag) — PNR XILPUI", status: "geboekt", bron: BRON_FILIPIJNEN_VLUCHTEN, zekerheid: "ZEKER" },
+  { id: "filipijnen-terug-2", variant: "filipijnen-geboekt", groep: "filipijnen", date: "2026-09-30", type: "vlucht", label: "MNL → TPE (Philippines AirAsia Z2124, 07:45–10:00)", status: "geboekt", bron: BRON_FILIPIJNEN_VLUCHTEN, zekerheid: "ZEKER" },
 ];
 
 /**

@@ -36,8 +36,8 @@ export const projects = [
     groepsgrootte: null,
     vormingstermijn: null,
     onbekendeVelden: ["groepsgrootte", "vormingstermijn"],
-    waarschuwing: "Geen groep vormen binnen de gestelde termijn betekent een F voor het hele vak. Groepsgrootte en vormingstermijn zijn ONBEKEND — worden in de les aangekondigd.",
-    bron: BRON_PY,
+    waarschuwing: "Geen groep vormen binnen de gestelde termijn betekent een F voor het hele vak. Idries heeft al een groepsgenoot, dus dat risico is afgedekt. Groepsgrootte en vormingstermijn zijn nog ONBEKEND — worden in de les aangekondigd. Presenteren is geen verplichting.",
+    bron: `${BRON_PY} + opgave Idries`,
     zekerheid: "TE VERIFIËREN",
   },
 ];

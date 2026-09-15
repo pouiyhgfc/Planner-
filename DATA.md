@@ -32,16 +32,25 @@ sinds FASE-8-1.md 0B (Computer Programming in Python erbij).
 | Vak | Code | Docent | Dag | Tijd | Zaal | SP |
 |---|---|---|---|---|---|---|
 | General Chinese (國際生華語(一)) | PTCSL7908, klas 23, course identifier 146 U9080, ser. 34044 | 何宣瑩 (HE, SYUAN-YING) | maandag | 18:25–21:05 | 普502 (Pu 502) | 3 |
-| General Psychology (普通心理學) | PSY1007-09 | 周珮雯 (Catherine P. Chou) | woensdag | 09:10–12:10 | 博雅 101 | ONBEKEND |
+| General Psychology (普通心理學) | PSY1007-09 | 周珮雯 (Catherine P. Chou) | woensdag | 09:10–12:10 | 博雅 101 | 3 |
 | **Computer Programming in Python** | **Data5006, curriculum identity 946EU0060, klas 03, ser. 52089** | LIN, TSE-YU | **woensdag** | **13:20–16:20** | ONBEKEND | 3 |
 | General Chinese (國際生華語(一)) | PTCSL7908, klas 23, course identifier 146 U9080, ser. 34044 | 何宣瑩 (HE, SYUAN-YING) | woensdag | 18:25–21:05 | 普502 (Pu 502) | 3 |
-| Global AgTech Foresight | **ONBEKEND** (zie correctie hieronder) | Chih-Wei Tung (programmadirecteur MS Global ATGS) | donderdag | 09:10–12:10 | ONBEKEND | ONBEKEND |
-| Railroad Transportation Engineering | 521 EU8770 | Yung-Cheng (Rex) Lai | donderdag | 14:20–17:20 | 新 103 | ONBEKEND |
+| Global AgTech Foresight | **ONBEKEND** (zie correctie hieronder) | Chih-Wei Tung (programmadirecteur MS Global ATGS) | donderdag | 09:10–12:10 | ONBEKEND | 3 |
+| Railroad Transportation Engineering | 521 EU8770 | Yung-Cheng (Rex) Lai | donderdag | 14:20–17:20 | 新 103 | 3 |
 
 Docentnamen voor PSY en AgTech kwamen uit VAKKEN.md §3/§5 — de syllabus resp.
-presentatie zelf noemden geen naam (dit stond eerder als ONBEKEND). SP =
-studiepunten, uit VAKKEN.md §1; voor PSY, AgTech en RTE niet gegeven, dus
-ONBEKEND.
+presentatie zelf noemden geen naam (dit stond eerder als ONBEKEND).
+
+**Studiepunten — correctie, bron: opgave Idries, zekerheid ZEKER.** Alle vijf
+de vakken tellen **3 studiepunten**. CHI en PY stonden al zo (VAKKEN.md §1);
+PSY, AgTech en RTE stonden op ONBEKEND omdat geen van die drie brondocumenten
+het aantal noemt. Idries heeft het aangeleverd: overal 3. Totaal dus 15
+studiepunten over vijf vakken.
+
+**Zaalnummers — bron: opgave Idries.** Idries heeft aangegeven dat locaties
+voor zijn planning niet van belang zijn. De onbekende zalen (Python, AgTech)
+blijven in de data op ONBEKEND staan met een invulveld, maar zijn geen
+openstaande vraag meer die hij moet uitzoeken.
 
 General Chinese: keuzevak, voertaal Chinees met Engels als hulptaal,
 lesmateriaal *Practical Audio-Visual Chinese 1* (les 1 t/m 6), alleen voor
@@ -165,7 +174,23 @@ leesopdracht per week — niet verzinnen.
 
 Beoordeling: midterm 35%, final 35%, 4 opdrachten 20%, participatie 10%.
 Te laat inleveren: −10% per dag inclusief weekend; na 1 week geen punten.
-Tentamens zijn niet cumulatief. Gemist tentamen zonder documentatie = 0.
+Tentamens zijn niet cumulatief en bestaan uit meerkeuzevragen. Gemist tentamen
+zonder documentatie = 0.
+
+**Opdrachten — bron: syllabus PSY1007-09, zekerheid ZEKER.** De syllabus
+noemt onder "Course Requirements" precies vier onderdelen: colleges, twee
+tentamens, **vier schriftelijke opdrachten** en discussie/participatie.
+**Er is dus geen wekelijks huiswerk en geen paper** — dat staat er niet, en
+wordt hier ook niet verzonnen. Inleveren gaat uitsluitend via NTU COOL; een
+opdracht die per e-mail naar docent of TA gaat, krijgt een 0. De
+**inleverdatums van de vier opdrachten staan niet in de syllabus** en blijven
+ONBEKEND.
+
+Contactgegevens (bron: syllabus, ZEKER): docent cpwchou@ntu.edu.tw, kamer
+Department of Psychology South Hall 118, spreekuur op afspraak; TA
+r13227124@ntu.edu.tw, ook op afspraak. Het vak wordt in het Engels gegeven en
+telt als Liberal Education Course A58 (Civil Awareness and Social Analysis,
+Life Science).
 
 ### 3.2 Global AgTech Foresight (donderdag 09:10–12:10)
 Bron: presentatie `20260910-_Global_AgTech_Foresight.pdf`, sprekerkolom en
@@ -176,6 +201,15 @@ t.o.v. de letterlijke titel (week 6, 8, 10, 11, 13 hieronder). Week 10's
 "FarmiSpace / DATAYOO" was zelfs een samenvoeging van de echte titel met de
 sprekersnaam — DATAYOO Company is de spreker, niet een deel van het
 onderwerp. Ook was er nog geen sprekerkolom.
+
+**Tweede correctie — bron: de presentatie zelf (pagina 3), zekerheid ZEKER.**
+De weekindeling staat als tabel op pagina 3 van
+`20260910-_Global_AgTech_Foresight.pdf`. Daaruit blijkt dat week 5 en week 6
+hier nóg steeds ingekort stonden ten opzichte van het brondocument:
+week 5 miste het woord "System", week 6 stond als "field monitoring to
+postharvest quality evaluation" in plaats van "From Field Plant Monitoring to
+Postharvest Quality Evaluation". Beide zijn hieronder letterlijk uit de tabel
+overgenomen.
 
 | Datum | Week | Onderwerp | Spreker |
 |---|---|---|---|
@@ -204,6 +238,20 @@ onderwerp. Ook was er nog geen sprekerkolom.
 - Participatie: vraag stellen = 5 punten/week, maximaal 30
 
 → De app moet elke gemiste donderdag koppelen aan een puntenverlies-indicatie.
+
+**Taiwan Smart Agriweek — bron: de presentatie (pagina 5-7), zekerheid
+ZEKER.** De introductiecollege-slides verwijzen naar AGRITECH TAIWAN /
+臺灣智慧農漁週, **2026-09-08 t/m 2026-09-10** in TaiNEX 1 (Taipei Nangang
+Exhibition Center), met een routebeschrijving per MRT. Dit is een beurs
+waarnaar verwezen wordt, geen les en geen verplichting, en de datums zijn
+inmiddels verstreken — daarom staat het hier wel als feit, maar wordt er
+**geen kalenderitem van gemaakt**.
+
+**Let op: dit is niet de excursie van week 14.** De on-site visit op
+2026-12-10 is een apart onderdeel; datum, tijd en locatie daarvan zijn nog
+ONBEKEND en worden hier niet ingevuld met de Agriweek-gegevens. Ook onderwerp,
+vorm, lengte en verslagplicht van de studentpresentatie in week 15 staan niet
+in de presentatie en blijven ONBEKEND.
 
 ### 3.3 Railroad Transportation Engineering (donderdag 14:20–17:20)
 Bron: `2026-NTU_RTE_Syllabus_ver_1.docx`. Docent Yung-Cheng (Rex) Lai. Zekerheid: **ZEKER**.
@@ -308,6 +356,13 @@ het hele tentamen. Hoe die weging over de drie onderdelen verdeeld is, is
 ONBEKEND — de app deelt niet door drie en toont bij elk onderdeel de volle
 tentamenweging met een vermelding dat de onderverdeling niet vastligt.
 
+**Wat een tentamen inhoudt — bron: syllabus PTCSL7908-23, zekerheid ZEKER.**
+De syllabus noemt per tentamen vier onderdelen: een schriftelijk deel, een
+**luistertoets**, een mondeling en een individuele presentatie. De luistertoets
+stond hier nog niet; hij valt samen met het schriftelijke deel en krijgt geen
+eigen datum. De syllabus geeft nog steeds geen percentages per onderdeel — de
+verdeling van de 20% en de 25% blijft dus ONBEKEND.
+
 → **Controlewaarden:** CHI heeft 30 lessessies (ongewijzigd, de generator
 kent geen tentamens) **plus 6 losse tentamenonderdelen**. 2026-10-28 heeft
 twee tentamenmomenten (PSY-midterm ochtend, CHI mondeling avond). 2026-12-23
@@ -342,10 +397,23 @@ punten.
 huiswerk 20%, quizzen/toetsen (dictee, bijna elke les) 20%, midterm 20%,
 final 25%.
 
+Nog twee losse gegevens uit de cursuspagina (ZEKER): het vak is **niet open in
+de eerste inschrijvingsronde** (備註: 初選不開放), en de vrijstelling van 6 uur
+absentie is gelijk aan **2 sessies** — één sessie telt drie lesuren (A/B/C).
+
 **Vanaf week 4 — correctie FASE-9.md A1, bron: opgave Idries, bevestigd bij
 de docent, zekerheid ZEKER:** quizzes, weektoetsen en huiswerk worden gegeven
 vanaf week 4, en de beste 15 resultaten tellen mee. Exacte datums staan op
 NTU COOL en zijn ONBEKEND — de app genereert er geen.
+
+**Frequentie — bron: opgave Idries, bevestigd door de syllabus, zekerheid
+ZEKER.** Vanaf dat moment loopt het elke week door: **elke les een dictee** en
+**elke week huiswerk**, plus na elke afgeronde les een herhalingstoets in het
+laatste lesuur. De syllabus zegt hetzelfde ("The dictation quiz will be given
+almost every class time", "A review test will be given for every lesson"). Dat
+maakt de losse datums minder belangrijk: er is per definitie elke maandag- en
+woensdagavond iets. De datums zelf staan op NTU COOL en blijven ONBEKEND — de
+app genereert er nog steeds geen.
 
 - Huiswerk: te laat = −10 punten, moet binnen een week alsnog, daarna 0
   punten. Handgeschreven verplicht.
@@ -414,6 +482,23 @@ hele vak**. Groepsgrootte en vormingstermijn worden in de les aangekondigd en
 zijn nu **ONBEKEND** — leeg veld met invoermogelijkheid in de app, geen
 termijn verzinnen. Presentaties: weken 14, 15, 16 (2026-12-09, 12-16, 12-23).
 
+**Groep al gevormd — bron: opgave Idries, zekerheid ZEKER.** Idries heeft al
+een groepsgenoot. Het F-risico van de regel hierboven is daarmee afgedekt; de
+regel zelf blijft in de data staan omdat hij uit de cursuspagina komt.
+Groepsgrootte en vormingstermijn blijven ONBEKEND, maar zijn geen risico meer.
+
+**Presenteren is geen verplichting — bron: opgave Idries, zekerheid ZEKER.**
+De projectpresentatie kan wel of niet gedaan worden. Daarom staat er geen
+datum vast voor Idries binnen weken 14-16: de drie kandidaatdata blijven als
+`mogelijkeData` in de data staan, zonder er één van te kiezen. Het
+groepsproject zelf telt wel gewoon voor 25%.
+
+**Opdrachten — bron: opgave Idries, zekerheid TE VERIFIËREN.** Er zijn er
+ongeveer **12**, waarvan de beste **10** meetellen voor de 65%. Idries geeft
+dit zelf aan met een slag om de arm ("dacht ik"), en de cursuspagina noemt
+alleen "ca. 10-12 stuks" — daarom TE VERIFIËREN en niet ZEKER. De
+inleverdatums staan op NTU COOL en blijven ONBEKEND.
+
 **Cursusrestricties — drie afzonderlijke regels (VAKKEN.md §4 vulde de eerste
 en derde aan; er stond hier eerder alleen de tweede):**
 1. Bachelorstudenten met een hoofd- of tweede hoofdvak in een afdeling van
@@ -426,14 +511,17 @@ en derde aan; er stond hier eerder alleen de tweede):**
 3. Master- en PhD-studenten hebben een ondertekende goedkeuringsbrief van hun
    begeleider of afdelingshoofd nodig.
 
-**Inschrijving onbevestigd:** de inschrijving liep via een Google Form met
-deadline **2026-09-13 09:13 (Taipei)**, waarna beperkte permissienummers
-worden verloot. Die deadline is verstreken; onbekend of Idries een plek
-heeft. Veld `inschrijving: "onbevestigd"` in het datamodel. Zolang dat zo
-staat: de app toont het vak met een zichtbare markering, de motor rekent het
-vak **wel** mee in de bezetting van woensdagmiddag (dus in alle
-blokberekeningen), en het vakkenscherm krijgt later (fase 8F) een knop om de
-status op bevestigd/afgewezen te zetten.
+**Inschrijving bevestigd — bron: opgave Idries, zekerheid ZEKER.** De
+inschrijving liep via een Google Form met deadline **2026-09-13 09:13
+(Taipei)**, waarna beperkte permissienummers worden verloot. Idries was al lid
+en heeft daarmee een plek — de loting was voor hem geen drempel. Veld
+`inschrijving: "bevestigd"` in het datamodel; dit was eerder `"onbevestigd"`.
+
+Gevolg voor de app: de motor rekende het vak al mee in de bezetting van
+woensdagmiddag en blijft dat doen, maar de markering "onbevestigd" verdwijnt.
+De knop op het vakkenscherm blijft bestaan (bevestigd ↔ afgewezen ↔
+onbevestigd) — de stand komt nu alleen uit de data in plaats van uit een
+vaste beginwaarde in het state-schema, zodat er maar één bron van waarheid is.
 
 ### 3.6 Afgeleide lesbelasting — controlewaarden
 
@@ -485,6 +573,31 @@ Bron: opgave Idries. Let op: 2026-09-25 is ook Moon Festival (feestdag, zie §2)
 de vaste boeking heeft voorrang in de statusbepaling (zie fase 2-regels). De
 terugkomst is een woensdag; Idries mist daardoor de PSY-les die ochtend
 (09:10–12:10, §3.1). Dit vak neemt geen aanwezigheid op.
+
+### 4.0 Filipijnen — vluchtgegevens
+
+Bron: **boekingsbevestiging 838759427 (Booking.com)**, aangeleverd door Idries.
+Zekerheid: **ZEKER**. Bestemming is **Davao (DVO)**, met in beide richtingen
+een overstap in Manila (MNL). Dit vervangt de eerdere velden `vluchtnummer`
+en `luchthavens`, die op ONBEKEND stonden.
+
+| Datum | Van → naar | Tijden | Maatschappij en vlucht |
+|---|---|---|---|
+| 2026-09-25 (vr) | TPE → MNL | 10:40 → 12:50 (2 u 10) | Philippines AirAsia Z2125 |
+| 2026-09-25 (vr) | MNL → DVO | 17:20 → 19:20 (2 u) | Cebu Pacific 5J955 |
+| 2026-09-29 (di) | DVO → MNL | 23:20 → 01:10 de volgende dag (1 u 50) | Philippine Airlines PR2824, uitgevoerd door PAL Express |
+| 2026-09-30 (wo) | MNL → TPE | 07:45 → 10:00 (2 u 15) | Philippines AirAsia Z2124 |
+
+- De heenreis heeft dus **twee vluchten op één dag** — de eerste in de app waar
+  dat voorkomt. Het dagblad toont ze allebei.
+- De terugreis vertrekt **dinsdagnacht** uit Davao en landt woensdagochtend
+  10:00 in Taipei. Dat komt overeen met de "± 10:00 op woensdag" die hier al
+  stond.
+- Carrier reservation number (PNR) van DVO → MNL: **XILPUI**. Voor de andere
+  drie vluchten stond in de bevestiging "being issued" — die zijn dus
+  **ONBEKEND** en worden niet ingevuld.
+- **Overnachtingen zijn nog ONBEKEND** — de bevestiging gaat alleen over
+  vluchten. Dat blijft een invulbaar veld in het dagblad.
 
 ### 4.1 Japan — omboeking (afgerond)
 
@@ -607,42 +720,68 @@ op te bouwen.
 
 De app maakt hiervoor lege, gemarkeerde velden — géén aannames.
 
-1. Vakcode en zaalnummer Global AgTech Foresight (de eerder aangenomen code
-   bleek bij Python te horen — zie §1-correctie). **Docentnaam is inmiddels
-   ZEKER** (VAKKEN.md §5: Chih-Wei Tung) — niet langer een gat.
+**Idries heeft op 2026-09-15 een reeks van deze punten beantwoord.** Wat
+daarmee is komen te vervallen, staat hieronder doorgestreept met de vindplaats
+van het antwoord. Wat nog open is, staat gewoon in de lijst.
+
+1. ~~Vakcode en~~ zaalnummer Global AgTech Foresight — **zaalnummers vervallen
+   als open punt** (§1: locaties zijn voor de planning niet van belang; het
+   veld blijft leeg met invulmogelijkheid). De **vakcode van AgTech is nog
+   steeds ONBEKEND** (de eerder aangenomen code bleek bij Python te horen, zie
+   §1-correctie). **Docentnaam is ZEKER** (VAKKEN.md §5: Chih-Wei Tung).
 1b. ~~General Chinese: exacte tentamendatum binnen week 9 en week 16~~ —
     **opgelost (FASE-9.md A1):** midterm en final bestaan elk uit drie
-    onderdelen op drie vaste datums, zie §3.4. Nog wel open: de verdeling van
-    de 20% (midterm) en 25% (final) over mondeling/schriftelijk/presentatie;
-    de datums van de quizzes/weektoetsen vanaf week 4 (staan op NTU COOL).
-    Ook: uitkomst van het gesprek met docent 何宣瑩 (HE, SYUAN-YING) over de
-    afwezigheid tijdens week 9 door de Japan-boeking, en of een herkansing
+    onderdelen op drie vaste datums, zie §3.4.
+    ~~De datums van de quizzes/weektoetsen vanaf week 4~~ — **vervallen als
+    open punt (§3.4):** er is elke les een dictee en elke week huiswerk, dus
+    losse datums zijn niet meer nodig; ze staan op NTU COOL en worden per les
+    aangekondigd.
+    **Nog open:** de verdeling van de 20% (midterm) en 25% (final) over
+    schriftelijk/luistertoets/mondeling/presentatie — de syllabus geeft die
+    niet. Ook: uitkomst van het gesprek met docent 何宣瑩 (HE, SYUAN-YING) over
+    de afwezigheid tijdens week 9 door de Japan-boeking, en of een herkansing
     zonder medische verklaring mogelijk is. Ook: hoe de 1/3-faaldrempel zich
     verhoudt tot de 6-uursvrijstelling (VAKKEN.md §8, vraag 11) — worden ze
     echt nooit verrekend, of is er een volgorde? (Vakcode, docent, zaal,
     startdatum en absentiebeleid zijn nu ZEKER — zie §1 en §3.4.)
-1c. Computer Programming in Python: zaalnummer; uitkomst van de
-    inschrijvingsloting (Google Form, deadline verstreken 2026-09-13 09:13);
-    groepsgrootte en vormingstermijn van het groepsproject; aantal opdrachten
-    en hun inleverdatums (ca. 10-12, exact ONBEKEND); of de strengere
-    cijfergrens voor programmeer-gerelateerde opleidingen op civiele techniek
-    van toepassing is (zie §3.5). **Docentnaam en studiepunten (3) zijn al
-    ZEKER.**
+1c. Computer Programming in Python — grotendeels beantwoord in §3.5:
+    ~~zaalnummer~~ (locaties niet van belang), ~~uitkomst van de
+    inschrijvingsloting~~ (**bevestigd**, Idries was al lid), ~~groepsgrootte
+    en vormingstermijn~~ (blijven ONBEKEND, maar zijn geen risico meer: de
+    groep is al gevormd), ~~in welke week de projectpresentatie valt~~
+    (presenteren is geen verplichting, dus er is geen week), ~~aantal
+    opdrachten~~ (ca. 12, waarvan 10 meetellen — TE VERIFIËREN).
+    **Nog open:** de inleverdatums van die opdrachten (staan op NTU COOL), en
+    of de strengere cijfergrens voor programmeer-gerelateerde opleidingen op
+    civiele techniek van toepassing is (zie §3.5).
 1d. ~~General Psychology: naam van de docent~~ — **opgelost.** VAKKEN.md §3
     geeft 周珮雯 (Catherine P. Chou); de syllabus zelf noemt geen naam.
 1e. Global AgTech Foresight: onderwerp, vorm (individueel of groep), lengte
-    en opleverdatum van de opdracht bij de studentpresentaties in week 15
+    en verslagplicht van de opdracht bij de studentpresentaties in week 15
     (12-17) — de presentatiedatum zelf is bevestigd (VAKKEN.md §5), de rest
-    niet. Ook: datum, tijd en locatie van de excursie in week 14 (12-10).
-1f. Railroad Transportation Engineering: datum, tijd en locatie van de
-    technical visit op 2026-11-19 (week 11).
-1g. Studiepunten voor General Psychology, Global AgTech Foresight en Railroad
-    Transportation Engineering — VAKKEN.md §1 geeft ze niet.
+    niet. **Blijft open:** de presentatie in de syllabus-pdf gaat er niet over.
+    Ook nog open: tijd van de excursie in week 14 (de datum, 2026-12-10, staat
+    vast; de locatie is niet van belang, zie §1). Verwar die excursie niet met
+    Taiwan Smart Agriweek van 8-10 september — zie §3.2.
+1f. Railroad Transportation Engineering: **tijd** van de technical visit op
+    2026-11-19 (week 11). De datum staat vast, de locatie is niet van belang
+    (zie §1).
+1g. ~~Studiepunten voor General Psychology, Global AgTech Foresight en
+    Railroad Transportation Engineering~~ — **opgelost (§1):** alle vijf de
+    vakken tellen 3 studiepunten (opgave Idries).
 1h. ~~Railroad Transportation Engineering: de kolom "Lecture Style" per
     week~~ — **opgelost:** Idries leverde `2026-NTU_RTE_Syllabus_ver_1.docx`
     aan. Zie §3.3 — 14 van de 16 lesdagen hebben nu een vorm ("in de les" of
     "discussietijd"); week 9 en 11 staan ook in de syllabus zelf leeg en
     blijven dus ONBEKEND.
+1i. General Psychology: de inleverdatums van de vier schriftelijke
+    opdrachten. De syllabus noemt ze niet (§3.1). Wel opgelost: er is **geen**
+    wekelijks huiswerk en **geen** paper — de vier opdrachten zijn de enige
+    inlevermomenten.
+1j. Filipijnen-reis: ~~vluchtgegevens~~ — **opgelost (§4.0):** alle vier de
+    vluchten staan vast, bron boekingsbevestiging 838759427. Nog open: de
+    **overnachtingen**, en de PNR's van de drie vluchten waarvoor de
+    bevestiging "being issued" meldde.
 2. Of de docenten inhaallessen plannen in de flexibele week 2026-12-28 → 12-31.
    Aankondiging uiterlijk 2026-11-28 volgens de kalender.
 3. Datum en duur van de afstudeeropdracht in Nederland (februari 2027) — bepaalt

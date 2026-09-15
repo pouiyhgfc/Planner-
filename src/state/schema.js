@@ -55,12 +55,25 @@
  *     een weergavekeuze, omkeerbaar via Instellingen. Sleutels zijn
  *     voorafgegaan door hun soort ("deadline::" / "oplevering::") zodat twee
  *     soorten nooit op elkaar kunnen botsen.
+ * v13: de uitkomst van de Python-inschrijvingsloting is bekend geworden
+ *     (Idries was al lid, DATA.md §3.5), dus de standaardwaarde komt niet
+ *     langer uit dit bestand maar uit src/data/courses.js. Een opgeslagen
+ *     "onbevestigd" was de oude standaard en geen antwoord meer op een vraag
+ *     die nu beantwoord is; die wordt opgetrokken naar de datawaarde. Een
+ *     bewuste keuze ("bevestigd" of "afgewezen") blijft ongemoeid — de knop
+ *     op het vakkenscherm blijft dus werken en overschrijft de data.
  */
 
 import { parseYMD } from "../lib/date.js";
 import { trips, TRIP_STATUSSEN } from "../data/trips.js";
+import { courseVoor } from "../data/courses.js";
 
-export const CURRENT_SCHEMA_VERSION = 12;
+export const CURRENT_SCHEMA_VERSION = 13;
+
+/** @returns {string} de inschrijvingsstand zoals src/data/courses.js die kent */
+function inschrijvingUitData() {
+  return courseVoor("PY").inschrijving;
+}
 
 const STATUS_WAARDEN = ["idee", "vast"];
 export const SCHERMEN = ["maand", "weken", "overzicht", "vakken"];
@@ -100,7 +113,7 @@ export function leegState() {
     weekWeergave: legeWeekWeergave(),
     afgevinkteMijlpalen: [],
     eigenProjecten: [],
-    pythonInschrijving: "onbevestigd",
+    pythonInschrijving: inschrijvingUitData(),
     vakkenVeldwaarden: {},
     tripStatusOverrides: {},
     eigenReizen: [],
@@ -194,7 +207,7 @@ export function migrate(state) {
       weekWeergave: geldigeWeekWeergave(s.weekWeergave),
       afgevinkteMijlpalen: s.afgevinkteMijlpalen ?? [],
       eigenProjecten: s.eigenProjecten ?? [],
-      pythonInschrijving: PYTHON_INSCHRIJVING_WAARDEN.includes(s.pythonInschrijving) ? s.pythonInschrijving : "onbevestigd",
+      pythonInschrijving: PYTHON_INSCHRIJVING_WAARDEN.includes(s.pythonInschrijving) ? s.pythonInschrijving : inschrijvingUitData(),
       vakkenVeldwaarden: s.vakkenVeldwaarden ?? {},
     };
   }
@@ -209,7 +222,7 @@ export function migrate(state) {
       weekWeergave: geldigeWeekWeergave(s.weekWeergave),
       afgevinkteMijlpalen: s.afgevinkteMijlpalen ?? [],
       eigenProjecten: s.eigenProjecten ?? [],
-      pythonInschrijving: PYTHON_INSCHRIJVING_WAARDEN.includes(s.pythonInschrijving) ? s.pythonInschrijving : "onbevestigd",
+      pythonInschrijving: PYTHON_INSCHRIJVING_WAARDEN.includes(s.pythonInschrijving) ? s.pythonInschrijving : inschrijvingUitData(),
       vakkenVeldwaarden: s.vakkenVeldwaarden ?? {},
       tripStatusOverrides: geldigeTripStatusOverrides(s.tripStatusOverrides),
     };
@@ -225,7 +238,7 @@ export function migrate(state) {
       weekWeergave: geldigeWeekWeergave(s.weekWeergave),
       afgevinkteMijlpalen: s.afgevinkteMijlpalen ?? [],
       eigenProjecten: s.eigenProjecten ?? [],
-      pythonInschrijving: PYTHON_INSCHRIJVING_WAARDEN.includes(s.pythonInschrijving) ? s.pythonInschrijving : "onbevestigd",
+      pythonInschrijving: PYTHON_INSCHRIJVING_WAARDEN.includes(s.pythonInschrijving) ? s.pythonInschrijving : inschrijvingUitData(),
       vakkenVeldwaarden: s.vakkenVeldwaarden ?? {},
       tripStatusOverrides: geldigeTripStatusOverrides(s.tripStatusOverrides),
       eigenReizen: s.eigenReizen ?? [],
@@ -242,7 +255,7 @@ export function migrate(state) {
       weekWeergave: geldigeWeekWeergave(s.weekWeergave),
       afgevinkteMijlpalen: s.afgevinkteMijlpalen ?? [],
       eigenProjecten: s.eigenProjecten ?? [],
-      pythonInschrijving: PYTHON_INSCHRIJVING_WAARDEN.includes(s.pythonInschrijving) ? s.pythonInschrijving : "onbevestigd",
+      pythonInschrijving: PYTHON_INSCHRIJVING_WAARDEN.includes(s.pythonInschrijving) ? s.pythonInschrijving : inschrijvingUitData(),
       vakkenVeldwaarden: s.vakkenVeldwaarden ?? {},
       tripStatusOverrides: geldigeTripStatusOverrides(s.tripStatusOverrides),
       eigenReizen: s.eigenReizen ?? [],
@@ -260,7 +273,7 @@ export function migrate(state) {
       weekWeergave: geldigeWeekWeergave(s.weekWeergave),
       afgevinkteMijlpalen: s.afgevinkteMijlpalen ?? [],
       eigenProjecten: s.eigenProjecten ?? [],
-      pythonInschrijving: PYTHON_INSCHRIJVING_WAARDEN.includes(s.pythonInschrijving) ? s.pythonInschrijving : "onbevestigd",
+      pythonInschrijving: PYTHON_INSCHRIJVING_WAARDEN.includes(s.pythonInschrijving) ? s.pythonInschrijving : inschrijvingUitData(),
       vakkenVeldwaarden: s.vakkenVeldwaarden ?? {},
       tripStatusOverrides: geldigeTripStatusOverrides(s.tripStatusOverrides),
       eigenReizen: s.eigenReizen ?? [],
@@ -277,6 +290,14 @@ export function migrate(state) {
     };
   }
 
+  if (s.schemaVersion === 12) {
+    s = {
+      ...s,
+      schemaVersion: 13,
+      pythonInschrijving: s.pythonInschrijving === "onbevestigd" ? inschrijvingUitData() : s.pythonInschrijving,
+    };
+  }
+
   if (s.schemaVersion === CURRENT_SCHEMA_VERSION) {
     return {
       ...s,
@@ -285,7 +306,7 @@ export function migrate(state) {
       weekWeergave: geldigeWeekWeergave(s.weekWeergave),
       afgevinkteMijlpalen: s.afgevinkteMijlpalen ?? [],
       eigenProjecten: s.eigenProjecten ?? [],
-      pythonInschrijving: PYTHON_INSCHRIJVING_WAARDEN.includes(s.pythonInschrijving) ? s.pythonInschrijving : "onbevestigd",
+      pythonInschrijving: PYTHON_INSCHRIJVING_WAARDEN.includes(s.pythonInschrijving) ? s.pythonInschrijving : inschrijvingUitData(),
       vakkenVeldwaarden: s.vakkenVeldwaarden ?? {},
       tripStatusOverrides: geldigeTripStatusOverrides(s.tripStatusOverrides),
       eigenReizen: s.eigenReizen ?? [],
